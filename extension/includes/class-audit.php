@@ -41,6 +41,7 @@ final class IGE_FFM_Audit {
 			'modification_reglages'   => 'Modification des règles',
 			'creation_exercice'       => "Création d'exercice",
 			'export_audit'            => "Export du journal d'audit",
+			'telechargement_pdf'      => 'Téléchargement d’un PDF',
 			'saisie_ecriture'         => 'Saisie d’une écriture',
 			'transmission'            => 'Transmission d’un lot',
 			'remise_transmission'     => 'Rejet renvoyé après correction',

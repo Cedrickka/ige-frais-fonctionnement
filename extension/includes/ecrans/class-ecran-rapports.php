@@ -50,7 +50,7 @@ final class IGE_FFM_Ecran_Rapports {
 		if ( $d ) {
 			$args['title']    = $d['titre'];
 			$args['subtitle'] = 'Réf. ' . $d['reference'] . ' · ' . $d['periode'];
-			$args['actions']  = '<a class="ige-btn ige-btn-ghost" href="' . esc_url( ige_ffm_url( 'rapports' ) ) . '">Registre</a><button type="button" class="ige-btn ige-btn-jaune" onclick="window.print()">Imprimer ou enregistrer en PDF</button>';
+			$args['actions']  = '<a class="ige-btn ige-btn-ghost" href="' . esc_url( ige_ffm_url( 'rapports' ) ) . '">Registre</a>' . ( in_array( $d['type'], array( 'pv_arrete', 'pv_inopine' ), true ) ? '' : '<a class="ige-btn ige-btn-jaune" href="' . esc_url( IGE_FFM_Pdf::url( array( 'quoi' => 'document', 'id' => $d['id'] ) ) ) . '">Télécharger le PDF</a>' );
 			return $args;
 		}
 		$args['title']    = 'Rapports officiels';
@@ -118,7 +118,13 @@ final class IGE_FFM_Ecran_Rapports {
 							<td><?php echo esc_html( wp_date( 'd/m/Y', strtotime( $doc['emis_le'] ) ) ); ?></td>
 							<td><?php echo esc_html( $u ? $u->user_login : '' ); ?></td>
 							<td class="ige-r"><?php echo esc_html( $doc['nb_verifications'] ); ?></td>
-							<td><a class="ige-act" href="<?php echo esc_url( add_query_arg( 'doc', $doc['id'], ige_ffm_url( 'rapports' ) ) ); ?>">Ouvrir</a></td>
+							<td style="white-space:nowrap"><a class="ige-act" href="<?php echo esc_url( add_query_arg( 'doc', $doc['id'], ige_ffm_url( 'rapports' ) ) ); ?>">Ouvrir</a>
+								<?php if ( ! in_array( $doc['type'], array( 'pv_arrete', 'pv_inopine' ), true ) ) : ?>
+									· <a class="ige-act" href="<?php echo esc_url( IGE_FFM_Pdf::url( array( 'quoi' => 'document', 'id' => $doc['id'] ) ) ); ?>">PDF</a>
+								<?php elseif ( $doc['objet_id'] && IGE_FFM_Arretes::get( (int) $doc['objet_id'] ) ) : ?>
+									· <a class="ige-act" href="<?php echo esc_url( IGE_FFM_Pdf::url( array( 'quoi' => 'pv', 'id' => $doc['objet_id'] ) ) ); ?>">PDF</a>
+								<?php endif; ?>
+							</td>
 						</tr>
 					<?php endforeach; ?>
 					<?php if ( ! $docs ) : ?>
@@ -147,7 +153,7 @@ final class IGE_FFM_Ecran_Rapports {
 			exit;
 		}
 		$d = IGE_FFM_Documents::get( $res );
-		ige_ffm_flash( 'ok', 'Rapport ' . $d['reference'] . ' émis', 'Imprimez-le ou enregistrez-le en PDF ; le code QR permet d’en vérifier l’authenticité.' );
+		ige_ffm_flash( 'ok', 'Rapport ' . $d['reference'] . ' émis', 'Téléchargez-le en PDF ; le code QR permet d’en vérifier l’authenticité.' );
 		wp_safe_redirect( ige_ffm_url( 'rapports', array( 'doc' => $res ) ) );
 		exit;
 	}

@@ -27,7 +27,7 @@ final class IGE_FFM_Ecran_Tableau {
 		$ex = IGE_FFM_Contexte::exercice();
 		$args['title']    = 'Tableau de bord' . ( $ex ? ' — Exercice ' . $ex['annee'] : '' );
 		$args['subtitle'] = $ex ? sprintf( 'Écritures validées au %s · %d %% de l’exercice écoulé', ige_ff_date_fr_safe(), round( IGE_FFM_Consolidation::temps_ecoule( $ex ) ) ) : '';
-		$args['actions']  = '<a class="ige-btn ige-btn-ghost" href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=ige_ffm_conso_export&vue=services' ), 'ige_ffm_conso_export' ) ) . '">Exporter (Excel)</a>';
+		$args['actions']  = '<a class="ige-btn ige-btn-ghost" href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=ige_ffm_conso_export&vue=services' ), 'ige_ffm_conso_export' ) ) . '">Exporter (Excel)</a><a class="ige-btn ige-btn-ghost" href="' . esc_url( IGE_FFM_Pdf::url( array( 'quoi' => 'consolidation', 'vue' => 'services' ) ) ) . '">PDF</a>';
 		if ( current_user_can( 'ige_rapports' ) ) {
 			$args['actions'] .= '<a class="ige-btn ige-btn-jaune" href="' . esc_url( ige_ffm_url( 'rapports' ) ) . '">Rapports officiels</a>';
 		}

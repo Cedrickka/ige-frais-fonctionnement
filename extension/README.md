@@ -2,7 +2,7 @@
 
 Logique métier de l'application de gestion des frais de fonctionnement de l'Inspection Générale de l'Enseignement. Elle s'utilise avec le thème **IGE Frais de fonctionnement** (version 1.0.1 ou plus), qui fournit l'interface.
 
-Version **1.1.0 — déploiement** (lot 1 complet + messagerie de la plateforme, code de connexion par e-mail, invitations, reprise des fichiers Excel). Thème requis : IGE Frais de fonctionnement **1.0.2**. WordPress 6.5 ou plus (testé sur 7.1.3), PHP 8.0 ou plus.
+Version **1.2.0** (lot 1 complet + déploiement + exports Excel et PDF au format de la charte). Thème requis : IGE Frais de fonctionnement **1.0.2**. WordPress 6.5 ou plus (testé sur 7.1.3), PHP 8.0 ou plus.
 
 ## 1. Ce que contient l'étape 1
 
@@ -103,6 +103,20 @@ identifiant;nom;email;profil;service
 j.mbuyi;Jean Mbuyi;j.mbuyi@exemple.cd;RESPONSABLE;8000 IG
 ```
 
+### Version 1.2.0 : exports Excel et PDF
+
+| Export | Excel (.xlsx) | PDF |
+| --- | --- | --- |
+| Livre de caisse (filtres appliqués) | Oui | Oui (A4 paysage) |
+| Consolidation | Oui, un onglet par vue (services, catégories, rubriques, mois) | Oui, la vue affichée |
+| Journal d'audit | Oui | — |
+| Rapports officiels (situation mensuelle, état consolidé, avances, rapport annuel) | — | Oui, avec code QR d'authenticité sur chaque page |
+| Procès-verbaux d'arrêté et de comptage inopiné | — | Oui, avec code QR |
+
+Les classeurs reprennent la charte : armoiries, intitulé du ministère, bande tricolore, titre, en-têtes bleu institutionnel, lignes alternées, montants au format `1 250 000` (négatifs en rouge), vraies dates, ligne de total, volets figés, filtres, impression A4 ajustée à la largeur avec en-têtes répétés et pagination. Les PDF sont produits par le serveur (aucune boîte d'impression du navigateur), en Cooper Hewitt et EB Garamond, avec pagination « Page n / N ». Les anciens exports CSV sont remplacés.
+
+Bibliothèques incluses (dossier `vendor/`) : Dompdf 3.1.0 (LGPL 2.1), php-font-lib et php-svg-lib (LGPL), Masterminds HTML5 (MIT), PHP-CSS-Parser (MIT), qrcode-generator de Kazuhiko Arase (MIT, classes préfixées `IGE_QR`). Polices de la charte converties en TTF dans `assets/fonts/` (SIL Open Font License). Extensions PHP requises : gd, mbstring, dom, zip (présentes chez Hostinger). Le cache des polices est écrit dans `wp-content/uploads/ige-ffm-pdf/` (accès direct interdit).
+
 ## 2. Installation sur ige-gestion.com
 
 **Mise à jour vers la 1.1.0** : après le téléversement, ouvrir **Exercice et règles de contrôle > Messagerie**, saisir `contact@ige-gestion.com` et le mot de passe de cette boîte (hPanel > E-mails), enregistrer, puis « Envoyer un e-mail de test ». Vérifier ensuite que **chaque compte a une adresse e-mail** : sans adresse, pas de code de connexion. Les comptes qui utilisent déjà une application d'authentification la gardent.
@@ -150,7 +164,11 @@ wp eval-file wp-content/plugins/ige-ff-metier/tests/test-pilotage.php
 wp eval-file wp-content/plugins/ige-ff-metier/tests/test-deploiement.php
 ```
 
-Résultats attendus : `63`, `76`, `57`, `74`, `57` puis `109 réussis`, sans échec (436 tests). Le test du déploiement n'envoie aucun e-mail (ils sont interceptés) et utilise les fichiers d'essai de `tests/fixtures/`. Le test des fonds suppose qu'on soit au moins en mai de l'exercice ; il clôture un exercice fictif (2030) puis le supprime, sans toucher l'exercice réel. Les tests couvrent le schéma, les données initiales, les droits de chaque rôle, la validation des référentiels, la création et la modification des comptes, la robustesse des mots de passe, le verrouillage, la désactivation, les bornes des règles et la détection d'une falsification du journal.
+```
+wp eval-file wp-content/plugins/ige-ff-metier/tests/test-exports.php
+```
+
+Résultats attendus : `63`, `76`, `57`, `74`, `57`, `109` puis `33 réussis`, sans échec (469 tests). Le test du déploiement n'envoie aucun e-mail (ils sont interceptés) et utilise les fichiers d'essai de `tests/fixtures/`. Le test des fonds suppose qu'on soit au moins en mai de l'exercice ; il clôture un exercice fictif (2030) puis le supprime, sans toucher l'exercice réel. Les tests couvrent le schéma, les données initiales, les droits de chaque rôle, la validation des référentiels, la création et la modification des comptes, la robustesse des mots de passe, le verrouillage, la désactivation, les bornes des règles et la détection d'une falsification du journal.
 
 Les tests de saisie couvrent les droits (lecteur, administrateur non rattaché, agent sur le budget), le blocage de la caisse négative et du dépassement du disponible, les validations (date future ou hors exercice, montant, rubrique, pièce, faux PDF, fichier PHP, plafond des espèces), le budget facultatif, les révisions motivées, le verrouillage du solde initial, le paiement d'un engagement, la contrepassation (et ses refus), le solde progressif du livre, la continuité de la numérotation, le mois clôturé, les doublons et la fusion des fournisseurs, le journal d'audit.
 

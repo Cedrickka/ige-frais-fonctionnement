@@ -24,7 +24,7 @@ final class IGE_FFM_Ecran_Consolidation {
 	 *
 	 * @return array<string,string>
 	 */
-	private static function vues() {
+	public static function vues() {
 		return array( 'services' => 'Par service', 'categories' => 'Par catégorie', 'rubriques' => 'Par rubrique', 'mois' => 'Par mois' );
 	}
 
@@ -33,7 +33,7 @@ final class IGE_FFM_Ecran_Consolidation {
 	 *
 	 * @return string
 	 */
-	private static function vue() {
+	public static function vue() {
 		$v = isset( $_GET['vue'] ) ? sanitize_key( $_GET['vue'] ) : 'services'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		return isset( self::vues()[ $v ] ) ? $v : 'services';
 	}
@@ -47,9 +47,10 @@ final class IGE_FFM_Ecran_Consolidation {
 	public static function title_band( $args ) {
 		$args['title']    = 'Consolidation';
 		$args['subtitle'] = 'Écritures validées uniquement · au ' . ige_ff_date_fr_safe();
-		$args['actions']  = '<a class="ige-btn ige-btn-ghost" href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=ige_ffm_conso_export&vue=' . self::vue() ), 'ige_ffm_conso_export' ) ) . '">Exporter (Excel)</a>';
+		$args['actions']  = '<a class="ige-btn ige-btn-ghost" href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=ige_ffm_conso_export&vue=' . self::vue() ), 'ige_ffm_conso_export' ) ) . '">Excel</a>';
+		$args['actions'] .= '<a class="ige-btn ige-btn-ghost" href="' . esc_url( IGE_FFM_Pdf::url( array( 'quoi' => 'consolidation', 'vue' => self::vue() ) ) ) . '">PDF</a>';
 		if ( current_user_can( 'ige_administrer' ) ) {
-			$args['actions'] .= '<a class="ige-btn ige-btn-jaune" href="' . esc_url( ige_ffm_url( 'rapports', array( 'type' => 'etat_consolide' ) ) ) . '">État consolidé (PDF)</a>';
+			$args['actions'] .= '<a class="ige-btn ige-btn-jaune" href="' . esc_url( ige_ffm_url( 'rapports', array( 'type' => 'etat_consolide' ) ) ) . '">Émettre l’état consolidé officiel</a>';
 		}
 		return $args;
 	}
@@ -148,7 +149,45 @@ final class IGE_FFM_Ecran_Consolidation {
 	}
 
 	/**
-	 * Export CSV (Excel).
+	 * Données d'export d'une vue (Excel et PDF).
+	 *
+	 * @param string $vue Vue.
+	 * @return array
+	 */
+	public static function export_donnees( $vue ) {
+		$ex    = IGE_FFM_Contexte::exercice();
+		$tab   = self::tableau( $vue );
+		$vues  = self::vues();
+		$types = array();
+		foreach ( $tab['entetes'] as $i => $h ) {
+			if ( 'À vérifier' === $h ) {
+				$types[] = array( $h, 'nombre', 10 );
+			} elseif ( in_array( $i, $tab['num'], true ) ) {
+				$types[] = array( $h, 'montant' );
+			} elseif ( false !== strpos( $h, '%' ) ) {
+				$types[] = array( $h, 'decimal' );
+			} elseif ( 'Dernier lot' === $h ) {
+				$types[] = array( $h, 'texte', 11 );
+			} else {
+				$types[] = array( $h, 'texte', 0 === $i ? 26 : 14 );
+			}
+		}
+		return array(
+			'titre'      => 'Consolidation ' . $ex['annee'] . ' — par ' . strtolower( preg_replace( '/^Par /i', '', $vues[ $vue ] ?? $vue ) ),
+			'sous_titre' => 'Écritures validées par Administration et Finance · ' . IGE_FFM_Classeur::extrait_par(),
+			'colonnes'   => $types,
+			'lignes'     => $tab['lignes'],
+			'total'      => $tab['total'],
+			'notes'      => array( 'Seules les écritures validées par Administration et Finance sont consolidées (règle RG-14). La caisse est celle du livre de chaque service.' ),
+			'fichier'    => 'consolidation-' . $vue . '-' . $ex['annee'],
+			'annee'      => $ex['annee'],
+			'vue'        => $vue,
+			'paysage'    => count( $types ) > 6,
+		);
+	}
+
+	/**
+	 * Export Excel (.xlsx) : un onglet par vue, la vue affichée en premier.
 	 */
 	public static function handle_export() {
 		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ), 'ige_ffm_conso_export' ) ) {
@@ -160,22 +199,14 @@ final class IGE_FFM_Ecran_Consolidation {
 			wp_die( 'Aucun exercice ouvert.' );
 		}
 		$vue = self::vue();
-		$tab = self::tableau( $vue );
-		IGE_FFM_Audit::log( 'export_consolidation', 'exercice', $ex['annee'], null, array( 'vue' => $vue ) );
-		nocache_headers();
-		header( 'Content-Type: text/csv; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename="consolidation-' . $vue . '-' . $ex['annee'] . '.csv"' );
-		$out = fopen( 'php://output', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
-		fwrite( $out, "\xEF\xBB\xBF" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
-		fputcsv( $out, $tab['entetes'], ';' );
-		$ligne = static fn( $l ) => array_map( static fn( $v ) => is_float( $v ) ? str_replace( '.', ',', (string) $v ) : ( is_int( $v ) ? (string) $v : IGE_FFM_Ecran_Livre::csv_texte( (string) $v ) ), $l );
-		foreach ( $tab['lignes'] as $l ) {
-			fputcsv( $out, $ligne( $l ), ';' );
+		IGE_FFM_Audit::log( 'export_consolidation', 'exercice', $ex['annee'], null, array( 'vue' => $vue, 'format' => 'xlsx' ) );
+		$c    = new IGE_FFM_Classeur( 'Consolidation ' . $ex['annee'] );
+		$vues = array_keys( self::vues() );
+		usort( $vues, static fn( $a, $b ) => ( $b === $vue ) <=> ( $a === $vue ) );
+		foreach ( $vues as $v ) {
+			$t = self::export_donnees( $v );
+			$c->feuille( self::vues()[ $v ], $t );
 		}
-		if ( $tab['total'] ) {
-			fputcsv( $out, $ligne( $tab['total'] ), ';' );
-		}
-		fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
-		exit;
+		$c->telecharger( 'consolidation-' . $ex['annee'] . '.xlsx' );
 	}
 }

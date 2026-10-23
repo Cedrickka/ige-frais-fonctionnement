@@ -68,7 +68,7 @@ final class IGE_FFM_Ecran_Arrete {
 		if ( $pv ) {
 			$args['title']    = 'Procès-verbal de caisse';
 			$args['subtitle'] = $sid ? IGE_FFM_Comptes::service_code( $sid ) : '';
-			$args['actions']  = '<button type="button" class="ige-btn ige-btn-jaune" onclick="window.print()">Imprimer ou enregistrer en PDF</button>';
+			$args['actions']  = '<a class="ige-btn ige-btn-jaune" href="' . esc_url( IGE_FFM_Pdf::url( array( 'quoi' => 'pv', 'id' => $pv ) ) ) . '">Télécharger le PDF</a>';
 			return $args;
 		}
 		$noms = IGE_FFM_Ecran_Livre::mois_noms();

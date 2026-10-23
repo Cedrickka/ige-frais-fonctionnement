@@ -100,7 +100,7 @@ final class IGE_FFM_Ecran_Audit {
 				<?php
 				// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
 				echo IGE_FFM_Ecrans::action_button( 'audit_verifier', array(), 'Vérifier l’intégrité', 'ige-btn ige-btn-line' );
-				echo IGE_FFM_Ecrans::action_button( 'audit_export', array( 'du' => $f['du'], 'au' => $f['au'], 'user_id' => $f['user_id'], 'action_audit' => $f['action'] ), 'Exporter (CSV)', 'ige-btn ige-btn-line' );
+				echo IGE_FFM_Ecrans::action_button( 'audit_export', array( 'du' => $f['du'], 'au' => $f['au'], 'user_id' => $f['user_id'], 'action_audit' => $f['action'] ), 'Exporter (Excel)', 'ige-btn ige-btn-line' );
 				// phpcs:enable
 				?>
 			</div>
@@ -159,7 +159,7 @@ final class IGE_FFM_Ecran_Audit {
 	}
 
 	/**
-	 * Export CSV (séparateur point-virgule, UTF-8 avec BOM pour Excel).
+	 * Export Excel (.xlsx) du journal filtré.
 	 */
 	public static function handle_export() {
 		ige_ffm_check_form( 'audit_export' );
@@ -167,22 +167,34 @@ final class IGE_FFM_Ecran_Audit {
 		$f       = self::filtres( wp_unslash( $_POST ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$actions = IGE_FFM_Audit::actions();
 		IGE_FFM_Audit::log( 'export_audit', 'audit', '', null, array_filter( $f ) );
-
-		nocache_headers();
-		header( 'Content-Type: text/csv; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename="journal-audit-' . wp_date( 'Y-m-d' ) . '.csv"' );
-		$out = fopen( 'php://output', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
-		fwrite( $out, "\xEF\xBB\xBF" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
-		fputcsv( $out, array( 'N°', 'Date et heure', 'Utilisateur', 'Action', 'Objet', 'Identifiant', 'Avant', 'Après', 'Adresse IP', 'Empreinte' ), ';' );
-		$page = 1;
+		$lignes = array();
+		$page   = 1;
 		do {
 			$res = IGE_FFM_Audit::search( array_merge( $f, array( 'page' => $page, 'par_page' => 1000 ) ) );
 			foreach ( $res['rows'] as $r ) {
-				fputcsv( $out, array( $r['id'], $r['created_at'], $r['user_login'], $actions[ $r['action'] ] ?? $r['action'], $r['objet'], $r['objet_id'], $r['avant'], $r['apres'], $r['ip'], $r['empreinte'] ), ';' );
+				$lignes[] = array( (int) $r['id'], $r['created_at'], $r['user_login'], $actions[ $r['action'] ] ?? $r['action'], $r['objet'], $r['objet_id'], $r['avant'], $r['apres'], $r['ip'], $r['empreinte'] );
 			}
 			++$page;
-		} while ( count( $res['rows'] ) === 1000 );
-		fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
-		exit;
+		} while ( count( $res['rows'] ) === 1000 && $page <= 100 );
+		$per = array_filter( array( $f['du'] ? 'du ' . wp_date( 'd/m/Y', strtotime( $f['du'] ) ) : '', $f['au'] ? 'au ' . wp_date( 'd/m/Y', strtotime( $f['au'] ) ) : '' ) );
+		$t   = array(
+			'titre'      => 'Journal d’audit',
+			'sous_titre' => ( $per ? 'Période ' . implode( ' ', $per ) . ' · ' : '' ) . count( $lignes ) . ' ligne(s) · ' . IGE_FFM_Classeur::extrait_par(),
+			'colonnes'   => array(
+				array( 'N°', 'nombre', 8 ),
+				array( 'Date et heure', 'dateheure' ),
+				array( 'Utilisateur', 'texte', 14 ),
+				array( 'Action', 'texte', 28 ),
+				array( 'Objet', 'texte', 12 ),
+				array( 'Identifiant', 'texte', 18 ),
+				array( 'Avant', 'long', 36 ),
+				array( 'Après', 'long', 36 ),
+				array( 'Adresse IP', 'texte', 14 ),
+				array( 'Empreinte', 'texte', 20 ),
+			),
+			'lignes'     => $lignes,
+			'notes'      => array( 'Chaque ligne est chaînée à la précédente par son empreinte SHA-256 : utilisez « Vérifier l’intégrité » dans l’application pour contrôler la chaîne.' ),
+		);
+		( new IGE_FFM_Classeur( 'Journal d’audit' ) )->feuille( 'Journal d’audit', $t )->telecharger( 'journal-audit-' . wp_date( 'Y-m-d' ) . '.xlsx' );
 	}
 }

@@ -79,8 +79,9 @@ final class IGE_FFM_Ecran_Livre {
 		$args['actions']  = '';
 		if ( $sid && $ex && IGE_FFM_Contexte::peut_voir( $sid ) ) {
 			$export = wp_nonce_url( add_query_arg( array_filter( array( 'action' => 'ige_ffm_livre_export', 'service' => $sid, 'mois' => $f['mois'], 'rubrique' => $f['rubrique_id'], 'statut' => $f['statut'], 'etat' => $f['etat'] ) ), admin_url( 'admin-post.php' ) ), 'ige_ffm_livre_export' );
-			$args['actions'] .= '<a class="ige-btn ige-btn-ghost" href="' . esc_url( $export ) . '">Exporter (Excel)</a>';
-			$args['actions'] .= '<button type="button" class="ige-btn ige-btn-ghost" onclick="window.print()">Imprimer</button>';
+			$pdf    = IGE_FFM_Pdf::url( array_filter( array( 'quoi' => 'livre', 'service' => $sid, 'mois' => $f['mois'], 'rubrique' => $f['rubrique_id'], 'statut' => $f['statut'], 'etat' => $f['etat'] ) ) );
+			$args['actions'] .= '<a class="ige-btn ige-btn-ghost" href="' . esc_url( $export ) . '">Excel</a>';
+			$args['actions'] .= '<a class="ige-btn ige-btn-ghost" href="' . esc_url( $pdf ) . '">PDF</a>';
 		}
 		if ( $sid && IGE_FFM_Contexte::peut_saisir( $sid ) ) {
 			$args['actions'] .= '<a class="ige-btn ige-btn-jaune" href="' . esc_url( ige_ffm_url( 'nouvelle-ecriture' ) ) . '">+ Nouvelle écriture</a>';
@@ -373,12 +374,11 @@ final class IGE_FFM_Ecran_Livre {
 	}
 
 	/**
-	 * Export CSV (Excel) du livre filtré.
+	 * Données d'export du livre filtré (Excel et PDF), après contrôle des droits.
+	 *
+	 * @return array
 	 */
-	public static function handle_export() {
-		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ), 'ige_ffm_livre_export' ) ) {
-			wp_die( 'Lien expiré.', '', array( 'response' => 403 ) );
-		}
+	public static function export_donnees() {
 		ige_ffm_require( 'ige_acceder' );
 		$sid = IGE_FFM_Contexte::service_courant();
 		$ex  = IGE_FFM_Contexte::exercice();
@@ -391,41 +391,88 @@ final class IGE_FFM_Ecran_Livre {
 		$modes = wp_list_pluck( IGE_FFM_Referentiels::all( 'mode_paiement' ), 'libelle', 'id' );
 		$fourn = wp_list_pluck( IGE_FFM_Fournisseurs::all( false ), 'raison_sociale', 'id' );
 		$code  = IGE_FFM_Comptes::service_code( $sid );
+		$s     = IGE_FFM_Referentiels::get( 'service', $sid );
 		IGE_FFM_Audit::log( 'export_livre', 'service', $code, null, array_filter( $f ) + array( 'lignes' => count( $livre['rows'] ) ) );
 
-		nocache_headers();
-		header( 'Content-Type: text/csv; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename="livre-caisse-' . sanitize_file_name( $code ) . '-' . $ex['annee'] . '.csv"' );
-		$out = fopen( 'php://output', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
-		fwrite( $out, "\xEF\xBB\xBF" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
-		fputcsv( $out, array( 'Identifiant', 'Date', 'Type', 'Statut', 'Rubrique', 'Description', 'Bénéficiaire', 'N° pièce', 'Mode', 'Entrée', 'Sortie', 'Solde', 'État', 'Contrepassée par' ), ';' );
-		fputcsv( $out, array( '', '', '', '', '', 'Solde au début de la période', '', '', '', '', '', $livre['solde_debut'], '', '' ), ';' );
+		$filtres = array();
+		if ( $f['mois'] ) {
+			$filtres[] = strtolower( self::mois_noms()[ $f['mois'] ] );
+		}
+		if ( $f['rubrique_id'] ) {
+			$filtres[] = 'rubrique ' . ( $rubs[ $f['rubrique_id'] ] ?? '' );
+		}
+		if ( $f['statut'] ) {
+			$filtres[] = 'payee' === $f['statut'] ? 'payées' : 'engagées';
+		}
+		if ( $f['etat'] ) {
+			$filtres[] = str_replace( '_', ' ', $f['etat'] );
+		}
+		$lignes  = array( array( '', '', '', '', '', 'Solde au début de la période', '', '', '', null, null, (int) $livre['solde_debut'], '', '', '_style' => 'italique' ) );
+		$entrees = 0;
+		$sorties = 0;
+		$solde   = (int) $livre['solde_debut'];
 		foreach ( $livre['rows'] as $e ) {
 			list( $lbl ) = IGE_FFM_Ecritures::etat( $e );
 			$m           = (int) $e['montant'];
-			fputcsv(
-				$out,
-				array(
-					$e['id_ecriture'],
-					wp_date( 'd/m/Y', strtotime( $e['date_operation'] ) ),
-					'entree' === $e['type'] ? 'Entrée' : 'Sortie',
-					'engagee' === $e['statut'] ? 'Engagée' : 'Payée',
-					$rubs[ $e['rubrique_id'] ] ?? '',
-					self::csv_texte( $e['description'] ),
-					self::csv_texte( $e['fournisseur_id'] ? ( $fourn[ $e['fournisseur_id'] ] ?? '' ) : $e['beneficiaire'] ),
-					self::csv_texte( $e['num_piece'] ),
-					$modes[ $e['mode_paiement_id'] ] ?? '',
-					'entree' === $e['type'] ? $m : '',
-					'sortie' === $e['type'] ? $m : '',
-					(int) $e['solde'],
-					$lbl,
-					$e['contrepassee_par'],
-				),
-				';'
+			if ( 'entree' === $e['type'] ) {
+				$entrees += $m;
+			} else {
+				$sorties += 'payee' === $e['statut'] ? $m : 0;
+			}
+			$solde    = (int) $e['solde'];
+			$lignes[] = array(
+				$e['id_ecriture'],
+				$e['date_operation'],
+				'entree' === $e['type'] ? 'Entrée' : 'Sortie',
+				'engagee' === $e['statut'] ? 'Engagée' : 'Payée',
+				$rubs[ $e['rubrique_id'] ] ?? '',
+				$e['description'],
+				$e['fournisseur_id'] ? ( $fourn[ $e['fournisseur_id'] ] ?? '' ) : $e['beneficiaire'],
+				$e['num_piece'],
+				$modes[ $e['mode_paiement_id'] ] ?? '',
+				'entree' === $e['type'] ? $m : null,
+				'sortie' === $e['type'] ? $m : null,
+				(int) $e['solde'],
+				$lbl,
+				(string) $e['contrepassee_par'],
 			);
 		}
-		fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
-		exit;
+		return array(
+			'titre'      => 'Livre de caisse — ' . $code,
+			'sous_titre' => ( $s && $s['libelle'] !== $code ? $s['libelle'] . ' · ' : '' ) . 'Exercice ' . $ex['annee'] . ( $filtres ? ' · ' . implode( ', ', $filtres ) : '' ) . ' · ' . count( $livre['rows'] ) . ' écriture(s) · ' . IGE_FFM_Classeur::extrait_par(),
+			'colonnes'   => array(
+				array( 'Identifiant', 'texte', 19 ),
+				array( 'Date', 'date' ),
+				array( 'Type', 'texte', 8 ),
+				array( 'Statut', 'texte', 9 ),
+				array( 'Rubrique', 'texte', 9 ),
+				array( 'Description', 'long', 36 ),
+				array( 'Fournisseur / bénéficiaire', 'long', 24 ),
+				array( 'N° pièce', 'texte', 12 ),
+				array( 'Mode', 'texte', 12 ),
+				array( 'Entrée', 'montant' ),
+				array( 'Sortie', 'montant' ),
+				array( 'Solde', 'montant' ),
+				array( 'État', 'texte', 13 ),
+				array( 'Contrepassée par', 'texte', 19 ),
+			),
+			'lignes'     => $lignes,
+			'total'      => array( 'Total de la période', '', '', '', '', '', '', '', '', $entrees, $sorties, $solde, '', '' ),
+			'notes'      => array( 'Total des sorties : sorties payées seulement (les engagements non payés ne sortent pas de la caisse). Solde : solde de caisse après chaque écriture.' ),
+			'fichier'    => 'livre-caisse-' . sanitize_file_name( $code ) . '-' . $ex['annee'] . ( $f['mois'] ? '-' . sprintf( '%02d', $f['mois'] ) : '' ),
+			'paysage'    => true,
+		);
+	}
+
+	/**
+	 * Export Excel (.xlsx) du livre filtré.
+	 */
+	public static function handle_export() {
+		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ), 'ige_ffm_livre_export' ) ) {
+			wp_die( 'Lien expiré.', '', array( 'response' => 403 ) );
+		}
+		$t = self::export_donnees();
+		( new IGE_FFM_Classeur( $t['titre'] ) )->feuille( 'Livre de caisse', $t )->telecharger( $t['fichier'] . '.xlsx' );
 	}
 
 	/**

@@ -3,7 +3,7 @@
  * Plugin Name:       IGE Frais de fonctionnement (métier)
  * Plugin URI:        https://ige-gestion.com/
  * Description:       Gestion des frais de fonctionnement de l'Inspection Générale de l'Enseignement : référentiels, comptes et profils, budgets, écritures de caisse, transmission, vérification, consolidation. Étapes 1 et 2 : socle (base, rôles, référentiels, comptes, règles, audit, sécurité) et saisie (budget, écritures, contrôles bloquants, livre de caisse, contrepassation, pièces, fournisseurs).
- * Version:           1.1.0
+ * Version:           1.2.0
  * Requires at least: 6.5
  * Requires PHP:      8.0
  * Author:            Inspection Générale de l'Enseignement
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'IGE_FFM_VERSION', '1.1.0' );
+define( 'IGE_FFM_VERSION', '1.2.0' );
 define( 'IGE_FFM_DB_VERSION', '7' );
 define( 'IGE_FFM_FILE', __FILE__ );
 define( 'IGE_FFM_DIR', plugin_dir_path( __FILE__ ) );
@@ -47,6 +47,8 @@ require_once IGE_FFM_DIR . 'includes/class-rapports.php';
 require_once IGE_FFM_DIR . 'includes/class-deux-facteurs.php';
 require_once IGE_FFM_DIR . 'includes/class-messagerie.php';
 require_once IGE_FFM_DIR . 'includes/class-xlsx.php';
+require_once IGE_FFM_DIR . 'includes/class-classeur.php';
+require_once IGE_FFM_DIR . 'includes/class-pdf.php';
 require_once IGE_FFM_DIR . 'includes/class-reprise.php';
 require_once IGE_FFM_DIR . 'includes/class-invitations.php';
 require_once IGE_FFM_DIR . 'includes/class-ecrans.php';
@@ -63,6 +65,7 @@ add_action( 'plugins_loaded', array( 'IGE_FFM_Transmission', 'init' ) );
 add_action( 'plugins_loaded', array( 'IGE_FFM_Deux_Facteurs', 'init' ) );
 add_action( 'plugins_loaded', array( 'IGE_FFM_Messagerie', 'init' ) );
 add_action( 'plugins_loaded', array( 'IGE_FFM_Invitations', 'init' ) );
+add_action( 'plugins_loaded', array( 'IGE_FFM_Pdf', 'init' ) );
 
 add_action(
 	'wp_enqueue_scripts',

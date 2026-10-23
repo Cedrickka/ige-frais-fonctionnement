@@ -1,5 +1,12 @@
 # Journal des versions
 
+## 1.2.0 — 24 octobre 2026 · Exports Excel et PDF
+
+- Exports Excel au format .xlsx mis en forme selon la charte (armoiries, bande tricolore, en-têtes bleu institutionnel, montants et dates réels, total, filtres, volets figés, mise en page d'impression) : livre de caisse, consolidation (4 onglets), journal d'audit. Les exports CSV sont retirés.
+- PDF produits par le serveur (Dompdf) : rapports officiels et procès-verbaux avec code QR sur chaque page, livre de caisse et consolidation. Boutons « Télécharger le PDF » à la place de « Imprimer ou enregistrer en PDF » ; colonne PDF dans le registre des rapports.
+- Téléchargements de PDF journalisés.
+- 33 tests automatiques supplémentaires (469 au total).
+
 ## 1.1.0 — 23 octobre 2026 · Déploiement
 
 - Messagerie de la plateforme : envoi par la boîte Hostinger `contact@ige-gestion.com` en SMTP authentifié, réglage avec mot de passe chiffré ou constantes `wp-config.php`, e-mail de test, modèle aux couleurs de l'institution, échecs journalisés.
