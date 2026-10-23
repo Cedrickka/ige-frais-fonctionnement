@@ -4,3 +4,28 @@
 .ige-table td form{margin:0}
 @media (max-width:1300px){.ige-adm-split{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:1000px){.ige-cols-2.ige-start{grid-template-columns:1fr}}
+
+/* Étape 2 : saisie, livre de caisse, budget. */
+.ige-seg-radio label{display:block;margin:0;cursor:pointer}
+.ige-seg-radio input{position:absolute;opacity:0;pointer-events:none}
+.ige-seg-radio span{display:block;text-align:center;padding:9px;font-size:13px;font-weight:600;color:var(--ige-muted);background:#fff}
+.ige-seg-radio input:checked+span{background:var(--ige-bleu-inst);color:#fff}
+.ige-seg-radio input:focus-visible+span{outline:2px solid var(--ige-bleu);outline-offset:-2px}
+[hidden]{display:none!important}
+.ige-table tr.ige-annule td{color:var(--ige-muted)}
+.ige-table tr.ige-annule td:nth-child(4){text-decoration:line-through}
+.ige-table tr.ige-sel td{background:#fffbe0}
+.ige-livre td:nth-child(4){min-width:180px}
+.ige-hist{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;height:150px;align-items:end}
+.ige-hist__col{display:flex;flex-direction:column;justify-content:flex-end;height:100%;text-align:center;font-size:11px;color:var(--ige-muted)}
+.ige-hist__bar{background:var(--ige-bleu);border-radius:3px 3px 0 0;min-height:2px;margin-bottom:4px}
+.ige-ctl{font-size:12.5px;padding:9px 11px;border-radius:var(--ige-radius-sm);margin-top:6px}
+.ige-ctl-ok{background:var(--ige-ok-bg);color:var(--ige-ok-txt)}
+.ige-ctl-ko{background:var(--ige-ko-bg);color:var(--ige-ko-txt);font-weight:600}
+.ige-ctl-warn{background:#fff4e0;color:#7a4b00}
+@media print{.ige-detail{display:none}}
+.ige-narrow:has(#ige-saisie){max-width:1040px}
+#ige-saisie{grid-template-columns:minmax(0,1fr) 320px}
+#ige-saisie .ige-kv{grid-template-columns:auto auto}
+@media (max-width:1000px){#ige-saisie{grid-template-columns:1fr}}
+.ige-content>.ige-grid+.ige-grid,.ige-content>.ige-grid+.ige-card,.ige-content>form+.ige-grid{margin-top:16px}

@@ -41,6 +41,17 @@ final class IGE_FFM_Audit {
 			'modification_reglages'   => 'Modification des règles',
 			'creation_exercice'       => "Création d'exercice",
 			'export_audit'            => "Export du journal d'audit",
+			'saisie_ecriture'         => 'Saisie d’une écriture',
+			'paiement_engagement'     => 'Paiement d’un engagement',
+			'contrepassation'         => 'Contrepassation',
+			'ajout_piece'             => 'Ajout d’une pièce justificative',
+			'modification_budget'     => 'Saisie du budget',
+			'revision_budget'         => 'Révision budgétaire',
+			'solde_initial'           => 'Solde initial de caisse',
+			'creation_fournisseur'    => 'Création de fournisseur',
+			'modification_fournisseur' => 'Modification de fournisseur',
+			'fusion_fournisseurs'     => 'Fusion de fournisseurs',
+			'export_livre'            => 'Export du livre de caisse',
 		);
 	}
 

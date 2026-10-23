@@ -17,6 +17,12 @@ require_once __DIR__ . '/ecrans/class-ecran-comptes.php';
 require_once __DIR__ . '/ecrans/class-ecran-parametres.php';
 require_once __DIR__ . '/ecrans/class-ecran-audit.php';
 require_once __DIR__ . '/ecrans/class-ecran-premiere-connexion.php';
+require_once __DIR__ . '/ecrans/class-ecran-service.php';
+require_once __DIR__ . '/ecrans/class-ecran-accueil-service.php';
+require_once __DIR__ . '/ecrans/class-ecran-nouvelle-ecriture.php';
+require_once __DIR__ . '/ecrans/class-ecran-livre.php';
+require_once __DIR__ . '/ecrans/class-ecran-budget.php';
+require_once __DIR__ . '/ecrans/class-ecran-fournisseurs.php';
 
 /**
  * Routeur des écrans.
@@ -35,6 +41,11 @@ final class IGE_FFM_Ecrans {
 			'parametres'         => array( 'ige_administrer', 'IGE_FFM_Ecran_Parametres' ),
 			'journal-audit'      => array( 'ige_voir_audit', 'IGE_FFM_Ecran_Audit' ),
 			'premiere-connexion' => array( 'read', 'IGE_FFM_Ecran_Premiere_Connexion' ),
+			'accueil-service'    => array( 'ige_acceder', 'IGE_FFM_Ecran_Accueil_Service' ),
+			'nouvelle-ecriture'  => array( 'ige_acceder', 'IGE_FFM_Ecran_Nouvelle_Ecriture' ),
+			'livre-de-caisse'    => array( 'ige_acceder', 'IGE_FFM_Ecran_Livre' ),
+			'budget'             => array( 'ige_acceder', 'IGE_FFM_Ecran_Budget' ),
+			'fournisseurs'       => array( 'ige_administrer', 'IGE_FFM_Ecran_Fournisseurs' ),
 		);
 	}
 
@@ -44,17 +55,11 @@ final class IGE_FFM_Ecrans {
 	 * @return array<string,string>
 	 */
 	public static function a_venir() {
-		$e2 = 'étape 2 du lot 1 (saisie)';
 		$e3 = 'étape 3 du lot 1 (circuit avec le central)';
 		$e4 = 'étape 4 du lot 1 (fonds et caisse)';
 		$e5 = 'étape 5 du lot 1 (pilotage)';
 		$l2 = 'lot 2';
 		return array(
-			'accueil-service'        => $e2,
-			'nouvelle-ecriture'      => $e2,
-			'livre-de-caisse'        => $e2,
-			'budget'                 => $e2,
-			'fournisseurs'           => $e2,
 			'verification'           => $e3,
 			'dossier-de-depense'     => $l2,
 			'transmission'           => $e3,

@@ -121,6 +121,9 @@ final class IGE_FFM_DB {
 			'CREATE TABLE ' . $t( 'revision_budget' ) . " (
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   budget_id bigint(20) unsigned NOT NULL,
+  exercice_id bigint(20) unsigned NOT NULL DEFAULT 0,
+  service_id bigint(20) unsigned NOT NULL DEFAULT 0,
+  rubrique_id bigint(20) unsigned NOT NULL DEFAULT 0,
   ancien_montant bigint(20) NOT NULL,
   nouveau_montant bigint(20) NOT NULL,
   motif varchar(255) NOT NULL,
@@ -130,7 +133,8 @@ final class IGE_FFM_DB {
   created_at datetime NOT NULL,
   decided_at datetime NULL,
   PRIMARY KEY  (id),
-  KEY budget_id (budget_id)
+  KEY budget_id (budget_id),
+  KEY exercice_service (exercice_id,service_id)
 ) $c;",
 			'CREATE TABLE ' . $t( 'compte' ) . " (
   user_id bigint(20) unsigned NOT NULL,

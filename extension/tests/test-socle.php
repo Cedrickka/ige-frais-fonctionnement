@@ -115,7 +115,7 @@ ige_t( 100 === $saved['seuil_justification'], 'Seuil de justification borné à 
 ige_t( 10 === $saved['mdp_longueur'], 'Longueur de mot de passe jamais inférieure à 10' );
 ige_t( 5 === $saved['inactivite_minutes'], 'Inactivité jamais inférieure à 5 minutes' );
 ige_t( 3000000 === $saved['plafond_especes'], 'Montant saisi avec espaces compris (3 000 000)' );
-IGE_FFM_Reglages::save( array( 'seuil_justification' => '80', 'inactivite_minutes' => '30', 'plafond_especes' => '2000000', 'bloquer_caisse_negative' => '1', 'bloquer_depassement' => '1', 'piece_obligatoire' => '1', 'contrepassation_rejet' => '1', 'anomalie_doublon' => '1', 'anomalie_fractionnement' => '1', 'anomalie_jour_non_ouvre' => '1', 'anomalie_beneficiaire' => '1', 'anomalie_saisie_tardive' => '1' ) );
+IGE_FFM_Reglages::save( array( 'seuil_justification' => '80', 'inactivite_minutes' => '30', 'plafond_especes' => '2000000', 'bloquer_caisse_negative' => '1', 'bloquer_depassement' => '1', 'piece_obligatoire' => '1', 'contrepassation_rejet' => '1', 'entrees_manuelles' => '1', 'anomalie_doublon' => '1', 'anomalie_fractionnement' => '1', 'anomalie_jour_non_ouvre' => '1', 'anomalie_beneficiaire' => '1', 'anomalie_saisie_tardive' => '1' ) );
 ige_t( 80 === (int) IGE_FFM_Reglages::get( 'seuil_justification' ), 'Réglages rétablis' );
 
 echo "\n7. Journal d'audit infalsifiable\n";

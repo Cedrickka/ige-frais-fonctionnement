@@ -21,6 +21,7 @@ final class IGE_FFM_Installer {
 		IGE_FFM_Reglages::install_defaults();
 		$seeded = self::seed();
 		self::create_pages();
+		IGE_FFM_Pieces::dossier();
 		update_option( 'ige_ffm_db_version', IGE_FFM_DB_VERSION );
 		IGE_FFM_Audit::log( 'installation', 'extension', IGE_FFM_VERSION, null, array( 'donnees_initiales' => $seeded ) );
 	}
@@ -39,6 +40,8 @@ final class IGE_FFM_Installer {
 		if ( get_option( 'ige_ffm_db_version' ) !== IGE_FFM_DB_VERSION ) {
 			self::create_tables();
 			IGE_FFM_Roles::install();
+			IGE_FFM_Reglages::install_defaults();
+			IGE_FFM_Pieces::dossier();
 			update_option( 'ige_ffm_db_version', IGE_FFM_DB_VERSION );
 		}
 	}
