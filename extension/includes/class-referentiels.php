@@ -214,7 +214,7 @@ final class IGE_FFM_Referentiels {
 	}
 
 	/**
-	 * Exercice ouvert le plus récent.
+	 * Exercice ouvert (le plus ancien s'il y en avait plusieurs).
 	 *
 	 * @return array|null
 	 */
@@ -222,18 +222,22 @@ final class IGE_FFM_Referentiels {
 		global $wpdb;
 		$t = IGE_FFM_DB::t( 'exercice' );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$row = $wpdb->get_row( "SELECT * FROM $t WHERE statut = 'ouvert' ORDER BY annee DESC LIMIT 1", ARRAY_A );
+		$row = $wpdb->get_row( "SELECT * FROM $t WHERE statut = 'ouvert' ORDER BY annee ASC LIMIT 1", ARRAY_A );
 		return $row ?: null;
 	}
 
 	/**
-	 * Crée l'exercice suivant le plus récent (ouvert, budget obligatoire par défaut).
+	 * Prépare l'exercice suivant (statut « préparé » : budgets saisissables, aucune écriture ;
+	 * il s'ouvre à la clôture de l'exercice en cours). Budget obligatoire par défaut.
 	 *
 	 * @return int|WP_Error
 	 */
 	public static function creer_exercice_suivant() {
 		global $wpdb;
 		$t    = IGE_FFM_DB::t( 'exercice' );
+		if ( (int) $wpdb->get_var( "SELECT COUNT(*) FROM $t WHERE statut = 'prepare'" ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			return new WP_Error( 'exercice', "L'exercice suivant est déjà préparé." );
+		}
 		$last = (int) $wpdb->get_var( "SELECT MAX(annee) FROM $t" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$year = $last ? $last + 1 : (int) wp_date( 'Y' );
 		$ok   = $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
@@ -242,7 +246,7 @@ final class IGE_FFM_Referentiels {
 				'annee'              => $year,
 				'date_debut'         => $year . '-01-01',
 				'date_fin'           => $year . '-12-31',
-				'statut'             => 'ouvert',
+				'statut'             => $last ? 'prepare' : 'ouvert',
 				'budget_obligatoire' => 1,
 				'created_at'         => ige_ffm_now(),
 			)

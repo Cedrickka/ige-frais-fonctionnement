@@ -25,6 +25,9 @@ require_once __DIR__ . '/ecrans/class-ecran-budget.php';
 require_once __DIR__ . '/ecrans/class-ecran-fournisseurs.php';
 require_once __DIR__ . '/ecrans/class-ecran-transmission.php';
 require_once __DIR__ . '/ecrans/class-ecran-verification.php';
+require_once __DIR__ . '/ecrans/class-ecran-arrete.php';
+require_once __DIR__ . '/ecrans/class-ecran-caisses.php';
+require_once __DIR__ . '/ecrans/class-ecran-avances.php';
 
 /**
  * Routeur des écrans.
@@ -50,6 +53,9 @@ final class IGE_FFM_Ecrans {
 			'fournisseurs'       => array( 'ige_administrer', 'IGE_FFM_Ecran_Fournisseurs' ),
 			'transmission'       => array( 'ige_acceder', 'IGE_FFM_Ecran_Transmission' ),
 			'verification'       => array( 'ige_verifier', 'IGE_FFM_Ecran_Verification' ),
+			'arrete-de-caisse'   => array( 'ige_acceder', 'IGE_FFM_Ecran_Arrete' ),
+			'caisses'            => array( 'ige_voir_tout', 'IGE_FFM_Ecran_Caisses' ),
+			'avances'            => array( 'ige_voir_tout', 'IGE_FFM_Ecran_Avances' ),
 		);
 	}
 
@@ -59,14 +65,10 @@ final class IGE_FFM_Ecrans {
 	 * @return array<string,string>
 	 */
 	public static function a_venir() {
-		$e4 = 'étape 4 du lot 1 (fonds et caisse)';
 		$e5 = 'étape 5 du lot 1 (pilotage)';
 		$l2 = 'lot 2';
 		return array(
 			'dossier-de-depense'     => $l2,
-			'avances'                => $e4,
-			'caisses'                => $e4,
-			'arrete-de-caisse'       => $e4,
 			'tableau-de-bord'        => $e5,
 			'consolidation'          => $e5,
 			'rapports'               => $e5,

@@ -56,6 +56,15 @@ final class IGE_FFM_Ecran_Livre {
 	}
 
 	/**
+	 * Noms abrégés des mois.
+	 *
+	 * @return string[]
+	 */
+	public static function mois_courts() {
+		return array( 1 => 'Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.' );
+	}
+
+	/**
 	 * Bandeau de titre.
 	 *
 	 * @param array $args Arguments.
@@ -259,7 +268,10 @@ final class IGE_FFM_Ecran_Livre {
 					<?php endif; ?>
 				</div>
 			</div>
-			<?php if ( $peut && ! $cp && ! $orig ) : ?>
+			<?php if ( $e['avance_id'] && ! $orig ) : ?>
+				<p class="ige-small ige-muted ige-no-print" style="margin:16px 0 0">Entrée créée par Administration et Finance (avance de fonds) : seule Administration et Finance peut l’annuler.</p>
+			<?php endif; ?>
+			<?php if ( $peut && ! $cp && ! $orig && ! $e['avance_id'] ) : ?>
 				<div class="ige-grid ige-cols-2 ige-start ige-no-print" style="margin-top:16px;border-top:1px solid var(--ige-ligne);padding-top:16px">
 					<?php if ( 'sortie' === $e['type'] && 'engagee' === $e['statut'] && ! ( 'rejetee' === $e['etat_verification'] && IGE_FFM_Reglages::get( 'contrepassation_rejet' ) ) ) : ?>
 						<?php echo IGE_FFM_Ecrans::form_open( 'payer' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>

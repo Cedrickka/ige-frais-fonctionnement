@@ -22,6 +22,18 @@ final class IGE_FFM_Ecran_Budget {
 	}
 
 	/**
+	 * Exercice affiché : l'exercice ouvert, ou l'exercice préparé si demandé (?exercice=).
+	 *
+	 * @return array|null
+	 */
+	private static function exercice_budget() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing
+		$id = isset( $_REQUEST['exercice'] ) ? (int) $_REQUEST['exercice'] : 0;
+		$p  = IGE_FFM_Cloture::exercice_prepare();
+		return $id && $p && (int) $p['id'] === $id ? $p : IGE_FFM_Contexte::exercice();
+	}
+
+	/**
 	 * Bandeau de titre.
 	 *
 	 * @param array $args Arguments.
@@ -29,7 +41,7 @@ final class IGE_FFM_Ecran_Budget {
 	 */
 	public static function title_band( $args ) {
 		$sid = IGE_FFM_Contexte::service_courant();
-		$ex  = IGE_FFM_Contexte::exercice();
+		$ex  = self::exercice_budget();
 		$args['title']    = 'Budget du service';
 		$args['subtitle'] = $sid && $ex ? IGE_FFM_Comptes::service_code( $sid ) . ' · exercice ' . $ex['annee'] . ( (int) $ex['budget_obligatoire'] ? ' · budget obligatoire' : ' · budget facultatif cette année' ) : '';
 		$args['actions']  = '';
@@ -44,7 +56,7 @@ final class IGE_FFM_Ecran_Budget {
 	public static function render() {
 		$ctx = IGE_FFM_Ecran_Service::contexte();
 		$sid = $ctx['sid'];
-		$ex  = IGE_FFM_Contexte::exercice();
+		$ex  = self::exercice_budget();
 		if ( ! $sid || ! $ex ) {
 			return $ctx['html'];
 		}
@@ -57,9 +69,24 @@ final class IGE_FFM_Ecran_Budget {
 		$old      = IGE_FFM_Ecrans::old();
 		$mensuel  = IGE_FFM_Budget::mensuel( $exo, $sid );
 		$base     = IGE_FFM_Ecran_Service::lien( ige_ffm_url( 'budget' ), $sid );
+		$prep     = IGE_FFM_Cloture::exercice_prepare();
+		$est_prep = 'prepare' === $ex['statut'];
+		if ( $est_prep ) {
+			$base = add_query_arg( 'exercice', $ex['id'], $base );
+		}
 
 		ob_start();
 		echo $ctx['html']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		if ( $prep ) {
+			$cur = IGE_FFM_Contexte::exercice();
+			echo '<div class="ige-toolbar">';
+			echo '<a class="ige-chip' . ( $est_prep ? '' : ' ige-on' ) . '" href="' . esc_url( remove_query_arg( 'exercice', $base ) ) . '">' . esc_html( 'Exercice ' . ( $cur ? $cur['annee'] : '' ) . ' (en cours)' ) . '</a>';
+			echo '<a class="ige-chip' . ( $est_prep ? ' ige-on' : '' ) . '" href="' . esc_url( add_query_arg( 'exercice', $prep['id'], $base ) ) . '">' . esc_html( 'Exercice ' . $prep['annee'] . ' (préparation)' ) . '</a>';
+			echo '</div>';
+		}
+		if ( $est_prep ) {
+			echo ige_ffm_banner( 'info', 'Budget de l’exercice ' . esc_html( $ex['annee'] ) . ' en préparation', ' Saisissez vos prévisions par rubrique en vous aidant de la consommation de l’exercice en cours (onglet ci-dessus). Le solde initial sera reporté automatiquement à la clôture.' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		}
 		if ( ! (int) $ex['budget_obligatoire'] && ! $tot['avec_budget'] ) {
 			echo ige_ffm_banner( 'info', 'Exercice ' . esc_html( $ex['annee'] ) . ' sans budget obligatoire', ' Le service peut saisir ses dépenses sans prévisions. La consommation par rubrique ci-dessous servira de base au budget de l’exercice suivant.' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		}
@@ -83,6 +110,7 @@ final class IGE_FFM_Ecran_Budget {
 			</h2>
 			<?php if ( $edit ) : ?>
 				<?php echo IGE_FFM_Ecrans::form_open( 'budget' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				<?php if ( $est_prep ) : ?><input type="hidden" name="exercice" value="<?php echo esc_attr( $ex['id'] ); ?>"><?php endif; ?>
 				<p class="ige-small ige-muted" style="margin-top:0">Laissez vide une rubrique sans budget. <?php echo $revision ? 'Le service a déjà des écritures : chaque changement est une révision, conservée avec son motif.' : ''; ?> Un budget ne peut pas être inférieur à ce qui est déjà consommé.</p>
 			<?php endif; ?>
 			<div class="ige-table-wrap"><table class="ige-table ige-num">
@@ -131,7 +159,7 @@ final class IGE_FFM_Ecran_Budget {
 			</section>
 			<section class="ige-card">
 				<h2>Solde initial et révisions</h2>
-				<?php if ( $peut && ! $revision ) : ?>
+				<?php if ( $peut && ! $revision && ! $est_prep ) : ?>
 					<?php echo IGE_FFM_Ecrans::form_open( 'solde_initial', 'class="ige-row" style="align-items:flex-end"' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 						<div style="flex:1;min-width:200px"><?php echo IGE_FFM_Ecrans::field( 'solde_initial', 'Solde initial de caisse (CDF)', (string) IGE_FFM_Budget::solde_initial( $exo, $sid ), array( 'attrs' => 'inputmode="numeric" class="ige-num"', 'help' => 'Argent en caisse au 1er janvier. Verrouillé dès la première écriture.' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
 						<button type="submit" class="ige-btn ige-btn-line" style="margin-bottom:16px">Enregistrer</button>
@@ -197,7 +225,7 @@ final class IGE_FFM_Ecran_Budget {
 		ige_ffm_check_form( 'budget' );
 		ige_ffm_require( 'ige_gerer_budget' );
 		$sid = IGE_FFM_Contexte::service_utilisateur();
-		$ex  = IGE_FFM_Contexte::exercice();
+		$ex  = self::exercice_budget();
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$raw     = isset( $_POST['budget'] ) && is_array( $_POST['budget'] ) ? wp_unslash( $_POST['budget'] ) : array();
 		$saisies = array();
@@ -209,11 +237,11 @@ final class IGE_FFM_Ecran_Budget {
 		if ( is_wp_error( $res ) ) {
 			IGE_FFM_Ecrans::remember( array( 'budget' => $saisies, 'motif' => $motif ) );
 			ige_ffm_flash( 'ko', 'Budget non enregistré', $res->get_error_message() );
-			wp_safe_redirect( ige_ffm_url( 'budget', array( 'modifier' => 1 ) ) );
+			wp_safe_redirect( ige_ffm_url( 'budget', array_filter( array( 'modifier' => 1, 'exercice' => 'prepare' === $ex['statut'] ? $ex['id'] : 0 ) ) ) );
 			exit;
 		}
 		ige_ffm_flash( $res ? 'ok' : 'info', $res ? 'Budget enregistré' : 'Aucun changement', $res ? sprintf( '%d rubrique(s) mise(s) à jour.', $res ) : '' );
-		wp_safe_redirect( ige_ffm_url( 'budget' ) );
+		wp_safe_redirect( ige_ffm_url( 'budget', array_filter( array( 'exercice' => 'prepare' === $ex['statut'] ? $ex['id'] : 0 ) ) ) );
 		exit;
 	}
 
@@ -224,7 +252,7 @@ final class IGE_FFM_Ecran_Budget {
 		ige_ffm_check_form( 'solde_initial' );
 		ige_ffm_require( 'ige_gerer_budget' );
 		$sid = IGE_FFM_Contexte::service_utilisateur();
-		$ex  = IGE_FFM_Contexte::exercice();
+		$ex  = self::exercice_budget();
 		$res = $ex ? IGE_FFM_Budget::enregistrer_solde_initial( (int) $ex['id'], $sid, ige_ffm_post( 'solde_initial' ), get_current_user_id() ) : new WP_Error( 'exercice', 'Aucun exercice ouvert.' );
 		if ( is_wp_error( $res ) ) {
 			ige_ffm_flash( 'ko', 'Solde initial non enregistré', $res->get_error_message() );

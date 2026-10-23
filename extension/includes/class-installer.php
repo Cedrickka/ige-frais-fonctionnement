@@ -42,7 +42,20 @@ final class IGE_FFM_Installer {
 			IGE_FFM_Roles::install();
 			IGE_FFM_Reglages::install_defaults();
 			IGE_FFM_Pieces::dossier();
+			self::un_seul_exercice_ouvert();
 			update_option( 'ige_ffm_db_version', IGE_FFM_DB_VERSION );
+		}
+	}
+
+	/**
+	 * Un seul exercice ouvert à la fois : un exercice postérieur déjà ouvert devient « préparé ».
+	 */
+	public static function un_seul_exercice_ouvert() {
+		global $wpdb;
+		$t   = IGE_FFM_DB::t( 'exercice' );
+		$ids = $wpdb->get_col( "SELECT id FROM $t WHERE statut = 'ouvert' ORDER BY annee ASC" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		foreach ( array_slice( $ids, 1 ) as $id ) {
+			$wpdb->update( $t, array( 'statut' => 'prepare' ), array( 'id' => (int) $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		}
 	}
 

@@ -42,3 +42,11 @@
 @media (max-width:1000px){.ige-verif{grid-template-columns:minmax(0,1fr)!important}}
 @media (max-width:640px){.ige-verif-actions input{flex-basis:100%!important}}
 .ige-grid>*{min-width:0}
+
+/* Étape 4 : arrêtés, caisses, avances. */
+.ige-billet label{font-size:13px;font-weight:500}
+.ige-billet input[readonly]{background:#f5f7fa}
+#ige-inopine .ige-card{box-shadow:none;border:0;padding:0}
+#ige-inopine .ige-card h2{font-size:13px}
+@media print{.ige-content>p.ige-no-print{display:none}}
+@media (max-width:640px){.ige-doc-wrap{padding:8px}.ige-billet{grid-template-columns:1fr 80px 1fr}}

@@ -92,6 +92,33 @@
 		}
 	});
 
+	/* Billetage : montants par coupure, totaux et écart en direct. */
+	document.querySelectorAll('[data-ige-billetage]').forEach(function (zone) {
+		var theo = parseInt(zone.getAttribute('data-theorique'), 10) || 0;
+		var calc = function () {
+			var cdf = 0, usd = 0;
+			zone.querySelectorAll('input[data-coupure]').forEach(function (i) {
+				var n = montant(i.value) || 0, v = parseInt(i.getAttribute('data-coupure'), 10) * n;
+				var cell = i.nextElementSibling;
+				if (i.getAttribute('data-devise') === 'usd') { usd += v; if (cell) { cell.textContent = v + ' USD'; } }
+				else { cdf += v; if (cell) { cell.textContent = Math.round(v).toLocaleString('fr-FR').replace(/\s/g, '\u202F'); } }
+			});
+			var t = zone.querySelector('[data-taux]'), a = zone.querySelector('[data-autres]');
+			var total = cdf + usd * ((t && montant(t.value)) || 0) + ((a && montant(a.value)) || 0);
+			var tc = zone.querySelector('[data-total-cdf]');
+			if (tc) { tc.textContent = Math.round(cdf).toLocaleString('fr-FR').replace(/\s/g, '\u202F'); }
+			var to = zone.querySelector('[data-ige-total]'), ec = zone.querySelector('[data-ige-ecart]');
+			if (to) { to.textContent = fmt(total); }
+			if (ec) {
+				var e = total - theo;
+				ec.textContent = fmt(e);
+				ec.style.color = e === 0 ? 'var(--ige-ok-txt)' : 'var(--ige-rouge)';
+			}
+		};
+		zone.addEventListener('input', calc);
+		calc();
+	});
+
 	var form = document.getElementById('ige-saisie');
 	if (!form) { return; }
 

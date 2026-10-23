@@ -65,6 +65,12 @@ final class IGE_FFM_Ecran_Accueil_Service {
 
 		ob_start();
 		echo $ctx['html']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		$mref  = max( 1, (int) wp_date( 'n' ) - 1 );
+		$closm = IGE_FFM_Arretes::dernier_mois_clos( $exo, $sid );
+		if ( (int) wp_date( 'Y' ) === (int) $ex['annee'] && (int) wp_date( 'n' ) > 1 && $closm < $mref && IGE_FFM_Ecritures::dernieres( $exo, $sid, 1 ) ) {
+			$noms = IGE_FFM_Ecran_Livre::mois_noms();
+			echo ige_ffm_banner( 'warn', 'Arrêté de caisse de ' . strtolower( $noms[ $mref ] ) . ' à faire', ' <a href="' . esc_url( IGE_FFM_Ecran_Service::lien( ige_ffm_url( 'arrete-de-caisse', array( 'mois' => $closm + 1 ) ), $sid ) ) . '">Compter la caisse et signer l’arrêté</a>.' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		}
 		if ( $rejets ) {
 			echo ige_ffm_banner( 'ko', count( $rejets ) . ' écriture(s) rejetée(s) par le central', ' <a href="' . esc_url( $trans ) . '">Voir les motifs et corriger</a>.' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		}
@@ -123,6 +129,21 @@ final class IGE_FFM_Ecran_Accueil_Service {
 					</tbody>
 				</table></div>
 			</section>
+			<div class="ige-grid">
+			<?php
+			$jf = IGE_FFM_Avances::justification( $exo, $sid );
+			if ( $jf['derniere'] ) :
+				$seuil = (int) IGE_FFM_Reglages::get( 'seuil_justification' );
+				?>
+				<section class="ige-card">
+					<h2>Avances reçues</h2>
+					<dl class="ige-kv ige-num" style="grid-template-columns:1fr auto">
+						<dt>Reste à justifier</dt><dd class="ige-right"><?php echo esc_html( ige_ffm_montant( $jf['reliquat'] ) ); ?></dd>
+						<dt>Dernière avance (<?php echo esc_html( $jf['derniere']['libelle'] ); ?>)</dt><dd class="ige-right"><?php echo esc_html( floor( $jf['taux_derniere'] ) . ' % justifiée' ); ?></dd>
+					</dl>
+					<p class="ige-small ige-muted" style="margin:10px 0 0"><?php echo $jf['taux_derniere'] >= $seuil ? 'Une nouvelle avance peut être accordée.' : esc_html( 'Une nouvelle avance sera possible quand la dernière sera justifiée à ' . $seuil . ' % (dépenses transmises et validées).' ); ?></p>
+				</section>
+			<?php endif; ?>
 			<section class="ige-card">
 				<h2>Rubriques sous tension</h2>
 				<?php if ( $tension ) : ?>
@@ -135,6 +156,7 @@ final class IGE_FFM_Ecran_Accueil_Service {
 					<p class="ige-muted ige-small" style="margin:0">Aucune rubrique au-dessus de <?php echo esc_html( $alerte ); ?> % de son budget.</p>
 				<?php endif; ?>
 			</section>
+			</div>
 		</div>
 		<?php
 		return ob_get_clean();

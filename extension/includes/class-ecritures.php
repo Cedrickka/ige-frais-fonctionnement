@@ -358,11 +358,18 @@ final class IGE_FFM_Ecritures {
 	 * @param int|null $user_id Auteur.
 	 * @return int|WP_Error Identifiant de la contrepassation.
 	 */
-	public static function contrepasser( $id, $motif, $user_id = null ) {
+	public static function contrepasser( $id, $motif, $user_id = null, $central = false ) {
 		$user_id = $user_id ?? get_current_user_id();
 		$e       = self::get( $id );
-		if ( ! $e || ! IGE_FFM_Contexte::peut_saisir( (int) $e['service_id'], $user_id ) ) {
+		if ( $central ) {
+			// Annulation d'une avance par le central : seule l'écriture d'entrée liée à l'avance est concernée.
+			if ( ! $e || ! $e['avance_id'] || ! user_can( $user_id, 'ige_gerer_fonds' ) ) {
+				return new WP_Error( 'droits', 'Seule Administration et Finance peut annuler une avance.' );
+			}
+		} elseif ( ! $e || ! IGE_FFM_Contexte::peut_saisir( (int) $e['service_id'], $user_id ) ) {
 			return new WP_Error( 'droits', 'Écriture introuvable dans votre service.' );
+		} elseif ( $e['avance_id'] ) {
+			return new WP_Error( 'avance', 'Cette entrée provient d’une avance de fonds : seule Administration et Finance peut l’annuler.' );
 		}
 		if ( $e['ecriture_origine_id'] ) {
 			return new WP_Error( 'etat', 'Une contrepassation ne peut pas elle-même être contrepassée.' );
@@ -407,10 +414,14 @@ final class IGE_FFM_Ecritures {
 			'observations'        => $motif,
 			'date_paiement'       => 'payee' === $e['statut'] ? $date : null,
 			'ecriture_origine_id' => (int) $e['id'],
+			'avance_id'           => $e['avance_id'] ?: null,
 			'etat_transmission'   => 'non_transmise',
 			'saisi_par'           => (int) $user_id,
 			'saisi_le'            => ige_ffm_now(),
 		);
+		if ( $central ) {
+			$row = array_merge( $row, self::etat_central( $user_id ) );
+		}
 		$code = preg_replace( '/[^A-Za-z0-9]/', '', IGE_FFM_Comptes::service_code( (int) $e['service_id'] ) );
 		$new  = self::inserer_numerotee( $row, $code, (int) $ex['annee'] );
 		if ( is_wp_error( $new ) ) {
@@ -418,8 +429,53 @@ final class IGE_FFM_Ecritures {
 		}
 		$c = self::get( $new );
 		IGE_FFM_Audit::log( 'contrepassation', 'ecriture', $e['id_ecriture'], null, array( 'contrepassation' => $c['id_ecriture'], 'montant' => (int) $c['montant'], 'motif' => $motif ), $user_id );
-		do_action( 'ige_ffm_ecriture_enregistree', $new, $user_id );
+		if ( ! $central ) {
+			do_action( 'ige_ffm_ecriture_enregistree', $new, $user_id );
+		}
 		return $new;
+	}
+
+	/**
+	 * Champs d'une écriture créée par le central (avance) : déjà transmise et validée.
+	 *
+	 * @param int $user_id Auteur.
+	 * @return array
+	 */
+	private static function etat_central( $user_id ) {
+		return array(
+			'etat_transmission' => 'transmise',
+			'etat_verification' => 'validee',
+			'anomalies'         => '[]',
+			'nb_transmissions'  => 1,
+			'valide_par'        => (int) $user_id,
+			'valide_le'         => ige_ffm_now(),
+		);
+	}
+
+	/**
+	 * Insère l'écriture d'entrée d'une avance de fonds (créée par le central, déjà validée).
+	 *
+	 * @param array $row     Ligne (exercice_id, service_id, date_operation, montant, description, num_piece, mode_paiement_id, avance_id).
+	 * @param int   $annee   Année de l'exercice.
+	 * @param int   $user_id Auteur.
+	 * @return int|WP_Error
+	 */
+	public static function inserer_avance( array $row, $annee, $user_id ) {
+		$row  = array_merge(
+			array(
+				'mois'          => (int) substr( $row['date_operation'], 5, 2 ),
+				'type'          => 'entree',
+				'statut'        => 'payee',
+				'beneficiaire'  => 'Administration et Finance (avance de fonds)',
+				'date_paiement' => $row['date_operation'],
+				'saisi_par'     => (int) $user_id,
+				'saisi_le'      => ige_ffm_now(),
+			),
+			$row,
+			self::etat_central( $user_id )
+		);
+		$code = preg_replace( '/[^A-Za-z0-9]/', '', IGE_FFM_Comptes::service_code( (int) $row['service_id'] ) ) ?: 'S' . (int) $row['service_id'];
+		return self::inserer_numerotee( $row, $code, (int) $annee );
 	}
 
 	/**

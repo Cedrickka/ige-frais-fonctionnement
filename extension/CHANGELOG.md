@@ -1,5 +1,16 @@
 # Journal des versions
 
+## 0.4.0 — 23 octobre 2026 · Étape 4 : fonds et caisse
+
+- Écrans Avances, Arrêté de caisse et Caisses (remplacent les maquettes) ; clôture d'exercice dans Exercice et règles de contrôle.
+- Avances de fonds avec entrée automatique dans la caisse du service, justification premier entré premier sorti par les dépenses validées, ancienneté des reliquats, règle des 80 % avec dérogation motivée, annulation par le central.
+- Arrêté mensuel : billetage CDF et USD, autres disponibilités, écart expliqué, double signature (agent puis Responsable, deux personnes), clôture du mois, procès-verbal imprimable au format de la charte.
+- Comptage inopiné par Administration et Finance, contresigné par l'agent présent.
+- Exercices : statut « préparé », un seul exercice ouvert, clôture avec contrôles et report des soldes.
+- Accueil du service : rappel de l'arrêté du mois précédent, carte des avances reçues.
+- Schéma version 5.
+- 74 tests automatiques supplémentaires (269 au total).
+
 ## 0.3.0 — 23 octobre 2026 · Étape 3 : circuit avec le central
 
 - Écrans Transmission (service) et Vérification (Administration et Finance), qui remplacent les maquettes.
