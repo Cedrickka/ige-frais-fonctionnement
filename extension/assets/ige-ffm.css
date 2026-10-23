@@ -29,3 +29,16 @@
 #ige-saisie .ige-kv{grid-template-columns:auto auto}
 @media (max-width:1000px){#ige-saisie{grid-template-columns:1fr}}
 .ige-content>.ige-grid+.ige-grid,.ige-content>.ige-grid+.ige-card,.ige-content>form+.ige-grid{margin-top:16px}
+
+/* Étape 3 : transmission et vérification. */
+.ige-pieces{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin:14px 0}
+.ige-piece-vue{display:grid;place-items:center;height:110px;border:1px solid var(--ige-ligne);border-radius:8px;overflow:hidden;background:#f5f7fa;font-size:11.5px;text-align:center;padding:4px;text-decoration:none}
+.ige-piece-vue img{width:100%;height:100%;object-fit:cover}
+.ige-piece-vue:hover{border-color:var(--ige-bleu)}
+.ige-verif-actions{background:#f5f7fa;border-radius:var(--ige-radius-sm);padding:10px}
+.ige-detail dl+.ige-banner,.ige-detail .ige-banner{margin-top:12px}
+.ige-detail h2{display:flex;align-items:center;gap:8px}
+.ige-verif>*{min-width:0}
+@media (max-width:1000px){.ige-verif{grid-template-columns:minmax(0,1fr)!important}}
+@media (max-width:640px){.ige-verif-actions input{flex-basis:100%!important}}
+.ige-grid>*{min-width:0}

@@ -60,9 +60,14 @@ final class IGE_FFM_Ecran_Accueil_Service {
 		$alerte = (int) IGE_FFM_Reglages::get( 'alerte_rubrique' );
 		$tension = array_filter( $suivi['lignes'], static fn( $l ) => null !== $l['taux'] && ( $l['taux'] >= $alerte || $l['disponible'] < 0 ) );
 		$livre  = IGE_FFM_Ecran_Service::lien( ige_ffm_url( 'livre-de-caisse' ), $sid );
+		$trans  = IGE_FFM_Ecran_Service::lien( ige_ffm_url( 'transmission' ), $sid );
+		$rejets = IGE_FFM_Transmission::rejets_a_traiter( $exo, $sid );
 
 		ob_start();
 		echo $ctx['html']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		if ( $rejets ) {
+			echo ige_ffm_banner( 'ko', count( $rejets ) . ' écriture(s) rejetée(s) par le central', ' <a href="' . esc_url( $trans ) . '">Voir les motifs et corriger</a>.' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		}
 		?>
 		<div class="ige-grid ige-kpis">
 			<div class="ige-card ige-kpi ige-ok">
@@ -88,7 +93,7 @@ final class IGE_FFM_Ecran_Accueil_Service {
 			<div class="ige-card ige-kpi <?php echo $a_trans ? 'ige-risque' : 'ige-ok'; ?>">
 				<div class="ige-lbl">À transmettre</div>
 				<div class="ige-val"><?php echo esc_html( $a_trans ); ?> <span>écriture(s)</span></div>
-				<div class="ige-meta">La transmission au central arrive à l’étape 3</div>
+				<div class="ige-meta"><a href="<?php echo esc_url( $trans ); ?>"><?php echo $a_trans ? 'Transmettre au central' : 'Voir les lots transmis'; ?></a><?php echo $rejets ? esc_html( ' · ' . count( $rejets ) . ' rejet(s) à corriger' ) : ''; ?></div>
 			</div>
 		</div>
 		<div class="ige-grid ige-cols-21">

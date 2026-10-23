@@ -40,7 +40,7 @@ final class IGE_FFM_Ecran_Livre {
 		if ( ! in_array( $f['statut'], array( '', 'payee', 'engagee' ), true ) ) {
 			$f['statut'] = '';
 		}
-		if ( ! in_array( $f['etat'], array( '', 'non_transmise', 'transmise', 'a_retransmettre' ), true ) ) {
+		if ( ! in_array( $f['etat'], array( '', 'non_transmise', 'a_retransmettre', 'a_verifier', 'validee', 'rejetee' ), true ) ) {
 			$f['etat'] = '';
 		}
 		return $f;
@@ -138,8 +138,10 @@ final class IGE_FFM_Ecran_Livre {
 				<select id="ige-f-etat" name="etat" class="ige-input" style="width:auto">
 					<option value="">Tous états</option>
 					<option value="non_transmise"<?php selected( $f['etat'], 'non_transmise' ); ?>>Non transmises</option>
-					<option value="transmise"<?php selected( $f['etat'], 'transmise' ); ?>>Transmises</option>
 					<option value="a_retransmettre"<?php selected( $f['etat'], 'a_retransmettre' ); ?>>À retransmettre</option>
+					<option value="a_verifier"<?php selected( $f['etat'], 'a_verifier' ); ?>>À vérifier</option>
+					<option value="validee"<?php selected( $f['etat'], 'validee' ); ?>>Validées</option>
+					<option value="rejetee"<?php selected( $f['etat'], 'rejetee' ); ?>>Rejetées</option>
 				</select>
 				<button type="submit" class="ige-btn ige-btn-line">Filtrer</button>
 				<?php if ( array_filter( $f ) ) : ?>
@@ -259,7 +261,7 @@ final class IGE_FFM_Ecran_Livre {
 			</div>
 			<?php if ( $peut && ! $cp && ! $orig ) : ?>
 				<div class="ige-grid ige-cols-2 ige-start ige-no-print" style="margin-top:16px;border-top:1px solid var(--ige-ligne);padding-top:16px">
-					<?php if ( 'sortie' === $e['type'] && 'engagee' === $e['statut'] ) : ?>
+					<?php if ( 'sortie' === $e['type'] && 'engagee' === $e['statut'] && ! ( 'rejetee' === $e['etat_verification'] && IGE_FFM_Reglages::get( 'contrepassation_rejet' ) ) ) : ?>
 						<?php echo IGE_FFM_Ecrans::form_open( 'payer' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 							<h3 style="margin:0 0 8px;font-size:14px">Payer l’engagement</h3>
 							<input type="hidden" name="ecriture" value="<?php echo esc_attr( $id ); ?>">

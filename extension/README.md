@@ -2,7 +2,7 @@
 
 Logique métier de l'application de gestion des frais de fonctionnement de l'Inspection Générale de l'Enseignement. Elle s'utilise avec le thème **IGE Frais de fonctionnement** (version 1.0.1 ou plus), qui fournit l'interface.
 
-Version **0.2.0 — étapes 1 (socle) et 2 (saisie) du lot 1**. WordPress 6.5 ou plus (testé sur 7.1.3), PHP 8.0 ou plus.
+Version **0.3.0 — étapes 1 (socle), 2 (saisie) et 3 (circuit avec le central) du lot 1**. WordPress 6.5 ou plus (testé sur 7.1.3), PHP 8.0 ou plus.
 
 ## 1. Ce que contient l'étape 1
 
@@ -30,6 +30,21 @@ Contrôles appliqués côté serveur à chaque écriture : droit de saisie limit
 Pièces jointes : JPG, PNG, WEBP ou PDF de 5 Mo au plus, type vérifié sur le contenu, stockées hors de portée du public (`uploads/ige-pieces`, accès direct interdit), renommées au hasard, avec empreinte SHA-256 ; elles ne se téléchargent qu'après contrôle des droits.
 
 En attendant le module des avances (étape 4), les services saisissent eux-mêmes leurs approvisionnements (« Entrée »), avec la provenance des fonds. Ce choix se désactive dans **Exercice et règles de contrôle** (« Les services saisissent eux-mêmes leurs approvisionnements »).
+
+### Étape 3 : circuit avec le central (version 0.3.0)
+
+| Écran | Contenu |
+| --- | --- |
+| Transmission (service) | Écritures prêtes à partir (nouvelles ou mises à jour), contrôles signalés, récapitulatif du lot (lignes, entrées, sorties, pièces jointes, anomalies), bouton « Transmettre le lot », lots précédents et leur état, rejets à corriger avec leur motif. |
+| Vérification (Administration et Finance) | Synthèse (à vérifier, avec anomalie, validées, rejetées : nombre et montant des sorties), file filtrable par état, service et lot, validation en masse des écritures sans anomalie, validation ou rejet d'une sélection, panneau de détail (pièces affichées, pièces exigées par la rubrique, anomalies expliquées, disponible du service), journal des lots reçus. |
+
+Lots numérotés par service et par exercice (`TR-8000IG-2026-001`). Une écriture transmise passe « À vérifier » ; l'engagement payé après envoi repasse « À retransmettre » et remplace la même ligne au central, sans doublon (RG-13).
+
+Anomalies détectées à la réception (signalées, non bloquantes) : date hors exercice, rubrique inconnue, montant nul ou négatif, pièce manquante, caisse négative, dépassement du budget, et, selon les règles : doublon de facture (même n° de pièce et même bénéficiaire, tous services confondus), fractionnement sous le plafond des espèces sur 7 jours, jour non ouvré (samedi, dimanche, jours fériés), bénéficiaire identique à l'agent qui saisit, saisie tardive. **Les jours fériés retenus sont à vérifier par l'IGE** (1er et 4 janvier, 16 et 17 janvier, 6 avril, 1er et 17 mai, 30 juin, 1er août, 25 décembre) ; ils se complètent par le filtre `ige_ffm_jours_feries`.
+
+Rejet : motif obligatoire ; le service le voit à son accueil et sur l'écran Transmission, et reçoit un courriel si les comptes ont une adresse. Avec la règle « Contrepassation obligatoire après un rejet » (par défaut), il contrepasse puis saisit l'écriture juste ; un engagement rejeté ne peut plus être payé. Sans cette règle, il peut renvoyer l'écriture après correction (par exemple une pièce ajoutée). Un vérificateur ne peut pas valider une écriture qu'il a lui-même saisie.
+
+Nouvelle règle : « Transmettre automatiquement chaque écriture au central dès son enregistrement » (désactivée par défaut).
 
 Les autres pages de l'application affichent encore le contenu de démonstration, avec une bannière « Écran en préparation » qui indique l'étape où elles deviendront fonctionnelles.
 
@@ -62,11 +77,17 @@ wp eval-file wp-content/plugins/ige-ff-metier/tests/test-socle.php
 wp eval-file wp-content/plugins/ige-ff-metier/tests/test-saisie.php
 ```
 
-Résultats attendus : `62 réussis, 0 échoués` puis `76 réussis, 0 échoués`. Les tests couvrent le schéma, les données initiales, les droits de chaque rôle, la validation des référentiels, la création et la modification des comptes, la robustesse des mots de passe, le verrouillage, la désactivation, les bornes des règles et la détection d'une falsification du journal.
+```
+wp eval-file wp-content/plugins/ige-ff-metier/tests/test-circuit.php
+```
+
+Résultats attendus : `62 réussis`, `76 réussis` puis `57 réussis`, sans échec. Les tests couvrent le schéma, les données initiales, les droits de chaque rôle, la validation des référentiels, la création et la modification des comptes, la robustesse des mots de passe, le verrouillage, la désactivation, les bornes des règles et la détection d'une falsification du journal.
 
 Les tests de saisie couvrent les droits (lecteur, administrateur non rattaché, agent sur le budget), le blocage de la caisse négative et du dépassement du disponible, les validations (date future ou hors exercice, montant, rubrique, pièce, faux PDF, fichier PHP, plafond des espèces), le budget facultatif, les révisions motivées, le verrouillage du solde initial, le paiement d'un engagement, la contrepassation (et ses refus), le solde progressif du livre, la continuité de la numérotation, le mois clôturé, les doublons et la fusion des fournisseurs, le journal d'audit.
 
-Des tests d'interface ont aussi été passés (ordinateur et téléphone) : saisie complète par un agent avec photo réduite de 1 Mo à 143 Ko, création d'un fournisseur pendant la saisie, refus d'un dépassement avec conservation des valeurs saisies, paiement d'un engagement, contrepassation, téléchargement contrôlé d'une pièce, export, consultation en lecture seule par le central, budget saisi par le Responsable, et pour l'étape 1 : création d'un service et d'un compte, refus d'un doublon, première connexion avec changement de mot de passe, refus d'accès d'un agent aux écrans d'administration et à l'administration WordPress, refus d'une requête forgée (code 403), message de compte verrouillé.
+Les tests du circuit couvrent les droits de transmission, chaque anomalie, la numérotation et le récapitulatif des lots, la synthèse, les filtres, la validation en masse, le rejet motivé, la séparation des fonctions, la contrepassation d'un rejet, le paiement après validation (mise à jour sans doublon), le blocage du paiement d'un engagement rejeté, le renvoi sans contrepassation, la transmission automatique.
+
+Des tests d'interface ont aussi été passés (ordinateur et téléphone) : transmission d'un lot de 10 écritures, file de vérification, rejet motivé depuis le panneau (refusé sans motif), validation en masse puis d'une sélection, rejet visible à l'accueil du service, contrepassation depuis « Rejets à corriger », accès refusé à un agent ; puis, pour l'étape 2 : saisie complète par un agent avec photo réduite de 1 Mo à 143 Ko, création d'un fournisseur pendant la saisie, refus d'un dépassement avec conservation des valeurs saisies, paiement d'un engagement, contrepassation, téléchargement contrôlé d'une pièce, export, consultation en lecture seule par le central, budget saisi par le Responsable, et pour l'étape 1 : création d'un service et d'un compte, refus d'un doublon, première connexion avec changement de mot de passe, refus d'accès d'un agent aux écrans d'administration et à l'administration WordPress, refus d'une requête forgée (code 403), message de compte verrouillé.
 
 ## 4. Points de vigilance
 
@@ -88,6 +109,6 @@ Des tests d'interface ont aussi été passés (ordinateur et téléphone) : sais
 ## 6. Étapes suivantes du lot 1
 
 2. ~~Saisie~~ : livrée en 0.2.0.
-3. Circuit avec le central : transmission, file de vérification, détection des anomalies, validation et rejet.
+3. ~~Circuit avec le central~~ : livré en 0.3.0.
 4. Fonds et caisse : avances, règle des 80 %, arrêté et clôture de caisse, comptage inopiné, clôture d'exercice.
 5. Pilotage : tableaux de bord, consolidation, rapports PDF avec code QR, vérification publique, exports Excel, double authentification.

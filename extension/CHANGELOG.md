@@ -1,5 +1,17 @@
 # Journal des versions
 
+## 0.3.0 — 23 octobre 2026 · Étape 3 : circuit avec le central
+
+- Écrans Transmission (service) et Vérification (Administration et Finance), qui remplacent les maquettes.
+- Lots numérotés, récapitulatif, journal des lots reçus ; mise à jour sans doublon d'une écriture retransmise (engagement payé après envoi).
+- Détection des anomalies à la réception (11 contrôles, dont doublon de facture entre services, fractionnement, jour non ouvré, bénéficiaire = agent, saisie tardive).
+- Validation en masse des écritures sans anomalie, validation ou rejet d'une sélection, rejet motivé avec courriel au service, séparation des fonctions.
+- Rejets à corriger à l'accueil du service ; contrepassation obligatoire (réglable) ; paiement d'un engagement rejeté bloqué.
+- Règle « transmission automatique » ; filtre du livre de caisse par état (à vérifier, validée, rejetée).
+- Mise en page : plus aucun débordement horizontal sur téléphone.
+- Schéma version 4 (nombre de transmissions par écriture).
+- 57 tests automatiques supplémentaires (195 au total).
+
 ## 0.2.0 — 23 octobre 2026 · Étape 2 : saisie
 
 - Écrans Accueil du service, Nouvelle écriture, Livre de caisse, Budget, Fournisseurs (remplacent les maquettes).

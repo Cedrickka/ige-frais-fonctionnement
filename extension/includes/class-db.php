@@ -191,6 +191,7 @@ final class IGE_FFM_DB {
   anomalies text NULL,
   motif_rejet varchar(255) NOT NULL DEFAULT '',
   lot_id bigint(20) unsigned NULL,
+  nb_transmissions smallint(5) unsigned NOT NULL DEFAULT 0,
   saisi_par bigint(20) unsigned NOT NULL,
   saisi_le datetime NOT NULL,
   valide_par bigint(20) unsigned NULL,

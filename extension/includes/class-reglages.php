@@ -26,6 +26,7 @@ final class IGE_FFM_Reglages {
 			'piece_obligatoire'          => array( 'bool', true, 'N° de pièce et photo obligatoires pour une sortie', 'controles' ),
 			'contrepassation_rejet'      => array( 'bool', true, 'Contrepassation obligatoire après un rejet', 'controles' ),
 			'entrees_manuelles'          => array( 'bool', true, 'Les services saisissent eux-mêmes leurs approvisionnements (en attendant les avances de fonds, étape 4)', 'controles' ),
+			'transmission_auto'          => array( 'bool', false, 'Transmettre automatiquement chaque écriture au central dès son enregistrement', 'controles' ),
 			'seuil_justification'        => array( 'int', 80, 'Justification exigée avant une nouvelle avance (%)', 'seuils' ),
 			'plafond_especes'            => array( 'int', 2000000, "Plafond d'un paiement en espèces (CDF)", 'seuils' ),
 			'alerte_rubrique'            => array( 'int', 80, "Alerte de consommation d'une rubrique (%)", 'seuils' ),

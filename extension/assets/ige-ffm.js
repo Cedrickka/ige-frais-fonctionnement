@@ -64,6 +64,34 @@
 		}, 0);
 	});
 
+	/* Vérification : tout sélectionner, compteur, motif exigé pour un rejet. */
+	var vf = document.getElementById('ige-verif-form');
+	if (vf) {
+		var boxes = function () { return vf.querySelectorAll('input[name="ids[]"]'); };
+		var tout = document.getElementById('ige-tout');
+		var compte = function () {
+			var n = vf.querySelectorAll('input[name="ids[]"]:checked').length;
+			vf.querySelectorAll('[data-ige-sel]').forEach(function (b) {
+				b.disabled = !n;
+				b.textContent = (b.value === 'rejeter' ? 'Rejeter' : 'Valider la sélection') + (n ? ' (' + n + ')' : '');
+			});
+		};
+		if (tout) { tout.addEventListener('change', function () { boxes().forEach(function (c) { c.checked = tout.checked; }); compte(); }); }
+		vf.addEventListener('change', compte);
+		compte();
+	}
+	document.addEventListener('click', function (e) {
+		var b = e.target.closest('button[name=decision][value=rejeter]');
+		if (!b) { return; }
+		var m = b.form.querySelector('input[name=motif]');
+		if (m && m.value.trim().length < 5) {
+			e.preventDefault();
+			m.setCustomValidity('Indiquez le motif du rejet (5 caractères au moins).');
+			m.reportValidity();
+			m.addEventListener('input', function () { m.setCustomValidity(''); }, { once: true });
+		}
+	});
+
 	var form = document.getElementById('ige-saisie');
 	if (!form) { return; }
 

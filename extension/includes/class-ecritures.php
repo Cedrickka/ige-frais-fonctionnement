@@ -265,6 +265,7 @@ final class IGE_FFM_Ecritures {
 			),
 			$user_id
 		);
+		do_action( 'ige_ffm_ecriture_enregistree', $id, $user_id );
 		return $id;
 	}
 
@@ -313,6 +314,9 @@ final class IGE_FFM_Ecritures {
 		if ( 'sortie' !== $e['type'] || 'engagee' !== $e['statut'] || $e['ecriture_origine_id'] || self::contrepassation_de( $id ) ) {
 			return new WP_Error( 'etat', 'Seul un engagement en cours (non contrepassé) peut être payé.' );
 		}
+		if ( 'rejetee' === $e['etat_verification'] && 'transmise' === $e['etat_transmission'] && IGE_FFM_Reglages::get( 'contrepassation_rejet' ) ) {
+			return new WP_Error( 'rejet', 'Cet engagement a été rejeté par le central : contrepassez-le puis saisissez l’engagement correct.' );
+		}
 		$ex = IGE_FFM_Contexte::exercice();
 		if ( ! $ex || (int) $ex['id'] !== (int) $e['exercice_id'] ) {
 			return new WP_Error( 'exercice', 'L’exercice de cet engagement est clos.' );
@@ -342,6 +346,7 @@ final class IGE_FFM_Ecritures {
 		}
 		$wpdb->update( IGE_FFM_DB::t( 'ecriture' ), $upd, array( 'id' => $id, 'statut' => 'engagee' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		IGE_FFM_Audit::log( 'paiement_engagement', 'ecriture', $e['id_ecriture'], array( 'statut' => 'engagee' ), array( 'statut' => 'payee', 'date_paiement' => $date, 'mode' => $m['libelle'] ), $user_id );
+		do_action( 'ige_ffm_ecriture_enregistree', (int) $id, $user_id );
 		return true;
 	}
 
@@ -413,6 +418,7 @@ final class IGE_FFM_Ecritures {
 		}
 		$c = self::get( $new );
 		IGE_FFM_Audit::log( 'contrepassation', 'ecriture', $e['id_ecriture'], null, array( 'contrepassation' => $c['id_ecriture'], 'montant' => (int) $c['montant'], 'motif' => $motif ), $user_id );
+		do_action( 'ige_ffm_ecriture_enregistree', $new, $user_id );
 		return $new;
 	}
 
@@ -448,7 +454,7 @@ final class IGE_FFM_Ecritures {
 			$keep = ( empty( $f['mois'] ) || (int) $r['mois'] === (int) $f['mois'] )
 				&& ( empty( $f['rubrique_id'] ) || (int) $r['rubrique_id'] === (int) $f['rubrique_id'] )
 				&& ( empty( $f['statut'] ) || $r['statut'] === $f['statut'] )
-				&& ( empty( $f['etat'] ) || $r['etat_transmission'] === $f['etat'] );
+				&& ( empty( $f['etat'] ) || self::etat_code( $r ) === $f['etat'] );
 			if ( null === $solde_debut && ( empty( $f['mois'] ) || (int) $r['mois'] >= (int) $f['mois'] ) ) {
 				$solde_debut = $solde;
 			}
@@ -502,19 +508,32 @@ final class IGE_FFM_Ecritures {
 	 * @return array{0:string,1:string}
 	 */
 	public static function etat( array $e ) {
-		if ( 'rejetee' === $e['etat_verification'] ) {
-			return array( 'Rejetée', 'ko' );
+		$l = array(
+			'non_transmise'   => array( 'Non transmise', 'neutre' ),
+			'a_retransmettre' => array( 'À retransmettre', 'info' ),
+			'a_verifier'      => array( 'À vérifier', 'wait' ),
+			'validee'         => array( 'Validée', 'ok' ),
+			'rejetee'         => array( 'Rejetée', 'ko' ),
+		);
+		return $l[ self::etat_code( $e ) ];
+	}
+
+	/**
+	 * Code de l'état affiché : non_transmise, a_retransmettre, a_verifier, validee ou rejetee.
+	 *
+	 * @param array $e Écriture.
+	 * @return string
+	 */
+	public static function etat_code( array $e ) {
+		if ( 'non_transmise' === $e['etat_transmission'] || '' === (string) $e['etat_transmission'] ) {
+			return 'non_transmise';
 		}
-		if ( 'validee' === $e['etat_verification'] ) {
-			return array( 'Validée', 'ok' );
+		if ( 'a_retransmettre' === $e['etat_transmission'] ) {
+			return 'a_retransmettre';
 		}
-		switch ( $e['etat_transmission'] ) {
-			case 'transmise':
-				return array( 'À vérifier', 'wait' );
-			case 'a_retransmettre':
-				return array( 'À retransmettre', 'info' );
-			default:
-				return array( 'Non transmise', 'neutre' );
+		if ( in_array( $e['etat_verification'], array( 'validee', 'rejetee' ), true ) ) {
+			return $e['etat_verification'];
 		}
+		return 'a_verifier';
 	}
 }
