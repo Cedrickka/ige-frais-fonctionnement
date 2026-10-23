@@ -50,3 +50,12 @@
 #ige-inopine .ige-card h2{font-size:13px}
 @media print{.ige-content>p.ige-no-print{display:none}}
 @media (max-width:640px){.ige-doc-wrap{padding:8px}.ige-billet{grid-template-columns:1fr 80px 1fr}}
+
+/* Étape 5 : pilotage, rapports, double authentification. */
+.ige-codes{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:12px}
+.ige-codes .ige-code{font-size:15px;padding:8px;text-align:center;letter-spacing:.06em}
+.ige-qr-grand{width:180px;height:180px;margin:12px 0;padding:8px;border:1px solid var(--ige-ligne)}
+.ige-etapes{padding-left:20px;line-height:1.6}
+.ige-etapes li{margin-bottom:10px}
+.ige-tabs a{cursor:pointer}
+@media (max-width:640px){.ige-exec{grid-template-columns:80px 1fr 44px}}

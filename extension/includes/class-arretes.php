@@ -318,6 +318,7 @@ final class IGE_FFM_Arretes {
 		}
 		$wpdb->update( IGE_FFM_DB::t( 'arrete' ), array( 'statut' => 'cloture', 'signe_resp_par' => $user_id, 'signe_resp_le' => ige_ffm_now() ), array( 'id' => $id, 'statut' => 'signe_agent' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		IGE_FFM_Audit::log( 'cloture_mois', 'arrete', self::reference( $a ), null, array( 'mois' => (int) $a['mois'], 'solde' => (int) $a['solde_theorique'], 'ecart' => (int) $a['ecart'] ), $user_id );
+		IGE_FFM_Rapports::enregistrer_pv( (int) $id, $user_id );
 		return true;
 	}
 
@@ -400,6 +401,7 @@ final class IGE_FFM_Arretes {
 		}
 		$wpdb->update( IGE_FFM_DB::t( 'arrete' ), array( 'statut' => 'contresigne', 'signe_agent_par' => $user_id, 'signe_agent_le' => ige_ffm_now() ), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		IGE_FFM_Audit::log( 'signature_arrete', 'arrete', self::reference( $a ), null, array( 'signataire' => 'agent (comptage inopiné)' ), $user_id );
+		IGE_FFM_Rapports::enregistrer_pv( (int) $id, $user_id );
 		return true;
 	}
 

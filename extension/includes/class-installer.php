@@ -43,6 +43,8 @@ final class IGE_FFM_Installer {
 			IGE_FFM_Reglages::install_defaults();
 			IGE_FFM_Pieces::dossier();
 			self::un_seul_exercice_ouvert();
+			// Les pages se créent une fois WordPress complètement chargé (permaliens disponibles).
+			add_action( 'init', array( __CLASS__, 'create_pages' ), 20 );
 			update_option( 'ige_ffm_db_version', IGE_FFM_DB_VERSION );
 		}
 	}
@@ -146,21 +148,28 @@ final class IGE_FFM_Installer {
 	}
 
 	/**
-	 * Pages propres à l'extension (si absentes) : première connexion.
+	 * Pages propres à l'extension (si absentes) : première connexion, double authentification.
 	 */
 	public static function create_pages() {
-		if ( ! get_page_by_path( 'premiere-connexion' ) ) {
+		$pages = array(
+			'premiere-connexion'      => array( 'Première connexion', 'Choisissez votre mot de passe personnel' ),
+			'double-authentification' => array( 'Double authentification', 'Un code à usage unique en plus du mot de passe' ),
+		);
+		foreach ( $pages as $slug => $p ) {
+			if ( get_page_by_path( $slug ) ) {
+				continue;
+			}
 			$id = wp_insert_post(
 				array(
 					'post_type'   => 'page',
 					'post_status' => 'publish',
-					'post_title'  => 'Première connexion',
-					'post_name'   => 'premiere-connexion',
+					'post_title'  => $p[0],
+					'post_name'   => $slug,
 				)
 			);
 			if ( $id && ! is_wp_error( $id ) ) {
 				update_post_meta( $id, '_wp_page_template', 'templates/formulaire.php' );
-				update_post_meta( $id, '_ige_sous_titre', 'Choisissez votre mot de passe personnel' );
+				update_post_meta( $id, '_ige_sous_titre', $p[1] );
 			}
 		}
 	}

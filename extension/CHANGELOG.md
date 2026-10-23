@@ -1,5 +1,17 @@
 # Journal des versions
 
+## 1.0.0 — 23 octobre 2026 · Étape 5 : pilotage — lot 1 complet
+
+- Écrans Tableau de bord, Consolidation, Rapports, Synthèse (Direction), Vérifier un document (public), Double authentification.
+- Consolidation sur les écritures validées ; alertes prioritaires ; exports Excel (CSV).
+- Registre des documents officiels : référence unique, contenu figé, empreinte SHA-256, code QR, vérification publique ; procès-verbaux d'arrêté et de comptage inopiné inscrits automatiquement.
+- Rapports : situation mensuelle, état consolidé, avances non justifiées, rapport annuel.
+- Double authentification native (TOTP), obligatoire pour Administration et Finance et les administrateurs, codes de secours, réinitialisation par un administrateur, constante d'urgence.
+- Schéma version 6 (table des documents).
+- 57 tests automatiques supplémentaires (327 au total).
+
+Thème associé : 1.0.2 (lien « Sécurité » vers la double authentification dans l'en-tête).
+
 ## 0.4.0 — 23 octobre 2026 · Étape 4 : fonds et caisse
 
 - Écrans Avances, Arrêté de caisse et Caisses (remplacent les maquettes) ; clôture d'exercice dans Exercice et règles de contrôle.

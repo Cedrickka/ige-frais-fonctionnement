@@ -2,7 +2,7 @@
 
 Logique métier de l'application de gestion des frais de fonctionnement de l'Inspection Générale de l'Enseignement. Elle s'utilise avec le thème **IGE Frais de fonctionnement** (version 1.0.1 ou plus), qui fournit l'interface.
 
-Version **0.4.0 — étapes 1 à 4 du lot 1** (socle, saisie, circuit avec le central, fonds et caisse). WordPress 6.5 ou plus (testé sur 7.1.3), PHP 8.0 ou plus.
+Version **1.0.0 — lot 1 complet** (socle, saisie, circuit avec le central, fonds et caisse, pilotage). Thème requis : IGE Frais de fonctionnement **1.0.2**. WordPress 6.5 ou plus (testé sur 7.1.3), PHP 8.0 ou plus.
 
 ## 1. Ce que contient l'étape 1
 
@@ -65,7 +65,26 @@ Nouvelle règle : « Transmettre automatiquement chaque écriture au central dè
 
 **À faire après installation** : décocher « Les services saisissent eux-mêmes leurs approvisionnements » dans les règles, pour que toute entrée de caisse vienne d'une avance tracée (l'écran Avances le rappelle tant que c'est coché).
 
-Les autres pages de l'application affichent encore le contenu de démonstration, avec une bannière « Écran en préparation » qui indique l'étape où elles deviendront fonctionnelles.
+### Étape 5 : pilotage (version 1.0.0)
+
+| Écran | Contenu |
+| --- | --- |
+| Tableau de bord (central) | Budget consommé, caisse consolidée, avances à justifier, écritures à vérifier ; exécution par service avec le repère du temps écoulé ; alertes prioritaires (rubrique à 80 % ou dépassée, avance de plus de 90 jours, écritures non transmises depuis N jours, anomalies, arrêtés manquants) ; avances par ancienneté ; consommation par catégorie ; dépenses par mois. |
+| Consolidation | Par service, catégorie, rubrique et mois, sur les seules écritures validées (RG-14) ; export Excel (CSV) de chaque vue. |
+| Rapports officiels | Situation mensuelle d'exécution, état consolidé, état des avances non justifiées, rapport annuel ; registre non modifiable ; mise en page de la charte, signataire, code QR ; impression ou enregistrement en PDF depuis le navigateur. |
+| Synthèse (Direction) | Vue d'une page pour l'Inspecteur Général : taux de consommation, caisse, avances, points d'attention, derniers rapports. |
+| Vérifier un document (public) | Saisie ou lecture du code QR : document authentique, altéré ou inconnu, sans aucune donnée financière ; 30 vérifications par minute et par adresse au plus. |
+| Sécurité du compte | Double authentification : activation par code QR, codes de secours, nouveaux codes, désactivation (si facultative). |
+
+**Documents officiels** : chaque rapport émis reçoit une référence (`IGE-AF-2026-0001`), son contenu est figé et protégé par une empreinte SHA-256 ; toute modification directe dans la base est signalée « altéré » à la vérification. Les procès-verbaux d'arrêté (à la signature du Responsable) et de comptage inopiné (à la contresignature) sont inscrits automatiquement au registre (`IGE-PV-2026-0001`) et portent un code QR ; si les données d'un arrêté changent après coup, le procès-verbal l'affiche.
+
+**Double authentification** : codes à 6 chiffres (norme TOTP, RFC 6238) lus dans Google Authenticator, Microsoft Authenticator ou FreeOTP ; secret chiffré dans la base ; 10 codes de secours à usage unique conservés sous forme d'empreintes ; un code ne peut pas resservir ; 5 essais et 5 minutes au plus. Obligatoire pour Administration et Finance et les administrateurs du site (réglable), facultative pour les autres. Un administrateur peut la réinitialiser pour une autre personne (téléphone perdu) depuis Comptes utilisateurs. **Urgence** : si le dernier administrateur perd téléphone et codes de secours, ajouter `define( 'IGE_FFM_DESACTIVER_2FA', true );` dans `wp-config.php`, se connecter, réinitialiser, puis retirer la ligne.
+
+**Après la mise à jour** : les comptes Administration et Finance et l'administrateur du site seront invités à activer la double authentification à leur prochaine connexion. Prévoir un téléphone avec l'application installée, et imprimer les codes de secours. L'extension « Two Factor » installée provisoirement peut alors être désactivée.
+
+Le PDF est produit par le navigateur (« Imprimer » puis « Enregistrer au format PDF ») : la mise en page A4 de la charte est prévue pour l'impression ; aucune bibliothèque PDF n'est installée sur le serveur.
+
+Les pages du lot 2 affichent encore le contenu de démonstration, avec une bannière « Écran en préparation » qui indique l'étape où elles deviendront fonctionnelles.
 
 ## 2. Installation sur ige-gestion.com
 
@@ -104,7 +123,11 @@ wp eval-file wp-content/plugins/ige-ff-metier/tests/test-circuit.php
 wp eval-file wp-content/plugins/ige-ff-metier/tests/test-fonds.php
 ```
 
-Résultats attendus : `62`, `76`, `57` puis `74 réussis`, sans échec. Le test des fonds suppose qu'on soit au moins en mai de l'exercice ; il clôture un exercice fictif (2030) puis le supprime, sans toucher l'exercice réel. Les tests couvrent le schéma, les données initiales, les droits de chaque rôle, la validation des référentiels, la création et la modification des comptes, la robustesse des mots de passe, le verrouillage, la désactivation, les bornes des règles et la détection d'une falsification du journal.
+```
+wp eval-file wp-content/plugins/ige-ff-metier/tests/test-pilotage.php
+```
+
+Résultats attendus : `63`, `76`, `57`, `74` puis `57 réussis`, sans échec (327 tests). Le test des fonds suppose qu'on soit au moins en mai de l'exercice ; il clôture un exercice fictif (2030) puis le supprime, sans toucher l'exercice réel. Les tests couvrent le schéma, les données initiales, les droits de chaque rôle, la validation des référentiels, la création et la modification des comptes, la robustesse des mots de passe, le verrouillage, la désactivation, les bornes des règles et la détection d'une falsification du journal.
 
 Les tests de saisie couvrent les droits (lecteur, administrateur non rattaché, agent sur le budget), le blocage de la caisse négative et du dépassement du disponible, les validations (date future ou hors exercice, montant, rubrique, pièce, faux PDF, fichier PHP, plafond des espèces), le budget facultatif, les révisions motivées, le verrouillage du solde initial, le paiement d'un engagement, la contrepassation (et ses refus), le solde progressif du livre, la continuité de la numérotation, le mois clôturé, les doublons et la fusion des fournisseurs, le journal d'audit.
 
@@ -112,7 +135,9 @@ Les tests du circuit couvrent les droits de transmission, chaque anomalie, la nu
 
 Les tests des fonds couvrent les droits, la création d'avance et son entrée de caisse, la justification premier entré premier sorti, la règle des 80 % et la dérogation, l'annulation, l'arrêté (billetage, dollars, autres disponibilités, écart à expliquer, double signature par deux personnes, verrouillage des mois, livre modifié après comptage), le comptage inopiné et sa contresignature, la préparation et la clôture d'exercice avec report des soldes.
 
-Des tests d'interface ont aussi été passés (ordinateur et téléphone) pour l'étape 4 : avance, avance par dérogation, arrêté avec écart en direct, signatures de l'agent et du Responsable, procès-verbal, comptage inopiné et contresignature ; et pour l'étape 3 : transmission d'un lot de 10 écritures, file de vérification, rejet motivé depuis le panneau (refusé sans motif), validation en masse puis d'une sélection, rejet visible à l'accueil du service, contrepassation depuis « Rejets à corriger », accès refusé à un agent ; puis, pour l'étape 2 : saisie complète par un agent avec photo réduite de 1 Mo à 143 Ko, création d'un fournisseur pendant la saisie, refus d'un dépassement avec conservation des valeurs saisies, paiement d'un engagement, contrepassation, téléchargement contrôlé d'une pièce, export, consultation en lecture seule par le central, budget saisi par le Responsable, et pour l'étape 1 : création d'un service et d'un compte, refus d'un doublon, première connexion avec changement de mot de passe, refus d'accès d'un agent aux écrans d'administration et à l'administration WordPress, refus d'une requête forgée (code 403), message de compte verrouillé.
+Les tests du pilotage couvrent la consolidation (écritures validées seulement), le temps écoulé, les alertes, l'émission des quatre rapports, les droits, la vérification publique (authentique, inconnu, altéré), l'inscription des procès-verbaux, et la double authentification (vecteurs officiels de la RFC 6238, tolérance d'horloge, anti-rejeu, codes de secours, chiffrement du secret, obligation, réinitialisation).
+
+Des tests d'interface ont aussi été passés pour l'étape 5 : activation de la double authentification (refus d'un mauvais code, codes de secours), connexion en deux étapes (code erroné, bon code, code de secours), tableau de bord, consolidation et export, émission de rapports avec code QR, vérification publique sur téléphone, synthèse de la Direction, aucun débordement sur téléphone ; pour l'étape 4 : avance, avance par dérogation, arrêté avec écart en direct, signatures de l'agent et du Responsable, procès-verbal, comptage inopiné et contresignature ; et pour l'étape 3 : transmission d'un lot de 10 écritures, file de vérification, rejet motivé depuis le panneau (refusé sans motif), validation en masse puis d'une sélection, rejet visible à l'accueil du service, contrepassation depuis « Rejets à corriger », accès refusé à un agent ; puis, pour l'étape 2 : saisie complète par un agent avec photo réduite de 1 Mo à 143 Ko, création d'un fournisseur pendant la saisie, refus d'un dépassement avec conservation des valeurs saisies, paiement d'un engagement, contrepassation, téléchargement contrôlé d'une pièce, export, consultation en lecture seule par le central, budget saisi par le Responsable, et pour l'étape 1 : création d'un service et d'un compte, refus d'un doublon, première connexion avec changement de mot de passe, refus d'accès d'un agent aux écrans d'administration et à l'administration WordPress, refus d'une requête forgée (code 403), message de compte verrouillé.
 
 ## 4. Points de vigilance
 
@@ -136,4 +161,4 @@ Des tests d'interface ont aussi été passés (ordinateur et téléphone) pour l
 2. ~~Saisie~~ : livrée en 0.2.0.
 3. ~~Circuit avec le central~~ : livré en 0.3.0.
 4. ~~Fonds et caisse~~ : livré en 0.4.0.
-5. Pilotage : tableaux de bord, consolidation, rapports PDF avec code QR, vérification publique, exports Excel, double authentification.
+5. ~~Pilotage~~ : livré en 1.0.0. **Le lot 1 est complet.**

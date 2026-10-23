@@ -101,6 +101,11 @@ final class IGE_FFM_Ecran_Comptes {
 									if ( (int) $c['mdp_a_changer'] && (int) $c['actif'] ) {
 										echo ' ' . ige_ffm_pill( 'Mot de passe provisoire', 'wait' );
 									}
+									if ( IGE_FFM_Deux_Facteurs::actif( (int) $c['user_id'] ) ) {
+										echo ' ' . ige_ffm_pill( 'Double authentification', 'info' );
+									} elseif ( IGE_FFM_Deux_Facteurs::obligatoire( (int) $c['user_id'] ) && (int) $c['actif'] ) {
+										echo ' ' . ige_ffm_pill( 'Double authentification à activer', 'wait' );
+									}
 									// phpcs:enable
 									?>
 								</td>
@@ -110,6 +115,9 @@ final class IGE_FFM_Ecran_Comptes {
 										<?php
 										// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
 										echo IGE_FFM_Ecrans::action_button( 'compte_reset', array( 'user_id' => $c['user_id'] ), 'Réinitialiser', 'ige-act', 'Générer un nouveau mot de passe provisoire pour ' . $c['user_login'] . ' ?' );
+										if ( (int) $c['user_id'] !== get_current_user_id() && IGE_FFM_Deux_Facteurs::actif( (int) $c['user_id'] ) ) {
+											echo IGE_FFM_Ecrans::action_button( '2fa_reinitialiser', array( 'user_id' => $c['user_id'] ), 'Réinit. double auth.', 'ige-act', 'Réinitialiser la double authentification de ' . $c['user_login'] . ' (téléphone perdu ou changé) ? Elle devra l’activer de nouveau.' );
+										}
 										if ( (int) $c['user_id'] !== get_current_user_id() ) {
 											echo (int) $c['actif']
 												? IGE_FFM_Ecrans::action_button( 'compte_etat', array( 'user_id' => $c['user_id'], 'actif' => 0 ), 'Désactiver', 'ige-act', 'Désactiver le compte ' . $c['user_login'] . ' ? La personne ne pourra plus se connecter.' )

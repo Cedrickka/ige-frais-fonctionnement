@@ -300,8 +300,21 @@ final class IGE_FFM_Ecran_Arrete {
 		$annee = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT annee FROM ' . IGE_FFM_DB::t( 'exercice' ) . ' WHERE id = %d', $a['exercice_id'] ) );
 		$date  = $mens ? IGE_FFM_Arretes::fin_de_mois( array( 'annee' => $annee ), (int) $a['mois'] ) : substr( $a['created_at'], 0, 10 );
 		list( $lbl ) = IGE_FFM_Arretes::etat( $a );
+		$doc         = IGE_FFM_Documents::pour_objet( $mens ? 'pv_arrete' : 'pv_inopine', (int) $a['id'] );
+		$modifie     = false;
+		if ( $doc ) {
+			$snap = json_decode( $doc['contenu'], true ) ?: array();
+			foreach ( $snap as $k => $v ) {
+				if ( isset( $a[ $k ] ) && (string) $a[ $k ] !== (string) $v ) {
+					$modifie = true;
+				}
+			}
+		}
 
 		ob_start();
+		if ( $modifie ) {
+			echo ige_ffm_banner( 'ko', 'Données modifiées après la signature', ' Le procès-verbal ne correspond plus à la version enregistrée au registre (' . esc_html( $doc['reference'] ) . '). Signalez-le à l’administrateur.' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		}
 		?>
 		<div class="ige-doc-wrap">
 			<article class="ige-pdf">
@@ -345,7 +358,12 @@ final class IGE_FFM_Ecran_Arrete {
 				</div>
 				<div class="ige-ft">
 					<?php echo function_exists( 'ige_ff_tri' ) ? ige_ff_tri() : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-					<div>Procès-verbal établi dans l’application de gestion des frais de fonctionnement · <?php echo esc_html( IGE_FFM_Arretes::reference( $a ) ); ?></div>
+					<?php if ( $doc ) : ?>
+						<div class="ige-qr" data-ige-qr="<?php echo esc_attr( IGE_FFM_Documents::url_verification( $doc['reference'] ) ); ?>" aria-label="Code QR de vérification"></div>
+						<div>Document authentifiable : scannez le code ou saisissez la référence <b><?php echo esc_html( $doc['reference'] ); ?></b> sur la page « Vérifier un document ».<br><?php echo esc_html( IGE_FFM_Arretes::reference( $a ) ); ?></div>
+					<?php else : ?>
+						<div>Procès-verbal établi dans l’application de gestion des frais de fonctionnement · <?php echo esc_html( IGE_FFM_Arretes::reference( $a ) ); ?> · le code QR d’authenticité est attribué à la signature finale.</div>
+					<?php endif; ?>
 				</div>
 			</article>
 		</div>

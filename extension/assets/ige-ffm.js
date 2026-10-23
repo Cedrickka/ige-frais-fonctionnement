@@ -92,6 +92,18 @@
 		}
 	});
 
+	/* Codes QR (rapports, procès-verbaux, double authentification). */
+	if (window.qrcode) {
+		document.querySelectorAll('[data-ige-qr]').forEach(function (el) {
+			try {
+				var q = window.qrcode(0, 'M');
+				q.addData(el.getAttribute('data-ige-qr'));
+				q.make();
+				el.innerHTML = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+			} catch (e) { el.textContent = 'Code QR indisponible'; }
+		});
+	}
+
 	/* Billetage : montants par coupure, totaux et écart en direct. */
 	document.querySelectorAll('[data-ige-billetage]').forEach(function (zone) {
 		var theo = parseInt(zone.getAttribute('data-theorique'), 10) || 0;

@@ -41,6 +41,7 @@ final class IGE_FFM_Reglages {
 			'verrouillage_minutes'       => array( 'int', 15, 'Durée du verrouillage (minutes)', 'securite' ),
 			'inactivite_minutes'         => array( 'int', 30, "Déconnexion après inactivité (minutes)", 'securite' ),
 			'mdp_longueur'               => array( 'int', 10, 'Longueur minimale du mot de passe', 'securite' ),
+			'deux_facteurs_admin'        => array( 'bool', true, 'Double authentification obligatoire pour Administration et Finance et les administrateurs du site', 'securite' ),
 			'revue_comptes_le'           => array( 'date', '', 'Dernière revue des comptes', 'interne' ),
 		);
 	}

@@ -12,7 +12,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'IGE_FF_VERSION', '1.0.1' );
+define( 'IGE_FF_VERSION', '1.0.2' );
 define( 'IGE_FF_DIR', get_template_directory() );
 define( 'IGE_FF_URI', get_template_directory_uri() );
 

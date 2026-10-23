@@ -40,6 +40,8 @@ $user = wp_get_current_user();
 					<span class="ige-user__txt">
 						<?php echo esc_html( $user->user_login ); ?><br>
 						<span class="ige-role"><?php echo esc_html( ige_ff_profil_libelle( $user ) ); ?></span>
+						<?php $ige_secu = get_page_by_path( 'double-authentification' ); ?>
+						<?php if ( $ige_secu ) : ?>· <a href="<?php echo esc_url( get_permalink( $ige_secu ) ); ?>"><?php esc_html_e( 'Sécurité', 'ige-ff' ); ?></a><?php endif; ?>
 						· <a href="<?php echo esc_url( wp_logout_url( home_url( '/' ) ) ); ?>"><?php esc_html_e( 'Se déconnecter', 'ige-ff' ); ?></a>
 					</span>
 				</div>
@@ -53,6 +55,8 @@ $user = wp_get_current_user();
 		<?php if ( $user->exists() ) : ?>
 			<div class="ige-nav__user">
 				<span><?php echo esc_html( $user->user_login . ' · ' . ige_ff_profil_libelle( $user ) ); ?></span>
+				<?php $ige_secu = get_page_by_path( 'double-authentification' ); ?>
+				<?php if ( $ige_secu ) : ?><a href="<?php echo esc_url( get_permalink( $ige_secu ) ); ?>"><?php esc_html_e( 'Sécurité du compte', 'ige-ff' ); ?></a><?php endif; ?>
 				<a href="<?php echo esc_url( wp_logout_url( home_url( '/' ) ) ); ?>"><?php esc_html_e( 'Se déconnecter', 'ige-ff' ); ?></a>
 			</div>
 		<?php endif; ?>

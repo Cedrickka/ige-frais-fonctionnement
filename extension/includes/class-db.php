@@ -269,6 +269,25 @@ final class IGE_FFM_DB {
   PRIMARY KEY  (id),
   KEY service_mois (service_id,exercice_id,mois)
 ) $c;",
+			'CREATE TABLE ' . $t( 'document' ) . " (
+  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  reference varchar(40) NOT NULL,
+  type varchar(30) NOT NULL,
+  titre varchar(255) NOT NULL,
+  periode varchar(60) NOT NULL DEFAULT '',
+  exercice_id bigint(20) unsigned NULL,
+  service_id bigint(20) unsigned NULL,
+  objet_id bigint(20) unsigned NULL,
+  signataire varchar(120) NOT NULL DEFAULT '',
+  contenu longtext NOT NULL,
+  empreinte char(64) NOT NULL,
+  emis_par bigint(20) unsigned NOT NULL,
+  emis_le datetime NOT NULL,
+  nb_verifications int(10) unsigned NOT NULL DEFAULT 0,
+  PRIMARY KEY  (id),
+  UNIQUE KEY reference (reference),
+  KEY type_objet (type,objet_id)
+) $c;",
 			'CREATE TABLE ' . $t( 'audit' ) . " (
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   user_id bigint(20) unsigned NOT NULL DEFAULT 0,
@@ -295,6 +314,6 @@ final class IGE_FFM_DB {
 	 * @return string[]
 	 */
 	public static function tables() {
-		return array( 'exercice', 'service', 'categorie', 'rubrique', 'mode_paiement', 'budget', 'solde_initial', 'revision_budget', 'compte', 'fournisseur', 'ecriture', 'lot', 'piece', 'avance', 'arrete', 'audit' );
+		return array( 'exercice', 'service', 'categorie', 'rubrique', 'mode_paiement', 'budget', 'solde_initial', 'revision_budget', 'compte', 'fournisseur', 'ecriture', 'lot', 'piece', 'avance', 'arrete', 'document', 'audit' );
 	}
 }

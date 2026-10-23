@@ -181,6 +181,8 @@ final class IGE_FFM_Securite {
 			$msg = ige_ffm_banner( 'ko', 'Compte verrouillé', ' ' . sprintf( 'Trop d’essais erronés. Réessayez dans %d minutes ou contactez l’administrateur.', (int) IGE_FFM_Reglages::get( 'verrouillage_minutes' ) ) );
 		} elseif ( 'inactif' === $login ) {
 			$msg = ige_ffm_banner( 'ko', 'Compte désactivé', ' Contactez l’administrateur de l’application.' );
+		} elseif ( 'code_expire' === $login ) {
+			$msg = ige_ffm_banner( 'warn', 'Code non validé', ' Le délai de 5 minutes est dépassé ou le nombre d’essais est atteint. Reconnectez-vous.' );
 		} elseif ( 'expiree' === $session ) {
 			$msg = ige_ffm_banner( 'info', 'Session expirée', ' ' . sprintf( 'Vous avez été déconnecté après %d minutes d’inactivité.', (int) IGE_FFM_Reglages::get( 'inactivite_minutes' ) ) );
 		}

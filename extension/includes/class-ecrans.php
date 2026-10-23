@@ -28,6 +28,10 @@ require_once __DIR__ . '/ecrans/class-ecran-verification.php';
 require_once __DIR__ . '/ecrans/class-ecran-arrete.php';
 require_once __DIR__ . '/ecrans/class-ecran-caisses.php';
 require_once __DIR__ . '/ecrans/class-ecran-avances.php';
+require_once __DIR__ . '/ecrans/class-ecran-tableau.php';
+require_once __DIR__ . '/ecrans/class-ecran-consolidation.php';
+require_once __DIR__ . '/ecrans/class-ecran-rapports.php';
+require_once __DIR__ . '/ecrans/class-ecran-deux-facteurs.php';
 
 /**
  * Routeur des écrans.
@@ -56,6 +60,11 @@ final class IGE_FFM_Ecrans {
 			'arrete-de-caisse'   => array( 'ige_acceder', 'IGE_FFM_Ecran_Arrete' ),
 			'caisses'            => array( 'ige_voir_tout', 'IGE_FFM_Ecran_Caisses' ),
 			'avances'            => array( 'ige_voir_tout', 'IGE_FFM_Ecran_Avances' ),
+			'tableau-de-bord'    => array( 'ige_voir_tout', 'IGE_FFM_Ecran_Tableau' ),
+			'consolidation'      => array( 'ige_voir_tout', 'IGE_FFM_Ecran_Consolidation' ),
+			'rapports'           => array( 'ige_rapports', 'IGE_FFM_Ecran_Rapports' ),
+			'synthese'           => array( 'ige_voir_tout', 'IGE_FFM_Ecran_Synthese' ),
+			'double-authentification' => array( 'read', 'IGE_FFM_Ecran_Deux_Facteurs' ),
 		);
 	}
 
@@ -65,16 +74,9 @@ final class IGE_FFM_Ecrans {
 	 * @return array<string,string>
 	 */
 	public static function a_venir() {
-		$e5 = 'étape 5 du lot 1 (pilotage)';
 		$l2 = 'lot 2';
 		return array(
 			'dossier-de-depense'     => $l2,
-			'tableau-de-bord'        => $e5,
-			'consolidation'          => $e5,
-			'rapports'               => $e5,
-			'modele-de-rapport'      => $e5,
-			'synthese'               => $e5,
-			'verifier-un-document'   => $e5,
 			'demandes-de-fonds'      => $l2,
 			'mes-demandes-de-fonds'  => $l2,
 			'tresorerie'             => $l2,
@@ -97,6 +99,7 @@ final class IGE_FFM_Ecrans {
 		foreach ( self::ecrans() as $def ) {
 			call_user_func( array( $def[1], 'register' ) );
 		}
+		IGE_FFM_Ecran_Verifier::register();
 	}
 
 	/**

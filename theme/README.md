@@ -145,3 +145,8 @@ ige-ff/
 ├── assets/img/              Armoiries couleur et blanc
 └── demo/                    Contenu fictif des maquettes
 ```
+
+## Versions
+
+- 1.0.2 : lien « Sécurité » (double authentification) à côté de « Se déconnecter », sur ordinateur et téléphone.
+- 1.0.1 : l'élément « Administration » du menu reste actif sur toutes les pages d'administration.
