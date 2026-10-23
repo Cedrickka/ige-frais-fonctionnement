@@ -1,0 +1,6 @@
+/* Compléments de mise en page des écrans de l'extension (s'appuie sur la feuille du thème). */
+.ige-adm-split{grid-template-columns:minmax(0,1fr) 320px;align-items:start}
+.ige-start{align-items:start}
+.ige-table td form{margin:0}
+@media (max-width:1300px){.ige-adm-split{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:1000px){.ige-cols-2.ige-start{grid-template-columns:1fr}}

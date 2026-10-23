@@ -1,0 +1,7 @@
+{
+"title": "Vérification d'un document officiel",
+"subtitle": "Page ouverte en scannant le code QR d'un rapport, ou en saisissant sa référence.",
+"actions": "",
+"content": "<div class=\"ige-seal\"><div class=\"ige-ok\">✓</div><div><b style=\"font-size:16px\">Document authentique</b><br/><span class=\"ige-small\">Ce document a bien été émis par l'application de l'Inspection Générale de l'Enseignement et n'a pas été modifié.</span></div></div>\n<dl class=\"ige-kv\">\n<dt>Référence</dt><dd>IGE-AF-2026-0193</dd>\n<dt>Document</dt><dd>Situation mensuelle d'exécution, septembre 2026</dd>\n<dt>Émis le</dt><dd>5 octobre 2026 à 11 h 24</dd>\n<dt>Émetteur</dt><dd>Administration et Finance</dd>\n<dt>Nombre de pages</dt><dd>3</dd>\n<dt>Empreinte</dt><dd><span class=\"ige-code\">9f2c…a71e</span></dd>\n</dl>\n<div class=\"ige-banner ige-info\" style=\"margin-top:22px\"><span class=\"ige-ic\">i</span><div>Pour un contrôle complet, comparez le contenu du document papier avec la copie officielle, accessible aux agents habilités après connexion. Aucune donnée financière n'est affichée publiquement.</div></div>\n<div class=\"ige-field\" style=\"margin-top:24px\"><label>Vérifier une autre référence</label><div class=\"ige-row\"><input style=\"flex:1\" value=\"IGE-AF-2026-\"/><button class=\"ige-btn ige-btn-bleu\">Vérifier</button></div></div>",
+"panneau": ""
+}

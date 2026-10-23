@@ -1,0 +1,19 @@
+/* wp-login.php aux couleurs de la charte */
+@font-face{font-family:"Cooper Hewitt";font-weight:400;font-display:swap;src:url(../fonts/cooper-hewitt-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Cooper Hewitt";font-weight:700;font-display:swap;src:url(../fonts/cooper-hewitt-latin-700-normal.woff2) format("woff2")}
+body.login{background:#fff;font-family:"Cooper Hewitt",system-ui,sans-serif;color:#323230}
+body.login::after{content:"";position:fixed;left:0;right:0;bottom:0;height:6px;background:linear-gradient(90deg,#0095c9 0 33.33%,#fff24b 33.33% 66.66%,#db3832 66.66%)}
+.login h1 a{width:96px;height:96px;background-size:contain;margin-bottom:12px}
+.ige-login-intitule{display:flex;gap:12px;justify-content:center;margin:0 0 24px;font-weight:700;text-transform:uppercase;font-size:12px;line-height:1.2}
+.ige-login-intitule small{display:block;text-transform:none;font-weight:400;margin-top:4px}
+.ige-login-ligne{width:5px;background:linear-gradient(#0095c9 0 33.33%,#fff24b 33.33% 66.66%,#db3832 66.66%)}
+.login form{border:1px solid #e1e5ea;border-radius:12px;box-shadow:none;padding:24px}
+.login label{font-weight:600;font-size:13px}
+.login input[type=text],.login input[type=password],.login input[type=email]{border:1px solid #afb8be;border-radius:6px;font-size:15px;padding:6px 10px}
+.login input:focus{border-color:#0095c9;box-shadow:0 0 0 1px #0095c9}
+.wp-core-ui .button-primary{background:#17418a;border-color:#17418a;border-radius:6px;font-weight:600}
+.wp-core-ui .button-primary:hover,.wp-core-ui .button-primary:focus{background:#123570;border-color:#123570}
+.login .message,.login .notice{border-left-color:#0095c9;border-radius:6px}
+.login #login_error{border-left-color:#db3832}
+.login #nav a,.login #backtoblog a{color:#006d94}
+.language-switcher{display:none}

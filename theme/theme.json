@@ -1,0 +1,49 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/theme.json",
+	"version": 3,
+	"settings": {
+		"appearanceTools": false,
+		"color": {
+			"custom": false,
+			"customGradient": false,
+			"defaultPalette": false,
+			"defaultGradients": false,
+			"palette": [
+				{ "slug": "bleu-institutionnel", "name": "Bleu institutionnel", "color": "#17418a" },
+				{ "slug": "bleu-drapeau", "name": "Bleu drapeau", "color": "#0095c9" },
+				{ "slug": "jaune-drapeau", "name": "Jaune drapeau", "color": "#fff24b" },
+				{ "slug": "rouge-drapeau", "name": "Rouge drapeau", "color": "#db3832" },
+				{ "slug": "vert", "name": "Vert", "color": "#65b32e" },
+				{ "slug": "orange", "name": "Orange", "color": "#ed7016" },
+				{ "slug": "anthracite", "name": "Anthracite", "color": "#323230" },
+				{ "slug": "gris-clair", "name": "Gris clair", "color": "#afb8be" },
+				{ "slug": "blanc", "name": "Blanc", "color": "#ffffff" }
+			]
+		},
+		"typography": {
+			"customFontSize": false,
+			"fontFamilies": [
+				{ "slug": "cooper-hewitt", "name": "Cooper Hewitt", "fontFamily": "\"Cooper Hewitt\", system-ui, sans-serif" },
+				{ "slug": "garamond", "name": "EB Garamond (documents)", "fontFamily": "\"EB Garamond\", Garamond, Georgia, serif" }
+			],
+			"fontSizes": [
+				{ "slug": "petit", "name": "Petit", "size": "12px" },
+				{ "slug": "normal", "name": "Normal", "size": "14px" },
+				{ "slug": "moyen", "name": "Moyen", "size": "18px" },
+				{ "slug": "grand", "name": "Grand", "size": "26px" }
+			]
+		},
+		"layout": {
+			"contentSize": "1264px",
+			"wideSize": "1320px"
+		},
+		"spacing": {
+			"units": [ "px", "%" ]
+		}
+	},
+	"styles": {
+		"typography": {
+			"fontFamily": "var(--wp--preset--font-family--cooper-hewitt)"
+		}
+	}
+}

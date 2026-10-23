@@ -1,0 +1,477 @@
+/* ==========================================================================
+   IGE Frais de fonctionnement — feuille de style principale
+   Charte graphique du Gouvernement de la RDC (février 2022)
+   Toutes les classes sont préfixées « ige- » pour ne jamais entrer en conflit
+   avec WordPress ou une extension.
+   ========================================================================== */
+
+/* 1. Polices (licence SIL Open Font License, fichiers dans assets/fonts) */
+@font-face{font-family:"Cooper Hewitt";font-style:normal;font-weight:400;font-display:swap;src:url(../fonts/cooper-hewitt-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Cooper Hewitt";font-style:normal;font-weight:500;font-display:swap;src:url(../fonts/cooper-hewitt-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:"Cooper Hewitt";font-style:normal;font-weight:600;font-display:swap;src:url(../fonts/cooper-hewitt-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"Cooper Hewitt";font-style:normal;font-weight:700;font-display:swap;src:url(../fonts/cooper-hewitt-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:"EB Garamond";font-style:normal;font-weight:400;font-display:swap;src:url(../fonts/eb-garamond-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"EB Garamond";font-style:normal;font-weight:600;font-display:swap;src:url(../fonts/eb-garamond-latin-600-normal.woff2) format("woff2")}
+
+/* 2. Jetons de la charte */
+:root{
+  /* Couleurs principales (drapeau) */
+  --ige-bleu:#0095c9;
+  --ige-jaune:#fff24b;
+  --ige-rouge:#db3832;
+  /* Couleurs complémentaires */
+  --ige-bleu-inst:#17418a;
+  --ige-bleu-inst-2:#123570;
+  --ige-vert:#65b32e;
+  --ige-orange:#ed7016;
+  --ige-ink:#323230;
+  --ige-gris:#afb8be;
+  /* Neutres de l'interface */
+  --ige-muted:#5d6670;
+  --ige-fond:#f3f5f8;
+  --ige-carte:#ffffff;
+  --ige-ligne:#e1e5ea;
+  /* Textes d'état lisibles (contraste AA sur fond clair) */
+  --ige-ok-txt:#3d7a17;   --ige-ok-bg:#ecf6e6;
+  --ige-wait-txt:#b14d08; --ige-wait-bg:#fdeee2;
+  --ige-ko-txt:#b4241f;   --ige-ko-bg:#fbe7e6;
+  --ige-info-txt:#006d94; --ige-info-bg:#e2f2f9;
+  /* Typographie */
+  --ige-font:"Cooper Hewitt",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  --ige-font-doc:"EB Garamond",Garamond,Georgia,serif;
+  /* Formes */
+  --ige-radius:10px;
+  --ige-radius-sm:6px;
+  --ige-max:1320px;
+  --ige-tri:linear-gradient(90deg,var(--ige-bleu) 0 33.33%,var(--ige-jaune) 33.33% 66.66%,var(--ige-rouge) 66.66%);
+  --ige-tri-v:linear-gradient(var(--ige-bleu) 0 33.33%,var(--ige-jaune) 33.33% 66.66%,var(--ige-rouge) 66.66%);
+}
+
+/* 3. Base */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:var(--ige-font);font-size:14px;line-height:1.45;color:var(--ige-ink);background:var(--ige-fond)}
+a{color:var(--ige-info-txt)}
+a:hover{color:var(--ige-bleu-inst)}
+img{max-width:100%;height:auto}
+h1,h2,h3,h4{line-height:1.2;color:inherit}
+:focus-visible{outline:3px solid var(--ige-bleu);outline-offset:2px}
+.ige-num,.ige-table td.ige-r,.ige-table th.ige-r{font-variant-numeric:tabular-nums}
+
+/* 4. Accessibilité */
+.ige-skip{position:absolute;left:-9999px;top:8px;z-index:100;background:var(--ige-jaune);color:var(--ige-bleu-inst);padding:10px 16px;border-radius:var(--ige-radius-sm);font-weight:700}
+.ige-skip:focus{left:8px}
+.screen-reader-text{border:0;clip:rect(1px,1px,1px,1px);clip-path:inset(50%);height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px;word-wrap:normal!important}
+
+/* 5. Logo : bloc-armoirie + Ligne d'État + intitulé (ordre imposé par la charte) */
+.ige-logo{display:flex;align-items:center;gap:14px;text-decoration:none;color:var(--ige-ink)}
+.ige-armoirie{flex:none;width:68px;height:68px;background:url(../img/armoirie-couleur.png) center/contain no-repeat}
+.ige-ligne-etat{flex:none;width:5px;align-self:stretch;min-height:52px;background:var(--ige-tri-v)}
+.ige-intitule{font-weight:700;text-transform:uppercase;font-size:13px;line-height:1.15;letter-spacing:.01em}
+.ige-intitule small{display:block;font-weight:500;text-transform:none;font-size:12px;margin-top:4px;letter-spacing:0}
+.ige-logo.ige-sm .ige-armoirie{width:50px;height:50px}
+.ige-logo.ige-sm .ige-ligne-etat{min-height:40px;width:4px}
+.ige-logo.ige-sm .ige-intitule{font-size:10.5px;white-space:nowrap}
+.ige-logo.ige-blanc{color:#fff}
+.ige-logo.ige-blanc .ige-armoirie{background-image:url(../img/armoirie-blanc.png)}
+.ige-tri{height:4px;background:var(--ige-tri)}
+
+/* 6. En-tête et navigation */
+.ige-head{background:var(--ige-bleu-inst);color:#fff}
+.ige-head__top{display:flex;align-items:center;gap:24px;padding:10px 28px;max-width:var(--ige-max);margin:0 auto}
+.ige-head__tools{margin-left:auto;display:flex;align-items:center;gap:18px}
+.ige-bell{color:#fff;text-decoration:none;font-size:12px;white-space:nowrap;opacity:.9}
+.ige-bell:hover{color:#fff;opacity:1}
+.ige-bell b{background:var(--ige-rouge);color:#fff;border-radius:999px;padding:1px 6px;font-size:10.5px;margin-left:4px}
+.ige-user{display:flex;align-items:center;gap:10px;font-size:12px;border-left:1px solid rgba(255,255,255,.25);padding-left:18px;white-space:nowrap}
+.ige-user a{color:#fff;opacity:.8;font-size:11.5px}
+.ige-user span.ige-role{opacity:.75}
+.ige-avatar{width:32px;height:32px;border-radius:50%;background:var(--ige-jaune);color:var(--ige-bleu-inst);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
+.ige-menu-toggle{display:none;font:inherit;font-size:13px;font-weight:600;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.45);border-radius:var(--ige-radius-sm);padding:8px 12px;cursor:pointer}
+
+.ige-nav{border-top:1px solid rgba(255,255,255,.14)}
+.ige-nav__list{list-style:none;margin:0 auto;padding:0 20px;display:flex;flex-wrap:wrap;gap:2px;max-width:var(--ige-max)}
+.ige-nav__item{position:relative;display:flex;align-items:center}
+.ige-nav__link{display:block;color:#fff;text-decoration:none;font-size:13px;font-weight:500;padding:11px 12px;opacity:.85;white-space:nowrap;border-bottom:3px solid transparent}
+.ige-nav__link:hover{color:#fff;opacity:1}
+.ige-nav__item.is-current>.ige-nav__link{opacity:1;font-weight:700;border-bottom-color:var(--ige-jaune)}
+.ige-nav__toggle{font:inherit;font-size:10px;color:#fff;background:transparent;border:0;margin-left:-8px;padding:11px 8px 11px 2px;cursor:pointer;opacity:.85}
+.ige-nav__sub{list-style:none;margin:0;padding:6px;position:absolute;top:100%;left:0;min-width:220px;background:#fff;border-radius:0 0 var(--ige-radius-sm) var(--ige-radius-sm);box-shadow:0 10px 30px rgba(16,28,52,.18);z-index:40;display:none}
+.ige-nav__item:hover>.ige-nav__sub,.ige-nav__item:focus-within>.ige-nav__sub,.ige-nav__item.is-open>.ige-nav__sub{display:block}
+.ige-nav__sub .ige-nav__link{color:var(--ige-ink);opacity:1;font-weight:500;border:0;border-radius:var(--ige-radius-sm);padding:9px 12px}
+.ige-nav__sub .ige-nav__link:hover{background:#e8eef8;color:var(--ige-bleu-inst)}
+.ige-nav__sub .is-current>.ige-nav__link{background:#e8eef8;color:var(--ige-bleu-inst);font-weight:700}
+
+.ige-nav__user{display:none}
+.ige-sub-bar{background:#fff;border-bottom:1px solid var(--ige-ligne)}
+.ige-sub-bar ul{list-style:none;margin:0 auto;padding:0 20px;display:flex;gap:4px;flex-wrap:wrap;max-width:var(--ige-max)}
+.ige-sub-bar a{display:block;font-size:12.5px;color:var(--ige-muted);text-decoration:none;padding:9px 12px;font-weight:600;border-bottom:2px solid transparent}
+.ige-sub-bar a:hover{color:var(--ige-bleu-inst)}
+.ige-sub-bar .is-current a{color:var(--ige-bleu-inst);border-bottom-color:var(--ige-bleu-inst)}
+
+/* 7. Bandeau de titre de page */
+.ige-title-band{background:var(--ige-bleu-inst-2);color:#fff}
+.ige-title-band__in{max-width:var(--ige-max);margin:0 auto;padding:22px 28px 20px;display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.ige-title-band h1{margin:0;font-size:26px;font-weight:700;letter-spacing:-.01em}
+.ige-title-band p{margin:4px 0 0;opacity:.8;font-size:13px}
+.ige-title-band .ige-actions,.ige-title-band__actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+
+/* 8. Mise en page */
+.ige-main{display:block}
+.ige-wrap{max-width:var(--ige-max);margin:0 auto;padding:24px 28px 40px}
+.ige-grid{display:grid;gap:16px}
+.ige-grid+.ige-grid,.ige-card+.ige-card,.ige-banner+.ige-grid,.ige-banner+.ige-card{margin-top:0}
+.ige-wrap>*+*{margin-top:16px}
+.ige-wrap.ige-grid>*+*{margin-top:0}
+.ige-content>*+*{margin-top:16px}
+.ige-grid>.ige-content>*+*{margin-top:16px}
+.ige-cols-2{grid-template-columns:1fr 1fr}
+.ige-cols-3{grid-template-columns:repeat(3,1fr)}
+.ige-cols-21{grid-template-columns:2fr 1fr}
+.ige-cols-12{grid-template-columns:1fr 2fr}
+.ige-verif{grid-template-columns:minmax(0,1fr) 340px;align-items:start}
+.ige-adm{display:grid;grid-template-columns:230px minmax(0,1fr);gap:16px;align-items:start}
+.ige-narrow{max-width:620px;margin-left:auto;margin-right:auto}
+.ige-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.ige-spacer{margin-left:auto}
+.ige-muted{color:var(--ige-muted)}
+.ige-small{font-size:12px}
+.ige-right{text-align:right}
+.ige-big{font-size:22px;font-weight:700;letter-spacing:-.01em}
+.ige-neg,.ige-table td.ige-neg{color:var(--ige-ko-txt)}
+
+/* 9. Boutons */
+.ige-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-size:13px;font-weight:600;border-radius:var(--ige-radius-sm);padding:9px 16px;border:1px solid transparent;cursor:pointer;white-space:nowrap;text-decoration:none;line-height:1.2}
+.ige-btn-jaune{background:var(--ige-jaune);color:var(--ige-bleu-inst)}
+.ige-btn-jaune:hover{background:#f5e632;color:var(--ige-bleu-inst)}
+.ige-btn-bleu{background:var(--ige-bleu-inst);color:#fff}
+.ige-btn-bleu:hover{background:var(--ige-bleu-inst-2);color:#fff}
+.ige-btn-ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.45)}
+.ige-btn-ghost:hover{background:rgba(255,255,255,.1);color:#fff}
+.ige-btn-line{background:#fff;color:var(--ige-bleu-inst);border-color:var(--ige-gris)}
+.ige-btn-line:hover{border-color:var(--ige-bleu-inst);color:var(--ige-bleu-inst)}
+.ige-btn-rouge{background:#fff;color:var(--ige-rouge);border-color:var(--ige-rouge)}
+.ige-btn-rouge:hover{background:var(--ige-ko-bg);color:var(--ige-ko-txt)}
+.ige-btn[disabled],.ige-btn.is-disabled{opacity:.5;cursor:not-allowed}
+.ige-btn-block{width:100%}
+
+/* 10. Cartes et indicateurs */
+.ige-card{background:var(--ige-carte);border:1px solid var(--ige-ligne);border-radius:var(--ige-radius);padding:18px}
+.ige-card h2{font-size:15px;margin:0 0 14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.ige-card h2 .ige-sub{font-weight:400;color:var(--ige-muted);font-size:12px;margin-left:auto}
+.ige-kpis{grid-template-columns:repeat(4,1fr)}
+.ige-kpi .ige-lbl{font-size:12px;color:var(--ige-muted);font-weight:500}
+.ige-kpi .ige-val{font-size:24px;font-weight:700;margin-top:6px;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.ige-kpi .ige-val span{font-size:13px;font-weight:500;color:var(--ige-muted)}
+.ige-kpi .ige-meta{font-size:12px;margin-top:6px;color:var(--ige-muted)}
+.ige-kpi.ige-accent{border-top:4px solid var(--ige-bleu-inst)}
+.ige-kpi.ige-alerte{border-top:4px solid var(--ige-orange)}
+.ige-kpi.ige-risque{border-top:4px solid var(--ige-rouge)}
+.ige-kpi.ige-ok{border-top:4px solid var(--ige-vert)}
+.ige-bar{height:8px;border-radius:4px;background:#e8ecf1;overflow:hidden;margin-top:10px;position:relative}
+.ige-bar i{display:block;height:100%;background:var(--ige-bleu)}
+
+/* 11. Pastilles d'état (jamais la couleur seule : toujours un libellé) */
+.ige-pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.ige-pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.ige-p-ok{background:var(--ige-ok-bg);color:var(--ige-ok-txt)}
+.ige-p-wait{background:var(--ige-wait-bg);color:var(--ige-wait-txt)}
+.ige-p-ko{background:var(--ige-ko-bg);color:var(--ige-ko-txt)}
+.ige-p-info{background:var(--ige-info-bg);color:var(--ige-info-txt)}
+.ige-p-neutre{background:#eef0f3;color:#4b545d}
+.ige-anom{font-size:11.5px;color:var(--ige-ko-txt);font-weight:600}
+.ige-code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:#f1f3f6;padding:2px 6px;border-radius:4px}
+
+/* 12. Tableaux */
+.ige-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ige-table{width:100%;border-collapse:collapse;font-size:13px}
+.ige-table th{text-align:left;font-size:11.5px;font-weight:600;color:var(--ige-muted);text-transform:uppercase;letter-spacing:.03em;padding:8px 10px;border-bottom:1px solid var(--ige-ligne);background:#fafbfc}
+.ige-table td{padding:10px;border-bottom:1px solid var(--ige-ligne);vertical-align:middle}
+.ige-table td.ige-r,.ige-table th.ige-r{text-align:right}
+.ige-table td.ige-r,.ige-table td b{white-space:nowrap}
+.ige-table tr.ige-sel td{background:#fffde0}
+.ige-table tr.ige-rejet td{background:#fff6f5}
+.ige-table tr.ige-contre td{background:#f7f8fa;color:var(--ige-muted)}
+.ige-table tr.ige-total td{font-weight:700;background:#f1f4f9}
+.ige-table td .ige-act{font-size:12px;color:var(--ige-info-txt);font-weight:600;text-decoration:none;margin-right:10px;white-space:nowrap}
+
+/* 13. Formulaires */
+.ige-field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;min-width:0}
+.ige-field label{font-size:12.5px;font-weight:600}
+.ige-field input,.ige-field select,.ige-field textarea,.ige-input{font:inherit;font-size:14px;padding:11px 12px;border:1px solid var(--ige-gris);border-radius:var(--ige-radius-sm);background:#fff;color:var(--ige-ink);width:100%}
+.ige-field input:focus,.ige-field select:focus,.ige-field textarea:focus,.ige-input:focus{outline:2px solid var(--ige-bleu);outline-offset:0;border-color:var(--ige-bleu)}
+.ige-field .ige-help{font-size:11.5px;color:var(--ige-muted)}
+.ige-field.ige-has-error input,.ige-field.ige-has-error select{border-color:var(--ige-rouge)}
+.ige-field .ige-error{font-size:12px;color:var(--ige-ko-txt);font-weight:600}
+.ige-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.ige-chip{display:inline-block;font-size:12.5px;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid var(--ige-ligne);color:var(--ige-ink);text-decoration:none}
+.ige-chip.ige-on{background:var(--ige-bleu-inst);color:#fff;border-color:var(--ige-bleu-inst)}
+.ige-switch{display:inline-block;width:34px;height:20px;border-radius:999px;background:#cfd5dc;position:relative;vertical-align:middle}
+.ige-switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff}
+.ige-switch.ige-on{background:var(--ige-bleu-inst)}
+.ige-switch.ige-on::after{left:16px}
+.ige-seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--ige-gris);border-radius:var(--ige-radius-sm);overflow:hidden;margin-bottom:14px}
+.ige-seg span{text-align:center;padding:9px;font-size:13px;font-weight:600;color:var(--ige-muted);background:#fff}
+.ige-seg span.ige-on{background:var(--ige-bleu-inst);color:#fff}
+.ige-otp{display:flex;gap:8px;margin:8px 0 16px}
+.ige-otp span{width:44px;height:52px;border:1px solid var(--ige-gris);border-radius:8px;display:grid;place-items:center;font-size:22px;font-weight:700}
+.ige-rule{font-size:12.5px;display:flex;gap:8px;padding:2px 0}
+.ige-rule .ige-ok{color:var(--ige-ok-txt);font-weight:700}
+.ige-rule .ige-no{color:var(--ige-muted)}
+.ige-tabs{display:flex;gap:4px;border-bottom:1px solid var(--ige-ligne);margin:-4px 0 16px;flex-wrap:wrap}
+.ige-tabs span,.ige-tabs a{padding:9px 14px;font-size:13px;font-weight:600;color:var(--ige-muted);border-bottom:3px solid transparent;text-decoration:none}
+.ige-tabs .ige-on{color:var(--ige-bleu-inst);border-color:var(--ige-bleu-inst)}
+.ige-photo{display:flex;align-items:center;gap:10px;border:1.5px dashed var(--ige-bleu);border-radius:8px;padding:12px;color:var(--ige-info-txt);font-weight:600;font-size:13px;background:#eef8fc;margin-bottom:12px}
+.ige-photo .ige-ic{width:34px;height:34px;border-radius:8px;background:var(--ige-bleu);color:#fff;display:grid;place-items:center;font-size:16px}
+.ige-hint{font-size:11.5px;color:var(--ige-muted);margin-top:-6px;margin-bottom:12px}
+.ige-billet{display:grid;grid-template-columns:1fr 90px 1fr;gap:8px 12px;align-items:center;font-size:13px}
+.ige-billet input{font:inherit;font-size:13px;padding:7px 8px;border:1px solid var(--ige-gris);border-radius:var(--ige-radius-sm);width:100%;text-align:right}
+.ige-billet .ige-h{font-size:11.5px;font-weight:600;color:var(--ige-muted);text-transform:uppercase;letter-spacing:.03em}
+
+/* 14. Messages et suivis */
+.ige-warn{background:var(--ige-wait-bg);color:#8a3c06;border-radius:var(--ige-radius-sm);padding:8px 10px;font-size:12px;margin-bottom:12px}
+.ige-banner{display:flex;gap:12px;align-items:flex-start;border-radius:8px;padding:12px 14px;font-size:13px;margin:0}
+.ige-banner.ige-ko{background:var(--ige-ko-bg);color:#8f1d19;border:1px solid #f1c3c0}
+.ige-banner.ige-warn{background:var(--ige-wait-bg);color:#8a3c06;border:1px solid #f6d2b6;margin:0}
+.ige-banner.ige-info{background:var(--ige-info-bg);color:#004f6d;border:1px solid #bfe3f2}
+.ige-banner.ige-ok{background:var(--ige-ok-bg);color:#2f5f12;border:1px solid #cfe7c0}
+.ige-banner b{display:block;margin-bottom:2px}
+.ige-banner a{color:inherit;font-weight:700}
+.ige-banner .ige-ic{font-weight:700;font-size:16px;line-height:1.1}
+.ige-check{display:flex;gap:8px;font-size:12.5px;align-items:center;padding:4px 0}
+.ige-check .ige-ok{color:var(--ige-ok-txt);font-weight:700}
+.ige-check .ige-ko{color:var(--ige-ko-txt);font-weight:700}
+.ige-msg{background:#f5f7fa;border-radius:8px;padding:10px 12px;font-size:12.5px;margin-top:10px}
+.ige-msg b{font-size:11.5px;color:var(--ige-bleu-inst)}
+.ige-steps{display:flex;margin-bottom:18px}
+.ige-steps div{flex:1;font-size:12px;font-weight:600;color:var(--ige-muted);padding:8px 4px 0 0;border-top:3px solid var(--ige-ligne)}
+.ige-steps div.ige-done{color:var(--ige-ok-txt);border-color:var(--ige-vert)}
+.ige-steps div.ige-on{color:var(--ige-bleu-inst);border-color:var(--ige-bleu-inst)}
+.ige-visa{display:inline-flex;gap:4px;vertical-align:middle}
+.ige-visa i{width:12px;height:12px;border-radius:50%;background:#dfe3e8;display:block}
+.ige-visa i.ige-ok{background:var(--ige-vert)}
+.ige-visa i.ige-wait{background:var(--ige-orange)}
+.ige-visa i.ige-ko{background:var(--ige-rouge)}
+.ige-timeline{list-style:none;margin:0;padding:0 0 0 4px}
+.ige-timeline li{position:relative;padding:0 0 14px 22px;font-size:13px;border-left:2px solid var(--ige-ligne)}
+.ige-timeline li:last-child{border-left-color:transparent;padding-bottom:0}
+.ige-timeline li::before{content:"";position:absolute;left:-7px;top:2px;width:12px;height:12px;border-radius:50%;background:#dfe3e8;border:2px solid #fff}
+.ige-timeline li.ige-ok::before{background:var(--ige-vert)}
+.ige-timeline li.ige-cur::before{background:var(--ige-orange)}
+.ige-timeline li b{display:block}
+.ige-timeline li span{font-size:12px;color:var(--ige-muted)}
+.ige-chain{display:grid;grid-template-columns:repeat(4,1fr)}
+.ige-chain>div{position:relative;padding:12px 16px 12px 52px;border-top:4px solid var(--ige-ligne);font-size:13px}
+.ige-chain>div.ige-ok{border-color:var(--ige-vert)}
+.ige-chain>div.ige-cur{border-color:var(--ige-orange);background:#fffaf5}
+.ige-chain .ige-n{position:absolute;left:14px;top:12px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:#eef0f3;color:var(--ige-muted)}
+.ige-chain .ige-ok .ige-n{background:var(--ige-vert);color:#fff}
+.ige-chain .ige-cur .ige-n{background:var(--ige-orange);color:#fff}
+.ige-chain b{display:block}
+.ige-chain small{color:var(--ige-muted)}
+.ige-alert-list{list-style:none;margin:0;padding:0}
+.ige-alert-list li{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--ige-ligne);font-size:13px}
+.ige-alert-list li:last-child{border-bottom:0}
+.ige-dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none}
+
+/* 15. Graphiques simples en CSS */
+.ige-exec{display:grid;grid-template-columns:150px 1fr 64px;gap:10px 12px;align-items:center;font-size:13px}
+.ige-exec .ige-track{position:relative;height:14px;background:#edf0f4;border-radius:3px}
+.ige-exec .ige-fill{position:absolute;inset:0 auto 0 0;border-radius:3px;background:var(--ige-bleu)}
+.ige-exec .ige-fill.ige-haut{background:var(--ige-orange)}
+.ige-exec .ige-fill.ige-depasse{background:var(--ige-rouge)}
+.ige-exec .ige-temps{position:absolute;top:-4px;bottom:-4px;width:0;border-left:2px dashed var(--ige-bleu-inst)}
+.ige-legend{display:flex;gap:16px;font-size:12px;color:var(--ige-muted);margin-top:14px;flex-wrap:wrap}
+.ige-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.ige-age{display:flex;height:22px;border-radius:4px;overflow:hidden;font-size:11px;font-weight:600}
+.ige-age span{display:grid;place-items:center;color:#fff}
+.ige-mini-bars{display:flex;align-items:flex-end;gap:10px;height:150px;padding-top:10px;border-bottom:1px solid var(--ige-ligne)}
+.ige-mini-bars div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.ige-mini-bars i{display:block;width:100%;max-width:34px;background:var(--ige-bleu);border-radius:3px 3px 0 0}
+.ige-mini-bars i.ige-cur{background:var(--ige-bleu-inst)}
+.ige-mini-bars span{font-size:10.5px;color:var(--ige-muted)}
+.ige-mini-bars em{font-style:normal;font-size:10.5px;font-weight:600}
+.ige-tbars{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:end;height:230px;border-bottom:1px solid var(--ige-ligne);padding-bottom:8px}
+.ige-tbars>div{display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.ige-tbars .ige-pair{display:flex;gap:6px;align-items:flex-end;height:160px;width:100%;justify-content:center}
+.ige-tbars .ige-pair i{width:38px;border-radius:3px 3px 0 0}
+.ige-tbars i.ige-need{background:var(--ige-orange)}
+.ige-tbars i.ige-have{background:var(--ige-bleu-inst)}
+.ige-tbars small{font-size:11px;color:var(--ige-muted);text-align:center}
+.ige-cmp{display:grid;grid-template-columns:110px 1fr 50px;gap:10px;align-items:center;font-size:12.5px}
+.ige-cmp div{height:12px;background:#edf0f4;border-radius:3px}
+.ige-cmp div i{display:block;height:100%;border-radius:3px;background:var(--ige-bleu)}
+.ige-cmp b{text-align:right}
+
+/* 16. Panneau de détail et listes clé/valeur */
+.ige-detail dl{display:grid;grid-template-columns:120px 1fr;gap:8px 10px;margin:0;font-size:13px}
+.ige-detail dt{color:var(--ige-muted)}
+.ige-detail dd{margin:0;font-weight:500}
+.ige-kv{display:grid;grid-template-columns:190px 1fr;gap:10px 14px;font-size:13px;margin:0}
+.ige-kv dt{color:var(--ige-muted)}
+.ige-kv dd{margin:0;font-weight:500}
+.ige-piece{margin:16px 0;height:150px;border:1px dashed var(--ige-gris);border-radius:8px;display:grid;place-items:center;text-align:center;padding:12px;color:var(--ige-muted);font-size:12px;background:repeating-linear-gradient(45deg,#fafbfc 0 10px,#f2f4f7 10px 20px)}
+
+/* 17. Administration : barre latérale */
+.ige-adm-side{background:#fff;border:1px solid var(--ige-ligne);border-radius:var(--ige-radius);padding:8px}
+.ige-adm-side ul{list-style:none;margin:0;padding:0}
+.ige-adm-side a{display:block;padding:9px 12px;border-radius:var(--ige-radius-sm);font-size:13px;color:var(--ige-ink);text-decoration:none}
+.ige-adm-side a:hover{background:#f1f4f9}
+.ige-adm-side .is-current>a,.ige-adm-side a.ige-on{background:#e8eef8;color:var(--ige-bleu-inst);font-weight:700;box-shadow:inset 3px 0 0 var(--ige-bleu-inst)}
+.ige-adm-side .ige-grp{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ige-muted);padding:12px 12px 4px;font-weight:600}
+
+/* 18. Fenêtre modale */
+.ige-modal-backdrop{position:fixed;inset:0;background:rgba(16,28,52,.45);z-index:60;display:none;align-items:flex-start;justify-content:center;padding:120px 16px 16px}
+.ige-modal-backdrop.is-open{display:flex}
+.ige-modal{width:520px;max-width:100%;background:#fff;border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.3);overflow:hidden}
+.ige-modal header{background:var(--ige-bleu-inst);color:#fff;padding:14px 18px;font-weight:700;font-size:15px}
+.ige-modal .ige-body{padding:18px}
+.ige-modal footer{padding:14px 18px;background:#f7f8fa;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--ige-ligne)}
+
+/* 19. Pages publiques et connexion */
+.ige-public{background:#fff;min-height:100vh;display:flex;flex-direction:column}
+.ige-public-head{display:flex;align-items:center;padding:18px 40px;border-bottom:1px solid var(--ige-ligne)}
+.ige-public-head .ige-armoirie{width:60px;height:60px}
+.ige-public-main{flex:1}
+.ige-public .ige-tri{height:6px}
+.ige-verify{max-width:620px;margin:40px auto;padding:0 20px}
+.ige-verify h1{color:var(--ige-bleu-inst);font-size:26px;margin:0 0 6px}
+.ige-verify .ige-seal{display:flex;gap:16px;align-items:center;background:var(--ige-ok-bg);border:1px solid #cfe7c0;border-radius:12px;padding:18px 20px;margin:18px 0 24px}
+.ige-verify .ige-seal .ige-ok{width:46px;height:46px;border-radius:50%;background:var(--ige-vert);color:#fff;display:grid;place-items:center;font-size:24px;font-weight:700;flex:none}
+.ige-verify .ige-seal.ige-ko{background:var(--ige-ko-bg);border-color:#f1c3c0}
+.ige-verify .ige-seal.ige-ko .ige-ok{background:var(--ige-rouge)}
+.ige-center-card{max-width:460px;margin:56px auto;background:#fff;border:1px solid var(--ige-ligne);border-radius:12px;padding:28px 32px}
+
+.ige-login{display:grid;grid-template-columns:1.05fr 1fr;min-height:100vh;background:#fff;position:relative}
+.ige-login__left{padding:48px 64px 64px;display:flex;flex-direction:column}
+.ige-login__left h1{font-size:30px;line-height:1.15;margin:72px 0 8px;color:var(--ige-bleu-inst);letter-spacing:-.01em}
+.ige-login__lead{color:var(--ige-muted);margin:0 0 32px;font-size:15px}
+.ige-login__form{max-width:380px}
+.ige-login__form p{margin:0 0 16px;display:flex;flex-direction:column;gap:6px}
+.ige-login__form label{font-size:12.5px;font-weight:600}
+.ige-login__form input[type=text],.ige-login__form input[type=password]{font:inherit;font-size:14px;padding:11px 12px;border:1px solid var(--ige-gris);border-radius:var(--ige-radius-sm)}
+.ige-login__form .login-remember{flex-direction:row}
+.ige-login__form .login-remember label{font-weight:400;display:flex;gap:8px;align-items:center}
+.ige-login__form input[type=submit]{width:100%;font:inherit;font-size:14px;font-weight:600;padding:12px;border:0;border-radius:var(--ige-radius-sm);background:var(--ige-bleu-inst);color:#fff;cursor:pointer}
+.ige-login__form input[type=submit]:hover{background:var(--ige-bleu-inst-2)}
+.ige-login__foot{margin-top:auto;font-size:12px;color:var(--ige-muted)}
+.ige-login__right{background:var(--ige-bleu-inst);color:#fff;padding:64px;display:flex;flex-direction:column;justify-content:center}
+.ige-login__right h2{font-size:22px;margin:0 0 20px;max-width:380px}
+.ige-login__right ul{list-style:none;padding:0;margin:0;display:grid;gap:14px;max-width:400px}
+.ige-login__right li{display:flex;gap:12px;font-size:14px;opacity:.92}
+.ige-login__right li b{color:var(--ige-jaune);font-weight:700;min-width:22px}
+.ige-login>.ige-tri{position:absolute;left:0;right:0;bottom:0;height:6px}
+
+/* 20. Document officiel imprimable (rapports, PV) */
+.ige-doc-wrap{background:#7c8590;padding:32px 16px;display:flex;justify-content:center}
+.ige-pdf{background:#fff;width:210mm;max-width:100%;min-height:297mm;padding:44px 48px 140px;box-shadow:0 6px 24px rgba(0,0,0,.35);font-family:var(--ige-font-doc);color:#222;font-size:13px;position:relative}
+.ige-pdf .ige-hd{display:flex;align-items:center;gap:12px;font-family:var(--ige-font)}
+.ige-pdf .ige-hd .ige-ref{margin-left:auto;text-align:right;font-size:10.5px;color:#555}
+.ige-pdf .ige-logo .ige-armoirie{width:54px;height:54px}
+.ige-pdf .ige-logo .ige-intitule{color:#222;font-size:10.5px}
+.ige-pdf h2,.ige-pdf .ige-doc-title{font-family:var(--ige-font);font-size:17px;color:var(--ige-bleu-inst);margin:30px 0 4px;text-transform:uppercase;letter-spacing:.02em}
+.ige-pdf .ige-subt{font-size:12px;color:#555;margin-bottom:16px}
+.ige-pdf .ige-table{font-size:11.5px;font-family:var(--ige-font)}
+.ige-pdf .ige-table th{background:var(--ige-bleu-inst);color:#fff;font-size:10px}
+.ige-pdf .ige-table td{padding:6px 8px}
+.ige-pdf .ige-tot td{font-weight:700;background:#f1f4f9}
+.ige-pdf .ige-sign{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:36px;font-size:12px}
+.ige-pdf .ige-sign div{border-top:1px solid #999;padding-top:6px;min-height:80px}
+.ige-pdf .ige-ft{position:absolute;left:48px;right:48px;bottom:30px;display:flex;gap:14px;align-items:flex-end;font-family:var(--ige-font);font-size:9.5px;color:#555;border-top:1px solid #ddd;padding-top:10px}
+.ige-pdf .ige-ft .ige-tri{height:3px;position:absolute;left:0;right:0;top:-2px}
+.ige-qr{width:74px;height:74px;flex:none;display:grid;place-items:center;border:1px solid #ddd;font-size:9px;color:#777;text-align:center;background:#fff}
+.ige-qr svg,.ige-qr img{width:100%;height:100%}
+
+/* 21. Composants divers */
+.ige-mail{border:1px solid var(--ige-ligne);border-radius:8px;overflow:hidden;font-size:13px}
+.ige-mail-h{background:#f5f7fa;padding:10px 14px;border-bottom:3px solid var(--ige-bleu-inst)}
+.ige-mail-b{padding:12px 16px}
+.ige-mail-b ul{margin:4px 0 10px;padding-left:18px}
+.ige-mail-b p{margin:0 0 6px}
+.ige-mail-btn{display:inline-block;background:var(--ige-bleu-inst);color:#fff;padding:8px 14px;border-radius:var(--ige-radius-sm);font-weight:600;font-size:12.5px}
+.ige-offline{background:#4b545d;color:#fff;font-size:12px;font-weight:600;padding:7px 14px;border-radius:var(--ige-radius-sm);margin-bottom:12px}
+.ige-conv{background:var(--ige-info-bg);color:#004f6d;border-radius:var(--ige-radius-sm);padding:8px 10px;font-size:12px;margin:-2px 0 12px}
+.ige-queue{display:flex;justify-content:space-between;background:#fff;border:1px dashed var(--ige-gris);border-radius:var(--ige-radius-sm);padding:8px 10px;font-size:12px;margin-bottom:6px}
+.ige-soldes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.ige-soldes>div{background:#fff;border:1px solid var(--ige-ligne);border-radius:8px;padding:10px}
+.ige-soldes small{display:block;color:var(--ige-muted);font-size:11px}
+.ige-soldes b{font-size:15px}
+.ige-ig-kpi{background:#fff;border:1px solid var(--ige-ligne);border-radius:var(--ige-radius);padding:12px;margin-bottom:10px}
+.ige-ig-kpi small{color:var(--ige-muted);font-size:11px;display:block}
+.ige-ig-kpi b{font-size:20px}
+.ige-empty{text-align:center;color:var(--ige-muted);padding:40px 16px}
+
+/* 22. Pied de page */
+.ige-foot{background:var(--ige-bleu-inst-2);color:#fff;margin-top:24px}
+.ige-foot__in{max-width:var(--ige-max);margin:0 auto;padding:18px 28px;display:flex;align-items:center;gap:24px;font-size:12px;flex-wrap:wrap}
+.ige-foot .ige-logo .ige-intitule{font-size:10px}
+.ige-foot ul{list-style:none;margin:0 0 0 auto;padding:0;display:flex;gap:18px;flex-wrap:wrap}
+.ige-foot a{color:#fff;opacity:.85;text-decoration:none}
+.ige-foot a:hover{opacity:1;color:#fff}
+
+/* 23. Contenu éditorial WordPress (pages, blocs) */
+.ige-content>*:first-child{margin-top:0}
+.ige-content>h2{font-size:18px;color:var(--ige-bleu-inst)}
+.ige-content>h3{font-size:15px}
+.ige-content>p,.ige-content>ul>li,.ige-content>ol>li{max-width:75ch}
+.ige-content table:not(.ige-table){width:100%;border-collapse:collapse;font-size:13px}
+.ige-content table:not(.ige-table) th,.ige-content table:not(.ige-table) td{padding:8px 10px;border-bottom:1px solid var(--ige-ligne);text-align:left}
+.alignwide{max-width:var(--ige-max)}
+.alignfull{width:100%}
+.wp-block-button__link{background:var(--ige-bleu-inst);color:#fff;border-radius:var(--ige-radius-sm);font-weight:600}
+.wp-caption-text,.wp-element-caption{font-size:12px;color:var(--ige-muted)}
+.ige-admin-notice{max-width:var(--ige-max);margin:16px auto 0;padding:0 28px}
+
+/* 24. Adaptation aux écrans */
+@media (max-width:1100px){
+  .ige-menu-toggle{display:inline-block}
+  .ige-nav{display:none}
+  .ige-nav.is-open{display:block}
+  .ige-nav__list{flex-direction:column;padding:8px 16px 16px}
+  .ige-nav__item{flex-wrap:wrap}
+  .ige-nav__link{flex:1;border-bottom:0;border-left:3px solid transparent}
+  .ige-nav__item.is-current>.ige-nav__link{border-left-color:var(--ige-jaune)}
+  .ige-nav__sub{position:static;display:block;box-shadow:none;background:transparent;width:100%;padding:0 0 6px 16px}
+  .ige-nav__sub .ige-nav__link{color:#fff;opacity:.85}
+  .ige-nav__sub .ige-nav__link:hover,.ige-nav__sub .is-current>.ige-nav__link{background:rgba(255,255,255,.1);color:#fff}
+  .ige-nav__toggle{display:none}
+  .ige-user .ige-user__txt{display:none}
+  .ige-nav__user{display:flex;justify-content:space-between;gap:12px;padding:12px 28px 16px;border-top:1px solid rgba(255,255,255,.14);font-size:12.5px}
+  .ige-nav__user a{color:var(--ige-jaune);font-weight:600}
+}
+@media (max-width:1000px){
+  .ige-kpis{grid-template-columns:repeat(2,1fr)}
+  .ige-cols-2,.ige-cols-3,.ige-cols-21,.ige-cols-12,.ige-verif,.ige-adm,.ige-login{grid-template-columns:1fr}
+  .ige-chain,.ige-tbars{grid-template-columns:1fr 1fr}
+  .ige-login__right{display:none}
+}
+@media (max-width:640px){
+  body{font-size:14.5px}
+  .ige-head__top{padding:10px 16px;gap:12px}
+  .ige-logo.ige-sm .ige-intitule{white-space:normal;font-size:9.5px}
+  .ige-bell{display:none}
+  .ige-title-band__in{padding:18px 16px}
+  .ige-title-band h1{font-size:21px}
+  .ige-wrap{padding:16px 16px 32px}
+  .ige-kpis{grid-template-columns:1fr}
+  .ige-exec{grid-template-columns:100px 1fr 48px}
+  .ige-kv,.ige-detail dl{grid-template-columns:1fr}
+  .ige-login__left{padding:28px 20px}
+  .ige-login__left h1{margin-top:40px}
+  .ige-center-card{margin:24px 16px;padding:22px 18px}
+  .ige-public-head{padding:14px 16px}
+  .ige-pdf{padding:24px 20px 140px}
+  .ige-pdf .ige-ft{left:20px;right:20px}
+  .ige-foot ul{margin-left:0}
+}
+
+/* 25. Impression : seul le document s'imprime */
+@media print{
+  @page{size:A4;margin:12mm}
+  body{background:#fff}
+  .ige-head,.ige-tri:not(.ige-pdf .ige-tri),.ige-sub-bar,.ige-title-band,.ige-foot,.ige-skip,#wpadminbar,.ige-no-print{display:none!important}
+  .ige-doc-wrap{background:none;padding:0}
+  .ige-pdf{box-shadow:none;width:auto;min-height:auto;padding:0 0 120px}
+  .ige-wrap{padding:0;max-width:none}
+  .ige-card{break-inside:avoid}
+}

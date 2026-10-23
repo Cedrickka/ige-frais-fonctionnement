@@ -1,0 +1,7 @@
+/* Éditeur de blocs : mêmes polices et couleurs que le site */
+@font-face{font-family:"Cooper Hewitt";font-weight:400;font-display:swap;src:url(../fonts/cooper-hewitt-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Cooper Hewitt";font-weight:700;font-display:swap;src:url(../fonts/cooper-hewitt-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:"EB Garamond";font-weight:400;font-display:swap;src:url(../fonts/eb-garamond-latin-400-normal.woff2) format("woff2")}
+body{font-family:"Cooper Hewitt",system-ui,sans-serif;color:#323230;font-size:14px;line-height:1.45}
+h1,h2,h3{color:#17418a}
+a{color:#006d94}

@@ -1,0 +1,7 @@
+{
+"title": "Saisie hors connexion",
+"subtitle": "8000 IG · N° provisoire HC-03",
+"actions": "",
+"content": "<div class=\"ige-card\"><div class=\"ige-offline\">Hors connexion · 3 écritures en attente d'envoi</div><div class=\"ige-seg\"><span class=\"ige-on\">Sortie</span><span>Entrée</span></div>\n<div class=\"ige-field\"><label>Rubrique</label><select><option>R07 · Frais de mission et transport</option></select></div>\n<div style=\"display:grid;grid-template-columns:90px 1fr;gap:8px\">\n<div class=\"ige-field\"><label>Devise</label><select><option>USD</option><option>CDF</option></select></div>\n<div class=\"ige-field\"><label>Montant</label><input class=\"ige-num\" style=\"font-weight:700;font-size:16px\" value=\"150,00\"/></div>\n</div>\n<div class=\"ige-conv ige-num\">Taux du 23/10 : 1 USD = 2 850 CDF (fictif) · <b>427 500 CDF</b></div>\n<div class=\"ige-field\"><label>Description</label><input value=\"Hébergement mission Kasaï, 2 nuitées\"/></div>\n<div class=\"ige-photo\"><span class=\"ige-ic\">◉</span>Photographier la pièce justificative</div>\n<div style=\"font-size:12px;font-weight:700;margin:4px 0 6px\">En attente d'envoi</div>\n<div class=\"ige-queue\"><span>HC-01 · R03 carburant</span><b>120 USD</b></div>\n<div class=\"ige-queue\"><span>HC-02 · R06 recharge</span><b>45 000 CDF</b></div><button class=\"ige-btn ige-btn-jaune ige-btn-block\">Enregistrer sur le téléphone</button></div>",
+"panneau": ""
+}
