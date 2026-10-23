@@ -2,7 +2,7 @@
 
 Logique métier de l'application de gestion des frais de fonctionnement de l'Inspection Générale de l'Enseignement. Elle s'utilise avec le thème **IGE Frais de fonctionnement** (version 1.0.1 ou plus), qui fournit l'interface.
 
-Version **1.0.0 — lot 1 complet** (socle, saisie, circuit avec le central, fonds et caisse, pilotage). Thème requis : IGE Frais de fonctionnement **1.0.2**. WordPress 6.5 ou plus (testé sur 7.1.3), PHP 8.0 ou plus.
+Version **1.1.0 — déploiement** (lot 1 complet + messagerie de la plateforme, code de connexion par e-mail, invitations, reprise des fichiers Excel). Thème requis : IGE Frais de fonctionnement **1.0.2**. WordPress 6.5 ou plus (testé sur 7.1.3), PHP 8.0 ou plus.
 
 ## 1. Ce que contient l'étape 1
 
@@ -86,7 +86,26 @@ Le PDF est produit par le navigateur (« Imprimer » puis « Enregistrer au form
 
 Les pages du lot 2 affichent encore le contenu de démonstration, avec une bannière « Écran en préparation » qui indique l'étape où elles deviendront fonctionnelles.
 
+### Version 1.1.0 : déploiement
+
+| Élément | Contenu |
+| --- | --- |
+| Messagerie de la plateforme | Tous les e-mails partent de `contact@ige-gestion.com` en SMTP authentifié (smtp.hostinger.com, port 465 SSL ou 587 TLS). Réglage dans **Exercice et règles de contrôle > Messagerie** (mot de passe conservé chiffré, jamais réaffiché) ou par constantes dans `wp-config.php` : `IGE_FFM_SMTP_HOTE`, `IGE_FFM_SMTP_PORT`, `IGE_FFM_SMTP_UTILISATEUR`, `IGE_FFM_SMTP_MOT_DE_PASSE`, `IGE_FFM_SMTP_EXPEDITEUR`. Bouton « Envoyer un e-mail de test ». Échecs d'envoi journalisés. |
+| Double authentification par e-mail | Méthode par défaut : à chaque connexion, un code à 6 chiffres (valable 10 minutes, usage unique, conservé sous forme d'empreinte) est envoyé à l'adresse du compte. Renvoi possible après une minute (3 au plus) ; le code précédent est alors annulé. Le code n'est jamais dans le sujet du message. L'application d'authentification reste possible au choix. Codes de secours dans les deux cas. Nouvelle règle « obligatoire pour tous les comptes ». |
+| Invitations | « Inviter par e-mail » (Comptes utilisateurs) : lien personnel valable 24 h pour choisir son mot de passe ; aucun mot de passe ne circule. |
+| Déploiement (Administration) | Tableau de préparation des services (comptes, Responsable, adresses manquantes, comptes activés, écritures reprises, budget, état : à préparer, en préparation, prêt, en service) ; création des comptes en nombre depuis un fichier CSV avec envoi des invitations ; reprise des fichiers Excel. |
+| Reprise Excel | Classeur central (états validée, rejetée, à vérifier et motifs) puis un fichier par service : solde initial, budget, livre de caisse. Identifiants et numéros conservés, contrepassations reliées, dates converties, aperçu avec erreurs et avertissements avant import, rien en double, refus si le service a déjà commencé à saisir dans l'application. Macros jamais exécutées. |
+
+Fichier CSV des comptes (séparateur `;`, enregistré depuis Excel « CSV UTF-8 » ou « CSV séparateur point-virgule ») :
+
+```
+identifiant;nom;email;profil;service
+j.mbuyi;Jean Mbuyi;j.mbuyi@exemple.cd;RESPONSABLE;8000 IG
+```
+
 ## 2. Installation sur ige-gestion.com
+
+**Mise à jour vers la 1.1.0** : après le téléversement, ouvrir **Exercice et règles de contrôle > Messagerie**, saisir `contact@ige-gestion.com` et le mot de passe de cette boîte (hPanel > E-mails), enregistrer, puis « Envoyer un e-mail de test ». Vérifier ensuite que **chaque compte a une adresse e-mail** : sans adresse, pas de code de connexion. Les comptes qui utilisent déjà une application d'authentification la gardent.
 
 Mise à jour depuis la 0.1.0 : Extensions > Ajouter > Téléverser `ige-ff-metier.zip` > « Remplacer la version installée ». Le schéma est mis à jour automatiquement, sans perte de données. Vider ensuite le cache LiteSpeed.
 
@@ -127,7 +146,11 @@ wp eval-file wp-content/plugins/ige-ff-metier/tests/test-fonds.php
 wp eval-file wp-content/plugins/ige-ff-metier/tests/test-pilotage.php
 ```
 
-Résultats attendus : `63`, `76`, `57`, `74` puis `57 réussis`, sans échec (327 tests). Le test des fonds suppose qu'on soit au moins en mai de l'exercice ; il clôture un exercice fictif (2030) puis le supprime, sans toucher l'exercice réel. Les tests couvrent le schéma, les données initiales, les droits de chaque rôle, la validation des référentiels, la création et la modification des comptes, la robustesse des mots de passe, le verrouillage, la désactivation, les bornes des règles et la détection d'une falsification du journal.
+```
+wp eval-file wp-content/plugins/ige-ff-metier/tests/test-deploiement.php
+```
+
+Résultats attendus : `63`, `76`, `57`, `74`, `57` puis `109 réussis`, sans échec (436 tests). Le test du déploiement n'envoie aucun e-mail (ils sont interceptés) et utilise les fichiers d'essai de `tests/fixtures/`. Le test des fonds suppose qu'on soit au moins en mai de l'exercice ; il clôture un exercice fictif (2030) puis le supprime, sans toucher l'exercice réel. Les tests couvrent le schéma, les données initiales, les droits de chaque rôle, la validation des référentiels, la création et la modification des comptes, la robustesse des mots de passe, le verrouillage, la désactivation, les bornes des règles et la détection d'une falsification du journal.
 
 Les tests de saisie couvrent les droits (lecteur, administrateur non rattaché, agent sur le budget), le blocage de la caisse négative et du dépassement du disponible, les validations (date future ou hors exercice, montant, rubrique, pièce, faux PDF, fichier PHP, plafond des espèces), le budget facultatif, les révisions motivées, le verrouillage du solde initial, le paiement d'un engagement, la contrepassation (et ses refus), le solde progressif du livre, la continuité de la numérotation, le mois clôturé, les doublons et la fusion des fournisseurs, le journal d'audit.
 
@@ -144,7 +167,8 @@ Des tests d'interface ont aussi été passés pour l'étape 5 : activation de la
 - **Désinstallation** : supprimer l'extension ne supprime **jamais** les données comptables. Pour tout effacer sur un site de test, ajouter `define( 'IGE_FFM_SUPPRIMER_DONNEES', true );` dans `wp-config.php` avant de supprimer l'extension.
 - **Mot de passe provisoire** : il transite quelques minutes dans la base (message affiché une fois) avant d'être effacé ; il est inutilisable après la première connexion.
 - **Journal d'audit** : l'application ne permet ni de modifier ni de supprimer une ligne. Un accès direct à la base (phpMyAdmin) le permettrait, mais la vérification d'intégrité le signalerait.
-- **Double authentification** : pour les comptes Administration et Finance, installer en complément l'extension officielle « Two Factor » de WordPress.org et l'activer pour ces comptes, en attendant l'intégration native prévue à l'étape 5.
+- **Double authentification par e-mail** : sa sûreté dépend de celle des boîtes des agents. Recommander des adresses professionnelles et un mot de passe de messagerie différent de celui de l'application. Si la messagerie tombe en panne, les codes de secours permettent de se connecter ; en dernier recours, `define( 'IGE_FFM_DESACTIVER_2FA', true );` dans `wp-config.php` suspend la double authentification.
+- **Délivrabilité** : dans hPanel > Domaines > DNS, vérifier que les enregistrements SPF, DKIM et DMARC de ige-gestion.com sont actifs (Hostinger les propose) pour que les codes n'arrivent pas en indésirables.
 - **Revue du code** : avant la mise en production réelle, faire relire le code par un développeur ou un auditeur indépendant, en particulier les contrôles d'accès.
 
 ## 5. Pour les développeurs
@@ -162,3 +186,4 @@ Des tests d'interface ont aussi été passés pour l'étape 5 : activation de la
 3. ~~Circuit avec le central~~ : livré en 0.3.0.
 4. ~~Fonds et caisse~~ : livré en 0.4.0.
 5. ~~Pilotage~~ : livré en 1.0.0. **Le lot 1 est complet.**
+6. Déploiement (1.1.0) : recette, reprise Excel, pilote sur 2 ou 3 services, puis généralisation aux 26 services (voir le plan de déploiement).

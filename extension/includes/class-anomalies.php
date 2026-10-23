@@ -141,7 +141,7 @@ final class IGE_FFM_Anomalies {
 				if ( ! $r || ! (int) $r['actif'] ) {
 					$a['rubrique'] = 'Rubrique absente ou désactivée.';
 				}
-				if ( '' === trim( (string) $e['num_piece'] ) || empty( $pieces[ $id ] ) ) {
+				if ( 'excel' !== ( $e['origine'] ?? '' ) && ( '' === trim( (string) $e['num_piece'] ) || empty( $pieces[ $id ] ) ) ) {
 					$a['piece'] = '' === trim( (string) $e['num_piece'] ) ? 'Aucun n° de pièce.' : 'Aucun fichier joint.';
 				}
 				if ( $rid && array_key_exists( $rid, $budget ) ) {

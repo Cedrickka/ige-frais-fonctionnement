@@ -154,6 +154,7 @@ final class IGE_FFM_Installer {
 		$pages = array(
 			'premiere-connexion'      => array( 'Première connexion', 'Choisissez votre mot de passe personnel' ),
 			'double-authentification' => array( 'Double authentification', 'Un code à usage unique en plus du mot de passe' ),
+			'deploiement'             => array( 'Déploiement', 'Comptes, invitations et reprise des fichiers Excel', 'templates/administration.php' ),
 		);
 		foreach ( $pages as $slug => $p ) {
 			if ( get_page_by_path( $slug ) ) {
@@ -168,9 +169,52 @@ final class IGE_FFM_Installer {
 				)
 			);
 			if ( $id && ! is_wp_error( $id ) ) {
-				update_post_meta( $id, '_wp_page_template', 'templates/formulaire.php' );
+				update_post_meta( $id, '_wp_page_template', $p[2] ?? 'templates/formulaire.php' );
 				update_post_meta( $id, '_ige_sous_titre', $p[1] );
+				if ( 'deploiement' === $slug ) {
+					self::ajouter_au_menu_admin( $id, 'Déploiement', 'Services et reprise Excel' );
+				}
 			}
 		}
+	}
+
+	/**
+	 * Ajoute une page à la barre latérale de l'administration, sous un groupe.
+	 *
+	 * @param int    $page_id Page.
+	 * @param string $groupe  Titre du groupe.
+	 * @param string $titre   Libellé du lien.
+	 */
+	private static function ajouter_au_menu_admin( $page_id, $groupe, $titre ) {
+		$loc = get_nav_menu_locations();
+		if ( empty( $loc['menu-admin'] ) ) {
+			return;
+		}
+		$menu = (int) $loc['menu-admin'];
+		$gid  = wp_update_nav_menu_item(
+			$menu,
+			0,
+			array(
+				'menu-item-title'  => $groupe,
+				'menu-item-url'    => '#',
+				'menu-item-type'   => 'custom',
+				'menu-item-status' => 'publish',
+			)
+		);
+		if ( is_wp_error( $gid ) ) {
+			return;
+		}
+		wp_update_nav_menu_item(
+			$menu,
+			0,
+			array(
+				'menu-item-title'     => $titre,
+				'menu-item-object'    => 'page',
+				'menu-item-object-id' => $page_id,
+				'menu-item-type'      => 'post_type',
+				'menu-item-parent-id' => $gid,
+				'menu-item-status'    => 'publish',
+			)
+		);
 	}
 }

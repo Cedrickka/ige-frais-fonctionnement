@@ -114,6 +114,10 @@ final class IGE_FFM_Ecran_Comptes {
 										<a class="ige-act" href="<?php echo esc_url( add_query_arg( 'modifier', $c['user_id'], $base ) . '#ige-formulaire' ); ?>">Modifier</a>
 										<?php
 										// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
+										if ( (int) $c['actif'] && (int) $c['mdp_a_changer'] && IGE_FFM_Messagerie::adresse_valide( get_userdata( (int) $c['user_id'] ) ) ) {
+											$deja = IGE_FFM_Invitations::invite_le( (int) $c['user_id'] );
+											echo IGE_FFM_Ecrans::action_button( 'inviter', array( 'user_id' => $c['user_id'] ), $deja ? 'Renvoyer l’invitation' : 'Inviter par e-mail', 'ige-act', 'Envoyer à ' . $c['user_login'] . ' un lien pour choisir son mot de passe ?' );
+										}
 										echo IGE_FFM_Ecrans::action_button( 'compte_reset', array( 'user_id' => $c['user_id'] ), 'Réinitialiser', 'ige-act', 'Générer un nouveau mot de passe provisoire pour ' . $c['user_login'] . ' ?' );
 										if ( (int) $c['user_id'] !== get_current_user_id() && IGE_FFM_Deux_Facteurs::actif( (int) $c['user_id'] ) ) {
 											echo IGE_FFM_Ecrans::action_button( '2fa_reinitialiser', array( 'user_id' => $c['user_id'] ), 'Réinit. double auth.', 'ige-act', 'Réinitialiser la double authentification de ' . $c['user_login'] . ' (téléphone perdu ou changé) ? Elle devra l’activer de nouveau.' );
@@ -173,7 +177,7 @@ final class IGE_FFM_Ecran_Comptes {
 		$h .= '<input type="hidden" name="user_id" value="' . esc_attr( $user_id ) . '">';
 		$h .= IGE_FFM_Ecrans::field( 'user_login', 'Identifiant', $u ? $u->user_login : $val( 'user_login', '' ), array( 'required' => ! $c, 'readonly' => (bool) $c, 'help' => $c ? 'L’identifiant ne peut pas être modifié.' : 'Exemple : agent8001 ou j.mbuyi. Lettres, chiffres, point, tiret.', 'attrs' => 'autocomplete="off"' ) );
 		$h .= IGE_FFM_Ecrans::field( 'display_name', 'Nom complet', $val( 'display_name', $u ? $u->display_name : '' ), array( 'required' => true ) );
-		$h .= IGE_FFM_Ecrans::field( 'user_email', 'Adresse e-mail', $val( 'user_email', $email ), array( 'type' => 'email', 'help' => 'Facultative ; utile pour les notifications et la récupération du mot de passe.' ) );
+		$h .= IGE_FFM_Ecrans::field( 'user_email', 'Adresse e-mail', $val( 'user_email', $email ), array( 'type' => 'email', 'help' => 'Indispensable : elle reçoit l’invitation et les codes de connexion. Une adresse par personne.' ) );
 		$h .= IGE_FFM_Ecrans::field( 'profil', 'Profil', $val( 'profil', $c['profil'] ?? '' ), array( 'type' => 'select', 'options' => $profils, 'required' => true ) );
 		$h .= IGE_FFM_Ecrans::field( 'service_id', 'Service', $val( 'service_id', $c['service_id'] ?? '' ), array( 'type' => 'select', 'options' => $services, 'help' => 'Obligatoire pour les profils Agent et Responsable.' ) );
 		$h .= '<div class="ige-row"><button type="submit" class="ige-btn ige-btn-jaune">' . esc_html( $c ? 'Enregistrer' : 'Créer le compte' ) . '</button>';
@@ -182,7 +186,7 @@ final class IGE_FFM_Ecran_Comptes {
 		}
 		$h .= '</div>';
 		if ( ! $c ) {
-			$h .= '<p class="ige-small ige-muted" style="margin-top:12px">Un mot de passe provisoire est généré et affiché une seule fois. La personne devra choisir son propre mot de passe à sa première connexion.</p>';
+			$h .= '<p class="ige-small ige-muted" style="margin-top:12px">Un mot de passe provisoire est généré et affiché une seule fois. Vous pouvez aussi, au lieu de le remettre, envoyer une invitation par e-mail : la personne choisit elle-même son mot de passe par un lien personnel. Pour créer de nombreux comptes, utilisez Déploiement.</p>';
 		}
 		return $h . '</form>';
 	}

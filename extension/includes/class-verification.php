@@ -206,7 +206,7 @@ final class IGE_FFM_Verification {
 		$mails = array();
 		foreach ( $uids as $uid ) {
 			$u = get_userdata( (int) $uid );
-			if ( $u && is_email( $u->user_email ) && ! str_ends_with( $u->user_email, '@invalid.local' ) ) {
+			if ( IGE_FFM_Messagerie::adresse_valide( $u ) ) {
 				$mails[] = $u->user_email;
 			}
 		}
@@ -220,7 +220,7 @@ final class IGE_FFM_Verification {
 		$corps = "Bonjour,\n\nAdministration et Finance a rejeté les écritures suivantes :\n\n" . implode( "\n", $lignes )
 			. "\n\nMotif : " . $motif
 			. "\n\n" . ( IGE_FFM_Reglages::get( 'contrepassation_rejet' ) ? "Corrigez-les par contrepassation puis saisissez l'écriture juste, et transmettez de nouveau.\n" : "Corrigez-les puis transmettez de nouveau.\n" )
-			. ige_ffm_url( 'transmission' ) . "\n\n-- \nIGE · Gestion des frais de fonctionnement\n";
-		wp_mail( $mails, '[IGE] Écriture(s) rejetée(s) – ' . IGE_FFM_Comptes::service_code( $sid ), $corps );
+			. ige_ffm_url( 'transmission' );
+		IGE_FFM_Messagerie::envoyer( $mails, 'Écriture(s) rejetée(s) – ' . IGE_FFM_Comptes::service_code( $sid ), $corps );
 	}
 }

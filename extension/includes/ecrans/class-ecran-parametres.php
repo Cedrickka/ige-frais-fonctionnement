@@ -20,6 +20,8 @@ final class IGE_FFM_Ecran_Parametres {
 		add_action( 'admin_post_ige_ffm_exercice_suivant', array( __CLASS__, 'handle_exercice_suivant' ) );
 		add_action( 'admin_post_ige_ffm_exercice_budget', array( __CLASS__, 'handle_exercice_budget' ) );
 		add_action( 'admin_post_ige_ffm_cloture_exercice', array( __CLASS__, 'handle_cloture' ) );
+		add_action( 'admin_post_ige_ffm_smtp', array( __CLASS__, 'handle_smtp' ) );
+		add_action( 'admin_post_ige_ffm_smtp_test', array( __CLASS__, 'handle_smtp_test' ) );
 	}
 
 	/**
@@ -102,6 +104,7 @@ final class IGE_FFM_Ecran_Parametres {
 				<?php endif; ?>
 				<p class="ige-small ige-muted">Un exercice « préparé » reçoit les budgets de l’année suivante mais aucune écriture ; il s’ouvre automatiquement à la clôture de l’exercice en cours.</p>
 				<?php echo self::cloture(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				<?php echo self::messagerie(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			</section>
 
 			<?php
@@ -143,6 +146,91 @@ final class IGE_FFM_Ecran_Parametres {
 		IGE_FFM_Reglages::save( wp_unslash( $_POST ) );
 		ige_ffm_flash( 'ok', 'Règles enregistrées', 'Les modifications sont inscrites au journal d’audit.' );
 		wp_safe_redirect( ige_ffm_url( 'parametres' ) );
+		exit;
+	}
+
+	/**
+	 * Réglages de la messagerie de la plateforme.
+	 *
+	 * @return string
+	 */
+	private static function messagerie() {
+		$r   = IGE_FFM_Messagerie::reglages();
+		$cst = IGE_FFM_Messagerie::par_constantes();
+		ob_start();
+		?>
+		<h3 id="ige-messagerie" style="margin:26px 0 8px;font-size:15px">Messagerie de la plateforme</h3>
+		<p class="ige-small" style="margin-top:0">Les codes de connexion, invitations et avis de rejet partent de cette boîte (Hostinger : serveur sortant smtp.hostinger.com, port 465).</p>
+		<?php echo $r['actif'] ? ige_ffm_banner( 'ok', 'Messagerie configurée', ' Envoi depuis ' . esc_html( $r['expediteur'] ) . '.' ) : ige_ffm_banner( 'warn', 'Messagerie non configurée', ' Les e-mails partent par la fonction d’envoi par défaut du serveur et risquent d’arriver en indésirables, ou de ne pas arriver.' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+		<?php if ( $cst ) : ?>
+			<p class="ige-small ige-muted">Réglages définis dans wp-config.php (constantes IGE_FFM_SMTP_…) : ils ne se modifient pas ici.</p>
+		<?php else : ?>
+			<?php echo IGE_FFM_Ecrans::form_open( 'smtp', 'autocomplete="off"' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				<div class="ige-grid ige-cols-2" style="gap:0 12px">
+					<?php echo IGE_FFM_Ecrans::field( 'utilisateur', 'Adresse de la boîte (identifiant SMTP)', $r['utilisateur'], array( 'type' => 'email', 'attrs' => 'placeholder="contact@ige-gestion.com"' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					<?php echo IGE_FFM_Ecrans::field( 'mot_de_passe', 'Mot de passe de la boîte', '', array( 'type' => 'password', 'attrs' => 'autocomplete="new-password" placeholder="' . ( $r['mot_de_passe'] ? 'Enregistré — laisser vide pour le garder' : '' ) . '"' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					<?php echo IGE_FFM_Ecrans::field( 'hote', 'Serveur sortant', $r['hote'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					<?php echo IGE_FFM_Ecrans::field( 'port', 'Port', (string) $r['port'], array( 'type' => 'select', 'options' => array( 465 => '465 (SSL)', 587 => '587 (TLS)' ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					<?php echo IGE_FFM_Ecrans::field( 'nom', 'Nom affiché', $r['nom'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					<?php echo IGE_FFM_Ecrans::field( 'expediteur', 'Adresse d’expédition (facultatif)', $r['expediteur'] === $r['utilisateur'] ? '' : $r['expediteur'], array( 'type' => 'email', 'help' => 'Par défaut, l’adresse de la boîte.' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				</div>
+				<button type="submit" class="ige-btn ige-btn-line">Enregistrer la messagerie</button>
+			</form>
+		<?php endif; ?>
+		<?php echo IGE_FFM_Ecrans::form_open( 'smtp_test', 'class="ige-row" style="margin-top:10px"' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			<button type="submit" class="ige-btn ige-btn-line">Envoyer un e-mail de test à <?php echo esc_html( wp_get_current_user()->user_email ); ?></button>
+		</form>
+		<?php
+		return ob_get_clean();
+	}
+
+	/**
+	 * Enregistrement de la messagerie.
+	 */
+	public static function handle_smtp() {
+		ige_ffm_check_form( 'smtp' );
+		ige_ffm_require( 'ige_administrer' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$mdp = isset( $_POST['mot_de_passe'] ) ? (string) wp_unslash( $_POST['mot_de_passe'] ) : '';
+		$res = IGE_FFM_Messagerie::enregistrer(
+			array(
+				'utilisateur'  => ige_ffm_post( 'utilisateur' ),
+				'mot_de_passe' => $mdp,
+				'hote'         => ige_ffm_post( 'hote' ),
+				'port'         => ige_ffm_post( 'port' ),
+				'nom'          => ige_ffm_post( 'nom' ),
+				'expediteur'   => ige_ffm_post( 'expediteur' ),
+			)
+		);
+		if ( is_wp_error( $res ) ) {
+			ige_ffm_flash( 'ko', 'Messagerie non enregistrée', $res->get_error_message() );
+		} else {
+			ige_ffm_flash( 'ok', 'Messagerie enregistrée', 'Envoyez un e-mail de test pour vérifier.' );
+		}
+		wp_safe_redirect( ige_ffm_url( 'parametres' ) . '#ige-messagerie' );
+		exit;
+	}
+
+	/**
+	 * E-mail de test.
+	 */
+	public static function handle_smtp_test() {
+		ige_ffm_check_form( 'smtp_test' );
+		ige_ffm_require( 'ige_administrer' );
+		$u      = wp_get_current_user();
+		$erreur = '';
+		$capt   = static function ( $e ) use ( &$erreur ) {
+			$erreur = $e->get_error_message();
+		};
+		add_action( 'wp_mail_failed', $capt );
+		$ok = IGE_FFM_Messagerie::adresse_valide( $u ) && IGE_FFM_Messagerie::envoyer( $u->user_email, 'E-mail de test', "Bonjour,\n\nCet e-mail confirme que la messagerie de la plateforme fonctionne.\n\nEnvoyé le " . wp_date( 'd/m/Y à H:i' ) . '.' );
+		remove_action( 'wp_mail_failed', $capt );
+		if ( $ok ) {
+			ige_ffm_flash( 'ok', 'E-mail de test envoyé', 'Vérifiez la boîte ' . $u->user_email . ' (et les courriers indésirables).' );
+		} else {
+			ige_ffm_flash( 'ko', 'Échec de l’envoi', $erreur ? 'Message du serveur : ' . $erreur : 'Votre compte n’a pas d’adresse e-mail valide.' );
+		}
+		wp_safe_redirect( ige_ffm_url( 'parametres' ) . '#ige-messagerie' );
 		exit;
 	}
 

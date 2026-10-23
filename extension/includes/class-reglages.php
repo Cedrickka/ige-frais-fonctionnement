@@ -42,6 +42,7 @@ final class IGE_FFM_Reglages {
 			'inactivite_minutes'         => array( 'int', 30, "Déconnexion après inactivité (minutes)", 'securite' ),
 			'mdp_longueur'               => array( 'int', 10, 'Longueur minimale du mot de passe', 'securite' ),
 			'deux_facteurs_admin'        => array( 'bool', true, 'Double authentification obligatoire pour Administration et Finance et les administrateurs du site', 'securite' ),
+			'deux_facteurs_tous'         => array( 'bool', false, 'Double authentification obligatoire pour tous les comptes (code par e-mail ; chaque compte doit avoir une adresse)', 'securite' ),
 			'revue_comptes_le'           => array( 'date', '', 'Dernière revue des comptes', 'interne' ),
 		);
 	}

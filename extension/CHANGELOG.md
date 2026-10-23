@@ -1,5 +1,15 @@
 # Journal des versions
 
+## 1.1.0 — 23 octobre 2026 · Déploiement
+
+- Messagerie de la plateforme : envoi par la boîte Hostinger `contact@ige-gestion.com` en SMTP authentifié, réglage avec mot de passe chiffré ou constantes `wp-config.php`, e-mail de test, modèle aux couleurs de l'institution, échecs journalisés.
+- Double authentification par code envoyé par e-mail (méthode par défaut) : 6 chiffres, 10 minutes, usage unique, renvoi limité ; activation après réception d'un premier code ; application d'authentification toujours possible ; règle « obligatoire pour tous ».
+- Invitations par e-mail (lien personnel de 24 h pour choisir son mot de passe).
+- Nouvel écran Administration > Déploiement : préparation des services, création des comptes en nombre (CSV), reprise des fichiers Excel (classeur central et fichiers de service) avec aperçu puis import.
+- Notification des rejets envoyée par la messagerie de la plateforme.
+- Schéma version 7 (origine des écritures : saisie ou reprise Excel ; pas d'anomalie « pièce manquante » sur les écritures reprises).
+- 109 tests automatiques supplémentaires (436 au total).
+
 ## 1.0.0 — 23 octobre 2026 · Étape 5 : pilotage — lot 1 complet
 
 - Écrans Tableau de bord, Consolidation, Rapports, Synthèse (Direction), Vérifier un document (public), Double authentification.

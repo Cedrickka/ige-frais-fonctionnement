@@ -63,6 +63,22 @@ final class IGE_FFM_Audit {
 			'modification_fournisseur' => 'Modification de fournisseur',
 			'fusion_fournisseurs'     => 'Fusion de fournisseurs',
 			'export_livre'            => 'Export du livre de caisse',
+			'export_consolidation'    => 'Export de la consolidation',
+			'emission_document'       => 'Émission d’un document',
+			'activation_2fa'          => 'Activation de la double authentification',
+			'desactivation_2fa'       => 'Désactivation de la double authentification',
+			'reinitialisation_2fa'    => 'Réinitialisation de la double authentification',
+			'changement_methode_2fa'  => 'Changement de méthode de double authentification',
+			'codes_secours_2fa'       => 'Nouveaux codes de secours',
+			'code_secours_2fa'        => 'Connexion avec un code de secours',
+			'echec_2fa'               => 'Échec de double authentification',
+			'echec_code_2fa'          => 'Code de vérification erroné',
+			'reglage_messagerie'      => 'Réglage de la messagerie',
+			'echec_envoi_courriel'    => 'Échec d’envoi d’un e-mail',
+			'invitation'              => 'Invitation par e-mail',
+			'import_comptes'          => 'Création de comptes en nombre',
+			'reprise_central'         => 'Reprise : classeur central',
+			'reprise_service'         => 'Reprise : fichier de service',
 		);
 	}
 

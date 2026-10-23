@@ -1,12 +1,14 @@
 <?php
 /**
- * Double authentification (EF-07) : codes à usage unique (TOTP, RFC 6238) générés par une
- * application d'authentification (Google Authenticator, Microsoft Authenticator, FreeOTP…),
- * et dix codes de secours à usage unique.
+ * Double authentification (EF-07). Deux méthodes :
+ * - « email » (par défaut) : un code à 6 chiffres, valable 10 minutes, est envoyé par la
+ *   messagerie de la plateforme à l'adresse du compte à chaque connexion ;
+ * - « application » : codes TOTP (RFC 6238) d'une application d'authentification.
+ * Dans les deux cas, dix codes de secours à usage unique.
  *
- * Connexion : après le mot de passe, la session n'est pas ouverte ; un jeton de 5 minutes
+ * Connexion : après le mot de passe, la session n'est pas ouverte ; un jeton de 10 minutes
  * mène à l'écran du code. Obligatoire pour Administration et Finance et les administrateurs
- * du site (réglable), facultative pour les autres comptes.
+ * du site, et, si le réglage est coché, pour tous les comptes ; facultative sinon.
  *
  * En cas d'urgence (téléphone perdu et plus de codes de secours pour le dernier administrateur),
  * ajouter define( 'IGE_FFM_DESACTIVER_2FA', true ); dans wp-config.php, se connecter,
@@ -61,7 +63,125 @@ final class IGE_FFM_Deux_Facteurs {
 	 * @return bool
 	 */
 	public static function obligatoire( $uid ) {
+		if ( IGE_FFM_Reglages::get( 'deux_facteurs_tous' ) && user_can( $uid, 'ige_acceder' ) ) {
+			return true;
+		}
 		return (bool) IGE_FFM_Reglages::get( 'deux_facteurs_admin' ) && user_can( $uid, 'ige_administrer' );
+	}
+
+	/**
+	 * Méthode du compte : « email » ou « application ».
+	 *
+	 * @param int $uid Utilisateur.
+	 * @return string
+	 */
+	public static function methode( $uid ) {
+		$m = (string) get_user_meta( $uid, '_ige_2fa_methode', true );
+		if ( '' === $m ) {
+			return get_user_meta( $uid, '_ige_2fa_secret', true ) ? 'application' : 'email';
+		}
+		return 'application' === $m ? 'application' : 'email';
+	}
+
+	// ---------------------------------------------------------------------
+	// Codes envoyés par e-mail.
+	// ---------------------------------------------------------------------
+
+	/**
+	 * Empreinte d'un code e-mail (le code lui-même n'est jamais conservé).
+	 *
+	 * @param string $code Code.
+	 * @param int    $uid  Utilisateur.
+	 * @return string
+	 */
+	private static function empreinte_otp( $code, $uid ) {
+		return hash_hmac( 'sha256', preg_replace( '/\D/', '', (string) $code ) . '|' . (int) $uid, wp_salt( 'auth' ) );
+	}
+
+	/**
+	 * Génère un code et l'envoie à l'adresse du compte.
+	 *
+	 * @param int    $uid   Utilisateur.
+	 * @param string $objet connexion | activation.
+	 * @return array|WP_Error [ empreinte, expire ].
+	 */
+	public static function envoyer_otp( $uid, $objet = 'connexion' ) {
+		$u = get_userdata( $uid );
+		if ( ! IGE_FFM_Messagerie::adresse_valide( $u ) ) {
+			return new WP_Error( 'adresse', 'Ce compte n’a pas d’adresse e-mail valide. Demandez à Administration et Finance de l’ajouter.' );
+		}
+		$code = str_pad( (string) random_int( 0, 999999 ), 6, '0', STR_PAD_LEFT );
+		$txt  = 'activation' === $objet
+			? "Bonjour {$u->display_name},\n\nVoici le code pour activer la double authentification de votre compte {$u->user_login} :\n\n**{$code}**\n\nIl est valable 10 minutes."
+			: "Bonjour {$u->display_name},\n\nVoici votre code de connexion à l’application des frais de fonctionnement (compte {$u->user_login}) :\n\n**{$code}**\n\nIl est valable 10 minutes et ne sert qu’une fois.\n\nSi vous n’essayez pas de vous connecter, quelqu’un connaît votre mot de passe : changez-le et prévenez Administration et Finance.";
+		$ok   = IGE_FFM_Messagerie::envoyer( $u->user_email, 'activation' === $objet ? 'Activation de la double authentification' : 'Votre code de connexion', $txt );
+		if ( ! $ok ) {
+			return new WP_Error( 'envoi', 'L’e-mail n’a pas pu être envoyé. Réessayez dans un instant, utilisez un code de secours, ou prévenez Administration et Finance.' );
+		}
+		return array( self::empreinte_otp( $code, $uid ), time() + 10 * MINUTE_IN_SECONDS );
+	}
+
+	/**
+	 * Vérifie un code e-mail.
+	 *
+	 * @param int    $uid       Utilisateur.
+	 * @param string $saisi     Code saisi.
+	 * @param string $empreinte Empreinte attendue.
+	 * @param int    $expire    Échéance.
+	 * @return bool
+	 */
+	public static function verifier_otp( $uid, $saisi, $empreinte, $expire ) {
+		$saisi = preg_replace( '/\D/', '', (string) $saisi );
+		return 6 === strlen( $saisi ) && $empreinte && time() <= (int) $expire && hash_equals( (string) $empreinte, self::empreinte_otp( $saisi, $uid ) );
+	}
+
+	/**
+	 * Envoie le code d'activation par e-mail (au plus un envoi par minute).
+	 *
+	 * @param int $uid Utilisateur.
+	 * @return true|WP_Error
+	 */
+	public static function demander_activation_email( $uid ) {
+		$o = (array) get_user_meta( $uid, '_ige_2fa_otp', true );
+		if ( ! empty( $o['envoye'] ) && time() - (int) $o['envoye'] < 60 ) {
+			return new WP_Error( 'delai', 'Un code vient d’être envoyé : attendez une minute avant d’en demander un autre.' );
+		}
+		$r = self::envoyer_otp( $uid, 'activation' );
+		if ( is_wp_error( $r ) ) {
+			return $r;
+		}
+		update_user_meta( $uid, '_ige_2fa_otp', array( 'empreinte' => $r[0], 'expire' => $r[1], 'envoye' => time(), 'essais' => 0 ) );
+		return true;
+	}
+
+	/**
+	 * Active la double authentification par e-mail après saisie du code reçu.
+	 *
+	 * @param int    $uid  Utilisateur.
+	 * @param string $code Code.
+	 * @return string[]|WP_Error Codes de secours.
+	 */
+	public static function activer_email( $uid, $code ) {
+		$o = (array) get_user_meta( $uid, '_ige_2fa_otp', true );
+		if ( empty( $o['empreinte'] ) ) {
+			return new WP_Error( 'code', 'Demandez d’abord l’envoi du code.' );
+		}
+		if ( (int) ( $o['essais'] ?? 0 ) >= 5 ) {
+			delete_user_meta( $uid, '_ige_2fa_otp' );
+			return new WP_Error( 'code', 'Trop d’essais : demandez un nouveau code.' );
+		}
+		if ( ! self::verifier_otp( $uid, $code, $o['empreinte'], $o['expire'] ) ) {
+			$o['essais'] = (int) ( $o['essais'] ?? 0 ) + 1;
+			update_user_meta( $uid, '_ige_2fa_otp', $o );
+			return new WP_Error( 'code', time() > (int) $o['expire'] ? 'Ce code a expiré : demandez-en un nouveau.' : 'Code incorrect.' );
+		}
+		delete_user_meta( $uid, '_ige_2fa_otp' );
+		delete_user_meta( $uid, '_ige_2fa_secret' );
+		delete_user_meta( $uid, '_ige_2fa_attente' );
+		update_user_meta( $uid, '_ige_2fa_methode', 'email' );
+		update_user_meta( $uid, '_ige_2fa_actif', 1 );
+		IGE_FFM_Audit::log( 'activation_2fa', 'compte', $uid, null, array( 'methode' => 'e-mail' ), $uid );
+		return self::nouveaux_codes_secours( $uid );
 	}
 
 	// ---------------------------------------------------------------------
@@ -174,7 +294,7 @@ final class IGE_FFM_Deux_Facteurs {
 	 * @param string $s Secret.
 	 * @return string
 	 */
-	private static function chiffrer( $s ) {
+	public static function chiffrer( $s ) {
 		if ( ! function_exists( 'openssl_encrypt' ) ) {
 			return 'p:' . $s;
 		}
@@ -188,7 +308,7 @@ final class IGE_FFM_Deux_Facteurs {
 	 * @param string $v Valeur stockée.
 	 * @return string
 	 */
-	private static function dechiffrer( $v ) {
+	public static function dechiffrer( $v ) {
 		$v = (string) $v;
 		if ( 0 === strpos( $v, 'p:' ) ) {
 			return substr( $v, 2 );
@@ -243,8 +363,9 @@ final class IGE_FFM_Deux_Facteurs {
 		update_user_meta( $uid, '_ige_2fa_secret', self::chiffrer( $s ) );
 		update_user_meta( $uid, '_ige_2fa_dernier', $pas );
 		update_user_meta( $uid, '_ige_2fa_actif', 1 );
+		update_user_meta( $uid, '_ige_2fa_methode', 'application' );
 		delete_user_meta( $uid, '_ige_2fa_attente' );
-		IGE_FFM_Audit::log( 'activation_2fa', 'compte', $uid, null, null, $uid );
+		IGE_FFM_Audit::log( 'activation_2fa', 'compte', $uid, null, array( 'methode' => 'application' ), $uid );
 		return self::nouveaux_codes_secours( $uid );
 	}
 
@@ -281,18 +402,25 @@ final class IGE_FFM_Deux_Facteurs {
 	}
 
 	/**
-	 * Vérifie un code (application ou secours) pour un compte actif.
+	 * Vérifie un code (e-mail, application ou secours) pour un compte actif.
 	 *
 	 * @param int    $uid   Utilisateur.
 	 * @param string $saisi Code.
-	 * @return string|false « totp », « secours » ou false.
+	 * @param array  $otp   Code e-mail attendu : empreinte, expire.
+	 * @return string|false « email », « totp », « secours » ou false.
 	 */
-	public static function controler( $uid, $saisi ) {
-		$s   = self::dechiffrer( get_user_meta( $uid, '_ige_2fa_secret', true ) );
-		$pas = self::verifier_code( $s, $saisi, (int) get_user_meta( $uid, '_ige_2fa_dernier', true ) );
-		if ( false !== $pas ) {
-			update_user_meta( $uid, '_ige_2fa_dernier', $pas );
-			return 'totp';
+	public static function controler( $uid, $saisi, array $otp = array() ) {
+		if ( 'email' === self::methode( $uid ) ) {
+			if ( $otp && self::verifier_otp( $uid, $saisi, $otp['empreinte'] ?? '', $otp['expire'] ?? 0 ) ) {
+				return 'email';
+			}
+		} else {
+			$s   = self::dechiffrer( get_user_meta( $uid, '_ige_2fa_secret', true ) );
+			$pas = self::verifier_code( $s, $saisi, (int) get_user_meta( $uid, '_ige_2fa_dernier', true ) );
+			if ( false !== $pas ) {
+				update_user_meta( $uid, '_ige_2fa_dernier', $pas );
+				return 'totp';
+			}
 		}
 		$c = strtoupper( preg_replace( '/[^A-Za-z0-9]/', '', (string) $saisi ) );
 		if ( 8 === strlen( $c ) ) {
@@ -325,7 +453,7 @@ final class IGE_FFM_Deux_Facteurs {
 		if ( (int) $par === (int) $uid && self::obligatoire( $uid ) ) {
 			return new WP_Error( 'obligatoire', 'La double authentification est obligatoire pour votre profil.' );
 		}
-		foreach ( array( '_ige_2fa_actif', '_ige_2fa_secret', '_ige_2fa_secours', '_ige_2fa_dernier', '_ige_2fa_attente' ) as $k ) {
+		foreach ( array( '_ige_2fa_actif', '_ige_2fa_secret', '_ige_2fa_secours', '_ige_2fa_dernier', '_ige_2fa_attente', '_ige_2fa_methode', '_ige_2fa_otp' ) as $k ) {
 			delete_user_meta( $uid, $k );
 		}
 		IGE_FFM_Audit::log( (int) $par === (int) $uid ? 'desactivation_2fa' : 'reinitialisation_2fa', 'compte', $uid, null, $motif ? array( 'motif' => $motif ) : null, $par );
@@ -352,19 +480,40 @@ final class IGE_FFM_Deux_Facteurs {
 		$jeton = wp_generate_password( 40, false, false );
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$redir = isset( $_REQUEST['redirect_to'] ) ? esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) ) : '';
-		set_transient(
-			'ige_ffm_2fa_' . hash( 'sha256', $jeton ),
-			array(
-				'uid'      => (int) $user->ID,
-				'login'    => $login,
-				'remember' => ! empty( $_POST['rememberme'] ), // phpcs:ignore WordPress.Security.NonceVerification.Missing
-				'redirect' => $redir,
-				'essais'   => 0,
-			),
-			5 * MINUTE_IN_SECONDS
+		$etat  = array(
+			'uid'      => (int) $user->ID,
+			'login'    => $login,
+			'remember' => ! empty( $_POST['rememberme'] ), // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			'redirect' => $redir,
+			'essais'   => 0,
+			'envois'   => 0,
 		);
+		if ( 'email' === self::methode( $user->ID ) ) {
+			$etat = self::envoyer_otp_connexion( $etat );
+		}
+		set_transient( 'ige_ffm_2fa_' . hash( 'sha256', $jeton ), $etat, 10 * MINUTE_IN_SECONDS );
 		wp_safe_redirect( add_query_arg( array( 'action' => 'ige_2fa', 'jeton' => $jeton ), wp_login_url() ) );
 		exit;
+	}
+
+	/**
+	 * Envoie (ou renvoie) le code de connexion et met à jour l'état de la connexion en cours.
+	 *
+	 * @param array $etat État.
+	 * @return array
+	 */
+	private static function envoyer_otp_connexion( array $etat ) {
+		$r = self::envoyer_otp( (int) $etat['uid'], 'connexion' );
+		++$etat['envois'];
+		$etat['envoye'] = time();
+		if ( is_wp_error( $r ) ) {
+			$etat['erreur_envoi'] = $r->get_error_message();
+			IGE_FFM_Audit::log( 'echec_code_2fa', 'compte', (int) $etat['uid'], null, array( 'erreur' => $r->get_error_code() ), (int) $etat['uid'] );
+		} else {
+			$etat['erreur_envoi'] = '';
+			$etat['otp']          = array( 'empreinte' => $r[0], 'expire' => $r[1] );
+		}
+		return $etat;
 	}
 
 	/**
@@ -379,10 +528,23 @@ final class IGE_FFM_Deux_Facteurs {
 			wp_safe_redirect( add_query_arg( 'login', 'code_expire', home_url( '/' ) ) );
 			exit;
 		}
-		$erreur = '';
-		if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) {
+		$erreur  = '';
+		$info    = '';
+		$email   = 'email' === self::methode( (int) $etat['uid'] );
+		$u       = get_userdata( (int) $etat['uid'] );
+		if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? '' ) && $email && ! empty( $_POST['ige_renvoyer'] ) ) {
+			if ( (int) $etat['envois'] >= 3 ) {
+				$erreur = 'Trois codes ont déjà été envoyés. Utilisez un code de secours ou reconnectez-vous plus tard.';
+			} elseif ( time() - (int) ( $etat['envoye'] ?? 0 ) < 60 ) {
+				$erreur = 'Attendez une minute avant de demander un nouveau code.';
+			} else {
+				$etat = self::envoyer_otp_connexion( $etat );
+				set_transient( $cle, $etat, 10 * MINUTE_IN_SECONDS );
+				$info = $etat['erreur_envoi'] ? '' : 'Un nouveau code a été envoyé ; le précédent ne fonctionne plus.';
+			}
+		} elseif ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) {
 			$code = isset( $_POST['ige_code'] ) ? sanitize_text_field( wp_unslash( $_POST['ige_code'] ) ) : '';
-			$ok   = self::controler( (int) $etat['uid'], $code );
+			$ok   = self::controler( (int) $etat['uid'], $code, (array) ( $etat['otp'] ?? array() ) );
 			if ( $ok ) {
 				delete_transient( $cle );
 				$user = get_userdata( (int) $etat['uid'] );
@@ -400,20 +562,33 @@ final class IGE_FFM_Deux_Facteurs {
 				wp_safe_redirect( add_query_arg( 'login', 'code_expire', home_url( '/' ) ) );
 				exit;
 			}
-			set_transient( $cle, $etat, 5 * MINUTE_IN_SECONDS );
-			$erreur = 'Code incorrect. Il vous reste ' . ( 5 - $etat['essais'] ) . ' essai(s).';
+			set_transient( $cle, $etat, 10 * MINUTE_IN_SECONDS );
+			$erreur = 'Code incorrect ou expiré. Il vous reste ' . ( 5 - $etat['essais'] ) . ' essai(s).';
 		}
 		// phpcs:enable
-		login_header( 'Double authentification', '', $erreur ? new WP_Error( 'code', $erreur ) : null );
+		if ( $email && ! empty( $etat['erreur_envoi'] ) && ! $erreur ) {
+			$erreur = $etat['erreur_envoi'];
+		}
+		login_header( 'Double authentification', $info ? '<p class="message">' . esc_html( $info ) . '</p>' : '', $erreur ? new WP_Error( 'code', $erreur ) : null );
 		?>
 		<form name="ige2fa" id="loginform" action="<?php echo esc_url( add_query_arg( array( 'action' => 'ige_2fa', 'jeton' => $jeton ), wp_login_url() ) ); ?>" method="post" autocomplete="off">
-			<p style="margin-bottom:14px">Ouvrez votre application d’authentification et saisissez le code à 6 chiffres affiché pour <b>IGE Frais</b>. Sans votre téléphone, utilisez un code de secours.</p>
+			<?php if ( $email ) : ?>
+				<p style="margin-bottom:14px">Un code à 6 chiffres vient d’être envoyé à <b><?php echo esc_html( IGE_FFM_Messagerie::masquer( $u ? $u->user_email : '' ) ); ?></b> depuis l’adresse de la plateforme. Il est valable 10 minutes. Pensez à regarder dans les courriers indésirables. Sans accès à votre messagerie, utilisez un code de secours.</p>
+			<?php else : ?>
+				<p style="margin-bottom:14px">Ouvrez votre application d’authentification et saisissez le code à 6 chiffres affiché pour <b>IGE Frais</b>. Sans votre téléphone, utilisez un code de secours.</p>
+			<?php endif; ?>
 			<p>
 				<label for="ige_code">Code de vérification</label>
 				<input type="text" name="ige_code" id="ige_code" class="input" inputmode="numeric" autocomplete="one-time-code" maxlength="9" required autofocus>
 			</p>
 			<p class="submit"><input type="submit" class="button button-primary button-large" value="Valider"></p>
 		</form>
+		<?php if ( $email ) : ?>
+			<form method="post" action="<?php echo esc_url( add_query_arg( array( 'action' => 'ige_2fa', 'jeton' => $jeton ), wp_login_url() ) ); ?>" style="text-align:center;margin-top:12px;background:none;border:0;box-shadow:none;padding:0">
+				<input type="hidden" name="ige_renvoyer" value="1">
+				<button type="submit" class="button-link" style="background:none;border:0;color:#007fc7;cursor:pointer;text-decoration:underline">Je n’ai rien reçu : renvoyer un code</button>
+			</form>
+		<?php endif; ?>
 		<?php
 		login_footer( 'ige_code' );
 		exit;

@@ -32,6 +32,7 @@ require_once __DIR__ . '/ecrans/class-ecran-tableau.php';
 require_once __DIR__ . '/ecrans/class-ecran-consolidation.php';
 require_once __DIR__ . '/ecrans/class-ecran-rapports.php';
 require_once __DIR__ . '/ecrans/class-ecran-deux-facteurs.php';
+require_once __DIR__ . '/ecrans/class-ecran-deploiement.php';
 
 /**
  * Routeur des écrans.
@@ -65,6 +66,7 @@ final class IGE_FFM_Ecrans {
 			'rapports'           => array( 'ige_rapports', 'IGE_FFM_Ecran_Rapports' ),
 			'synthese'           => array( 'ige_voir_tout', 'IGE_FFM_Ecran_Synthese' ),
 			'double-authentification' => array( 'read', 'IGE_FFM_Ecran_Deux_Facteurs' ),
+			'deploiement'        => array( 'ige_administrer', 'IGE_FFM_Ecran_Deploiement' ),
 		);
 	}
 

@@ -1,0 +1,8 @@
+identifiant;nom;email;profil;service
+t.resp9990;Test Responsable;t.resp9990@exemple.cd;RESPONSABLE;9990 TEST
+t.agent9990;Test Agent;t.agent9990@exemple.cd;agent;9990test
+t.bad;Sans Mail;;AGENT;9990 TEST
+t.inconnu;Profil X;x@exemple.cd;CHEF;9990 TEST
+t.svc;Service X;y@exemple.cd;AGENT;0000 ZZ
+t.dir9990;Direction Test;t.dir9990@exemple.cd;LECTEUR;
+t.agent9990;Doublon;z@exemple.cd;AGENT;9990 TEST
