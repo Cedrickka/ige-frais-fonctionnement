@@ -1,5 +1,16 @@
 # Journal des versions
 
+## 2.1.0 — 24 octobre 2026 · Priorité 3, stocks et fonctions du site
+
+- Fonctions du site : 12 modules activables par Administration et Finance ; menus, pages, formulaires, alertes et e-mails suivent ; données conservées.
+- Devise USD désactivable (saisie, taux du jour, billetage de l'arrêté).
+- Parc automobile et gestion du charroi (VA-41) : véhicules, chauffeurs, documents de bord et échéances, demandes de véhicule, attribution contrôlée, ordres de route et carnet de bord, carburant et consommation, entretiens planifiés, réparations et immobilisation, sinistres, coûts par véhicule et par km, alertes, export Excel ; écran « Véhicules » pour les services.
+- Stocks de fournitures (VA-42) : articles, bons d'entrée et de sortie par bureau, coût moyen pondéré, consommation par bureau, inventaire, seuils, export Excel.
+- Score de risque par service (VA-21) et comparaison des services avec effectifs (VA-23).
+- Nomenclature budgétaire de l'État (VA-33) : référentiel, rattachement contrôlé, consolidation par ligne.
+- Rapport hebdomadaire par e-mail (VA-34) et écran Notifications.
+- Schéma version 10. 112 tests automatiques supplémentaires (746 au total).
+
 ## 2.0.0 — 24 octobre 2026 · Lot 2
 
 - Missions d'inspection (VA-40) : ordre de mission, barème paramétrable (fictif tant que le barème officiel n'est pas saisi), visas, ordre de mission officiel en PDF avec code QR, paiement par la caisse du service avec l'ordre de mission en pièce, rapport de retour, liquidation (complément ou reversement).

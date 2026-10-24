@@ -15,7 +15,16 @@ defined( 'ABSPATH' ) || exit;
 final class IGE_FFM_Devises {
 
 	/**
-	 * Taux applicable à une date : le dernier fixé à cette date ou avant.
+	 * La devise USD est-elle utilisée (Fonctions du site) ?
+	 *
+	 * @return bool
+	 */
+	public static function active() {
+		return IGE_FFM_Fonctions::active( 'devise_usd' );
+	}
+
+	/**
+	 * Taux applicable à une date (le dernier fixé à cette date ou avant).
 	 *
 	 * @param string $date   AAAA-MM-JJ.
 	 * @param string $devise Devise.

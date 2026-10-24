@@ -24,12 +24,25 @@ final class IGE_FFM_Hors_Connexion {
 	 * Crochets.
 	 */
 	public static function init() {
+		if ( ! IGE_FFM_Fonctions::active( 'hors_connexion' ) ) {
+			add_action( 'wp_footer', array( __CLASS__, 'desinstaller' ) );
+			return;
+		}
 		add_action( 'init', array( __CLASS__, 'servir' ), 1 );
 		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'scripts' ), 30 );
 		add_action( 'wp_head', array( __CLASS__, 'manifeste' ) );
 		add_action( 'wp_footer', array( __CLASS__, 'nettoyage_deconnecte' ) );
 		add_action( 'wp_ajax_ige_ffm_jeton', array( __CLASS__, 'jeton' ) );
+	}
+
+	/**
+	 * Fonction désactivée : retire le service worker déjà installé sur les téléphones.
+	 */
+	public static function desinstaller() {
+		if ( is_user_logged_in() ) {
+			echo "<script>if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(x){if(x.active&&x.active.scriptURL.indexOf('ige-ffm-sw')!==-1){x.unregister();}});});}</script>\n";
+		}
 	}
 
 	/**

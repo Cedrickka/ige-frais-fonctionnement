@@ -59,7 +59,7 @@ final class IGE_FFM_Ecran_Tresorerie {
 		if ( $p['tension'] ) {
 			echo ige_ffm_banner( 'ko', 'Tension prévue en ' . $noms[ $p['tension']['mois'] ], ' Il manquerait ' . esc_html( ige_ffm_montant( $p['tension']['manque'] ) ) . ' : décalez des dépenses non urgentes, réduisez des demandes de fonds ou obtenez une dotation plus tôt.' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		}
-		if ( ! $t0 || strtotime( $auj ) - strtotime( $t0['date_effet'] ) > 7 * DAY_IN_SECONDS ) {
+		if ( IGE_FFM_Devises::active() && ( ! $t0 || strtotime( $auj ) - strtotime( $t0['date_effet'] ) > 7 * DAY_IN_SECONDS ) ) {
 			echo ige_ffm_banner( 'warn', 'Taux du jour à mettre à jour', ' ' . ( $t0 ? 'Dernier taux : ' . esc_html( wp_date( 'd/m/Y', strtotime( $t0['date_effet'] ) ) ) . '. ' : '' ) . 'Les services ne peuvent saisir en dollars qu’avec un taux de moins de 31 jours.' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		}
 		?>
@@ -126,28 +126,38 @@ final class IGE_FFM_Ecran_Tresorerie {
 						. '<button type="submit" class="ige-btn ige-btn-line">Ajouter au plan</button></form>';
 					?>
 				</section>
-				<section class="ige-card" id="taux">
-					<h2 style="margin-top:0">Taux du jour (USD)</h2>
-					<p class="ige-small">Francs congolais pour 1 dollar. Sert à convertir les dépenses saisies en dollars ; le montant d’origine et le taux restent visibles sur l’écriture.</p>
-					<?php
-					echo IGE_FFM_Ecrans::form_open( 'taux' ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-						. '<div class="ige-grid ige-cols-2" style="gap:0 12px">'
-						. IGE_FFM_Ecrans::field( 'date', 'Date', $auj, array( 'type' => 'date', 'required' => true, 'attrs' => 'max="' . esc_attr( $auj ) . '"' ) )
-						. IGE_FFM_Ecrans::field( 'taux', 'Taux', $t0 ? (string) (float) $t0['taux'] : '', array( 'required' => true, 'attrs' => 'inputmode="decimal" class="ige-num" placeholder="2 850"' ) )
-						. '</div><button type="submit" class="ige-btn ige-btn-jaune">Fixer le taux</button></form>';
-					?>
-					<?php if ( $taux ) : ?>
-						<table class="ige-table" style="margin-top:10px"><thead><tr><th>Date</th><th class="ige-r">CDF pour 1 USD</th></tr></thead><tbody>
-							<?php foreach ( $taux as $x ) : ?>
-								<tr><td><?php echo esc_html( wp_date( 'd/m/Y', strtotime( $x['date_effet'] ) ) ); ?></td><td class="ige-r ige-num"><?php echo esc_html( number_format( (float) $x['taux'], fmod( (float) $x['taux'], 1 ) ? 2 : 0, ',', "\u{202F}" ) ); ?></td></tr>
-							<?php endforeach; ?>
-						</tbody></table>
-					<?php endif; ?>
-				</section>
+				<?php echo IGE_FFM_Devises::active() ? self::carte_taux() : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			</aside>
 		</div>
 		<?php
 		return ob_get_clean();
+	}
+
+	/**
+	 * Carte « Taux du jour » (Trésorerie, ou Paramètres si la trésorerie est désactivée).
+	 *
+	 * @param string $retour Page de retour.
+	 * @return string
+	 */
+	public static function carte_taux( $retour = 'tresorerie' ) {
+		$auj  = IGE_FFM_Contexte::aujourdhui();
+		$t0   = IGE_FFM_Devises::taux( $auj );
+		$taux = IGE_FFM_Devises::derniers( 10 );
+		$h    = '<section class="ige-card" id="taux"><h2 style="margin-top:0">Taux du jour (USD)</h2>'
+			. '<p class="ige-small">Francs congolais pour 1 dollar. Sert à convertir les dépenses saisies en dollars ; le montant d’origine et le taux restent visibles sur l’écriture.</p>'
+			. IGE_FFM_Ecrans::form_open( 'taux' ) . '<input type="hidden" name="retour" value="' . esc_attr( $retour ) . '">'
+			. '<div class="ige-grid ige-cols-2" style="gap:0 12px">'
+			. IGE_FFM_Ecrans::field( 'date', 'Date', $auj, array( 'type' => 'date', 'required' => true, 'attrs' => 'max="' . esc_attr( $auj ) . '"' ) )
+			. IGE_FFM_Ecrans::field( 'taux', 'Taux', $t0 ? (string) (float) $t0['taux'] : '', array( 'required' => true, 'attrs' => 'inputmode="decimal" class="ige-num" placeholder="2 850"' ) )
+			. '</div><button type="submit" class="ige-btn ige-btn-jaune">Fixer le taux</button></form>';
+		if ( $taux ) {
+			$h .= '<table class="ige-table" style="margin-top:10px"><thead><tr><th>Date</th><th class="ige-r">CDF pour 1 USD</th></tr></thead><tbody>';
+			foreach ( $taux as $x ) {
+				$h .= '<tr><td>' . esc_html( wp_date( 'd/m/Y', strtotime( $x['date_effet'] ) ) ) . '</td><td class="ige-r ige-num">' . esc_html( number_format( (float) $x['taux'], fmod( (float) $x['taux'], 1 ) ? 2 : 0, ',', "\u{202F}" ) ) . '</td></tr>';
+			}
+			$h .= '</tbody></table>';
+		}
+		return $h . '</section>';
 	}
 
 	/**
@@ -194,7 +204,7 @@ final class IGE_FFM_Ecran_Tresorerie {
 		} else {
 			ige_ffm_flash( 'ok', 'Taux du jour enregistré', '' );
 		}
-		wp_safe_redirect( ige_ffm_url( 'tresorerie' ) . '#taux' );
+		wp_safe_redirect( ige_ffm_url( 'parametres' === ige_ffm_post( 'retour' ) ? 'parametres' : 'tresorerie' ) . '#taux' );
 		exit;
 	}
 }

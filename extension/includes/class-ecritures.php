@@ -175,7 +175,7 @@ final class IGE_FFM_Ecritures {
 		$mnt    = ige_ffm_parse_montant( $data['montant'] ?? '' );
 		$devise = null;
 		if ( 'USD' === strtoupper( (string) ( $data['devise'] ?? 'CDF' ) ) ) {
-			if ( ! IGE_FFM_Reglages::get( 'saisie_usd' ) ) {
+			if ( ! IGE_FFM_Devises::active() ) {
 				return new WP_Error( 'devise', 'La saisie en dollars n’est pas ouverte.' );
 			}
 			$devise = IGE_FFM_Devises::convertir( $data['montant_usd'] ?? ( $data['montant'] ?? '' ), (string) ( $data['date_operation'] ?? '' ) );

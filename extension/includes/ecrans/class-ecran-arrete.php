@@ -265,14 +265,18 @@ final class IGE_FFM_Ecran_Arrete {
 		}
 		$h .= '<span style="font-weight:700;border-top:1px solid var(--ige-ligne);padding-top:8px">Total CDF</span><span style="border-top:1px solid var(--ige-ligne)"></span><span class="ige-right" data-total-cdf style="font-weight:700;border-top:1px solid var(--ige-ligne);padding-top:8px">' . esc_html( ige_ffm_montant( (int) ( $d['total_cdf'] ?? 0 ), '' ) ) . '</span>';
 		$h .= '</div>';
-		$h .= '<details' . ( ! empty( $d['usd'] ) || ! empty( $d['autres'] ) ? ' open' : '' ) . ' style="margin-top:16px"><summary class="ige-small" style="font-weight:600;cursor:pointer">Dollars et autres disponibilités</summary><div class="ige-billet ige-num" style="margin-top:10px">';
-		foreach ( $c['USD'] as $v ) {
+		$usd = IGE_FFM_Devises::active() || ! empty( $d['usd'] );
+		$h  .= '<details' . ( ! empty( $d['usd'] ) || ! empty( $d['autres'] ) ? ' open' : '' ) . ' style="margin-top:16px"><summary class="ige-small" style="font-weight:600;cursor:pointer">' . ( $usd ? 'Dollars et autres disponibilités' : 'Autres disponibilités' ) . '</summary><div class="ige-billet ige-num" style="margin-top:10px">';
+		foreach ( $usd ? $c['USD'] : array() as $v ) {
 			$n  = (int) ( $d['usd'][ $v ] ?? 0 );
 			$h .= '<label for="ige-usd-' . $v . '">' . esc_html( $v ) . ' USD</label><input id="ige-usd-' . $v . '" name="usd[' . $v . ']" inputmode="numeric" value="' . esc_attr( $n ?: '' ) . '" placeholder="0" data-coupure="' . $v . '" data-devise="usd"' . $ro . '><span class="ige-right" data-ligne>' . esc_html( $n * $v ) . ' USD</span>';
 		}
 		$h .= '</div>';
 		$h .= '<div class="ige-grid ige-cols-2" style="gap:0 12px;margin-top:12px">';
-		$h .= IGE_FFM_Ecrans::field( 'taux', 'Taux du jour (CDF pour 1 USD)', ! empty( $d['taux'] ) ? (string) $d['taux'] : '', array( 'attrs' => 'inputmode="numeric" data-taux' . $ro ) );
+		if ( $usd ) {
+			$t0 = empty( $d['taux'] ) && ! $lecture ? IGE_FFM_Devises::taux( IGE_FFM_Contexte::aujourdhui() ) : null;
+			$h .= IGE_FFM_Ecrans::field( 'taux', 'Taux du jour (CDF pour 1 USD)', ! empty( $d['taux'] ) ? (string) $d['taux'] : ( $t0 ? (string) (int) round( (float) $t0['taux'] ) : '' ), array( 'attrs' => 'inputmode="numeric" data-taux' . $ro ) );
+		}
 		$h .= IGE_FFM_Ecrans::field( 'autres', 'Autres disponibilités (CDF)', ! empty( $d['autres'] ) ? (string) $d['autres'] : '', array( 'attrs' => 'inputmode="numeric" data-autres' . $ro, 'help' => 'Compte bancaire, mobile money…' ) );
 		$h .= '</div>';
 		$h .= IGE_FFM_Ecrans::field( 'autres_detail', 'Détail des autres disponibilités', (string) ( $d['autres_detail'] ?? '' ), array( 'attrs' => 'maxlength="190" placeholder="Ex. : relevé Rawbank du 30/09, solde M-Pesa"' . $ro ) );

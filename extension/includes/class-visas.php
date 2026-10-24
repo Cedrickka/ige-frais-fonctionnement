@@ -305,19 +305,19 @@ final class IGE_FFM_Visas {
 		if ( ! $ex ) {
 			return $out;
 		}
-		foreach ( IGE_FFM_Demandes::en_circuit( (int) $ex['id'] ) as $d ) {
+		foreach ( IGE_FFM_Fonctions::active( 'demandes_fonds' ) ? IGE_FFM_Demandes::en_circuit( (int) $ex['id'] ) : array() as $d ) {
 			$e = self::etat( 'demande', (int) $d['id'], (int) $d['montant'] );
 			if ( $e['suivante'] && self::peut( $user_id, $e['suivante'], (int) $d['service_id'] ) ) {
 				$out[] = array( 'objet' => 'demande', 'id' => (int) $d['id'], 'ref' => $d['reference'], 'service_id' => (int) $d['service_id'], 'montant' => (int) $d['montant'], 'libelle' => $d['objet'], 'etape' => $e['suivante'] );
 			}
 		}
-		foreach ( IGE_FFM_Chaine::en_ordonnancement( (int) $ex['id'] ) as $x ) {
+		foreach ( IGE_FFM_Fonctions::active( 'chaine' ) ? IGE_FFM_Chaine::en_ordonnancement( (int) $ex['id'] ) : array() as $x ) {
 			$e = self::etat( 'ordonnancement', (int) $x['id'], (int) $x['montant'] );
 			if ( $e['suivante'] && self::peut( $user_id, $e['suivante'], (int) $x['service_id'] ) ) {
 				$out[] = array( 'objet' => 'ordonnancement', 'id' => (int) $x['id'], 'ref' => $x['id_ecriture'], 'service_id' => (int) $x['service_id'], 'montant' => (int) $x['montant'], 'libelle' => $x['description'], 'etape' => $e['suivante'] );
 			}
 		}
-		foreach ( IGE_FFM_Missions::en_circuit( (int) $ex['id'] ) as $m ) {
+		foreach ( IGE_FFM_Fonctions::active( 'missions' ) ? IGE_FFM_Missions::en_circuit( (int) $ex['id'] ) : array() as $m ) {
 			$e = self::etat( 'mission', (int) $m['id'], (int) $m['montant'] );
 			if ( $e['suivante'] && self::peut( $user_id, $e['suivante'], (int) $m['service_id'] ) ) {
 				$out[] = array( 'objet' => 'mission', 'id' => (int) $m['id'], 'ref' => $m['numero'], 'service_id' => (int) $m['service_id'], 'montant' => (int) $m['montant'], 'libelle' => $m['objet'] . ' · ' . $m['destination'], 'etape' => $e['suivante'] );

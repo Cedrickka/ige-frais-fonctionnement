@@ -312,6 +312,8 @@ final class IGE_FFM_Pieces {
 		} elseif ( 'mission' === $p['objet'] ) {
 			$m       = IGE_FFM_Missions::get( (int) $p['objet_id'] );
 			$service = $m ? (int) $m['service_id'] : 0;
+		} elseif ( in_array( $p['objet'], array( 'vehicule_doc', 'entretien' ), true ) && ( current_user_can( 'ige_logistique' ) || current_user_can( 'ige_voir_tout' ) ) ) {
+			$service = -1;
 		} elseif ( 'releve' === $p['objet'] && current_user_can( 'ige_gerer_fonds' ) ) {
 			$service = -1;
 		}

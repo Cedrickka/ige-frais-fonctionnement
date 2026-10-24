@@ -35,6 +35,7 @@ final class IGE_FFM_Roles {
 			'ige_administrer'       => 'Gérer référentiels, comptes, exercices et règles',
 			'ige_voir_audit'        => "Consulter le journal d'audit",
 			'ige_viser_direction'   => 'Viser les demandes, ordonnancements et missions au-delà du seuil (Inspecteur Général)',
+			'ige_logistique'        => 'Gérer le parc automobile et les stocks de fournitures',
 		);
 	}
 
@@ -48,7 +49,7 @@ final class IGE_FFM_Roles {
 		return array(
 			'ige_agent'       => array( 'Agent (service)', 'service', $agent ),
 			'ige_responsable' => array( 'Responsable (service)', 'service', array_merge( $agent, array( 'ige_gerer_budget', 'ige_signer_arrete' ) ) ),
-			'ige_admin'       => array( 'Administration et Finance', 'central', array( 'ige_acceder', 'ige_verifier', 'ige_gerer_fonds', 'ige_voir_tout', 'ige_rapports', 'ige_administrer', 'ige_voir_audit' ) ),
+			'ige_admin'       => array( 'Administration et Finance', 'central', array( 'ige_acceder', 'ige_verifier', 'ige_gerer_fonds', 'ige_voir_tout', 'ige_rapports', 'ige_administrer', 'ige_voir_audit', 'ige_logistique' ) ),
 			'ige_lecteur'     => array( 'Lecteur (Direction)', 'direction', array( 'ige_acceder', 'ige_voir_tout', 'ige_rapports', 'ige_viser_direction' ) ),
 		);
 	}

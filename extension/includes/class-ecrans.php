@@ -39,6 +39,10 @@ require_once __DIR__ . '/ecrans/class-ecran-missions.php';
 require_once __DIR__ . '/ecrans/class-ecran-tresorerie.php';
 require_once __DIR__ . '/ecrans/class-ecran-rapprochement.php';
 require_once __DIR__ . '/ecrans/class-ecran-hors-connexion.php';
+require_once __DIR__ . '/ecrans/class-ecran-fonctions.php';
+require_once __DIR__ . '/ecrans/class-ecran-parc.php';
+require_once __DIR__ . '/ecrans/class-ecran-stocks.php';
+require_once __DIR__ . '/ecrans/class-ecran-analyses.php';
 
 /**
  * Routeur des écrans.
@@ -81,6 +85,12 @@ final class IGE_FFM_Ecrans {
 			'tresorerie'         => array( 'ige_gerer_fonds', 'IGE_FFM_Ecran_Tresorerie' ),
 			'rapprochement-bancaire' => array( 'ige_gerer_fonds', 'IGE_FFM_Ecran_Rapprochement' ),
 			'hors-connexion'     => array( 'ige_saisir', 'IGE_FFM_Ecran_Hors_Connexion' ),
+			'fonctions-du-site'  => array( 'ige_administrer', 'IGE_FFM_Ecran_Fonctions' ),
+			'parc-automobile'    => array( 'ige_voir_tout', 'IGE_FFM_Ecran_Parc' ),
+			'vehicules'          => array( 'ige_acceder', 'IGE_FFM_Ecran_Vehicules' ),
+			'stocks'             => array( 'ige_voir_tout', 'IGE_FFM_Ecran_Stocks' ),
+			'risques'            => array( 'ige_voir_tout', 'IGE_FFM_Ecran_Risques' ),
+			'notifications'      => array( 'ige_administrer', 'IGE_FFM_Ecran_Notifications' ),
 		);
 	}
 
@@ -90,13 +100,7 @@ final class IGE_FFM_Ecrans {
 	 * @return array<string,string>
 	 */
 	public static function a_venir() {
-		$l2 = 'lot 2';
-		return array(
-			'parc-automobile'        => $l2,
-			'stocks'                 => $l2,
-			'risques'                => $l2,
-			'notifications'          => $l2,
-		);
+		return array();
 	}
 
 	/**
@@ -133,6 +137,9 @@ final class IGE_FFM_Ecrans {
 		}
 		$slug   = self::slug();
 		$ecrans = self::ecrans();
+		if ( isset( $ecrans[ $slug ] ) && is_user_logged_in() && IGE_FFM_Fonctions::page_inactive( $slug ) ) {
+			return IGE_FFM_Fonctions::message( $slug );
+		}
 		if ( isset( $ecrans[ $slug ] ) ) {
 			list( $cap, $class ) = $ecrans[ $slug ];
 			if ( ! current_user_can( $cap ) ) {

@@ -25,7 +25,11 @@ final class IGE_FFM_Ecran_Consolidation {
 	 * @return array<string,string>
 	 */
 	public static function vues() {
-		return array( 'services' => 'Par service', 'categories' => 'Par catégorie', 'rubriques' => 'Par rubrique', 'mois' => 'Par mois' );
+		$v = array( 'services' => 'Par service', 'categories' => 'Par catégorie', 'rubriques' => 'Par rubrique', 'mois' => 'Par mois' );
+		if ( IGE_FFM_Fonctions::active( 'nomenclature' ) ) {
+			$v['nomenclature'] = 'Par ligne de la nomenclature';
+		}
+		return $v;
 	}
 
 	/**
@@ -78,6 +82,12 @@ final class IGE_FFM_Ecran_Consolidation {
 					$l[] = array( $r['rubrique']['code'] . ' ' . $r['rubrique']['libelle'], IGE_FFM_Referentiels::categorie_libelle( (int) ( $r['rubrique']['categorie_id'] ?? 0 ) ), $r['consomme'], $t['consomme'] ? round( $r['consomme'] / $t['consomme'] * 100, 1 ) : 0 );
 				}
 				return array( 'entetes' => array( 'Rubrique', 'Catégorie', 'Consommé', 'Part (%)' ), 'lignes' => $l, 'total' => array( 'Total', '', $t['consomme'], 100 ), 'num' => array( 2 ) );
+			case 'nomenclature':
+				$l = array();
+				foreach ( IGE_FFM_Analyses::par_nomenclature( (int) $ex['id'] ) as $n ) {
+					$l[] = array( '' === $n['code'] ? '—' : $n['code'], $n['libelle'], implode( ', ', $n['rubriques'] ), $n['budget'], $n['consomme'], $n['taux'] );
+				}
+				return array( 'entetes' => array( 'Ligne', 'Libellé officiel', 'Rubriques', 'Budget', 'Consommé', 'Exécution (%)' ), 'lignes' => $l, 'total' => array( 'Total', '', '', $t['budget'], $t['consomme'], null === $t['taux'] ? null : round( $t['taux'], 1 ) ), 'num' => array( 3, 4 ) );
 			case 'mois':
 				$noms = IGE_FFM_Ecran_Livre::mois_noms();
 				$l    = array();

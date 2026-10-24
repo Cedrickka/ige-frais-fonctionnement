@@ -668,6 +668,9 @@ final class IGE_FFM_Banque {
 	 * @return array
 	 */
 	public static function alertes( $out, $exo ) {
+		if ( ! IGE_FFM_Fonctions::active( 'rapprochement' ) ) {
+			return $out;
+		}
 		$jours = max( 1, (int) IGE_FFM_Reglages::get( 'suspens_alerte_jours' ) );
 		$lim   = gmdate( 'Y-m-d', strtotime( IGE_FFM_Contexte::aujourdhui() . ' -' . $jours . ' days' ) );
 		$n     = 0;

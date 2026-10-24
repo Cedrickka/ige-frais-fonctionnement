@@ -27,7 +27,7 @@ final class IGE_FFM_Chaine {
 	 * @return bool
 	 */
 	public static function requise( array $e ) {
-		$seuil = (int) IGE_FFM_Reglages::get( 'chaine_seuil' );
+		$seuil = IGE_FFM_Fonctions::active( 'chaine' ) ? (int) IGE_FFM_Reglages::get( 'chaine_seuil' ) : 0;
 		return $seuil > 0 && 'sortie' === ( $e['type'] ?? '' ) && empty( $e['ecriture_origine_id'] ) && empty( $e['mission_id'] ) && (int) ( $e['montant'] ?? 0 ) >= $seuil;
 	}
 

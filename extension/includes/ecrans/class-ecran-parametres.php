@@ -54,6 +54,7 @@ final class IGE_FFM_Ecran_Parametres {
 			'seuils'    => 'Seuils',
 			'anomalies' => 'Détection d’anomalies à la vérification',
 			'circuit'   => 'Circuit de la dépense, devises et banque',
+			'logistique' => 'Parc automobile',
 			'securite'  => 'Sécurité des comptes',
 		);
 		$unites  = array(
@@ -70,6 +71,8 @@ final class IGE_FFM_Ecran_Parametres {
 			'visa_direction_seuil' => 'CDF',
 			'rappro_jours'         => 'jours',
 			'suspens_alerte_jours' => 'jours',
+			'parc_tolerance_conso' => '%',
+			'parc_prix_litre'      => 'CDF',
 		);
 
 		ob_start();
@@ -120,6 +123,9 @@ final class IGE_FFM_Ecran_Parametres {
 			<?php
 			echo IGE_FFM_Ecrans::form_open( 'reglages', 'id="ige-form-reglages" class="ige-grid" style="gap:16px"' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			foreach ( $groupes as $g => $titre ) :
+				if ( 'logistique' === $g && ! IGE_FFM_Fonctions::active( 'parc' ) ) {
+					continue;
+				}
 				?>
 				<section class="ige-card">
 					<h2><?php echo esc_html( $titre ); ?></h2>
@@ -142,7 +148,12 @@ final class IGE_FFM_Ecran_Parametres {
 				<div><button type="submit" class="ige-btn ige-btn-jaune">Enregistrer les règles</button></div>
 			</form>
 		</div>
+		<?php if ( IGE_FFM_Fonctions::active( 'missions' ) ) : ?>
 		<div style="margin-top:16px"><?php echo IGE_FFM_Ecran_Missions::formulaire_bareme(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+		<?php endif; ?>
+		<?php if ( IGE_FFM_Devises::active() && ! IGE_FFM_Fonctions::active( 'tresorerie' ) ) : ?>
+		<div style="margin-top:16px;max-width:560px"><?php echo IGE_FFM_Ecran_Tresorerie::carte_taux( 'parametres' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+		<?php endif; ?>
 		<?php
 		return ob_get_clean();
 	}

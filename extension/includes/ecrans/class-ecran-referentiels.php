@@ -39,7 +39,20 @@ final class IGE_FFM_Ecran_Referentiels {
 	 */
 	private static function onglet() {
 		$o = isset( $_GET['onglet'] ) ? sanitize_key( $_GET['onglet'] ) : 'service'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		return isset( IGE_FFM_Referentiels::types()[ $o ] ) ? $o : 'service';
+		return isset( self::types()[ $o ] ) ? $o : 'service';
+	}
+
+	/**
+	 * Référentiels affichés (la nomenclature seulement si la fonction est active).
+	 *
+	 * @return array
+	 */
+	private static function types() {
+		$t = IGE_FFM_Referentiels::types();
+		if ( ! IGE_FFM_Fonctions::active( 'nomenclature' ) ) {
+			unset( $t['nomenclature'] );
+		}
+		return $t;
 	}
 
 	/**
@@ -49,7 +62,7 @@ final class IGE_FFM_Ecran_Referentiels {
 	 */
 	public static function render() {
 		$type   = self::onglet();
-		$types  = IGE_FFM_Referentiels::types();
+		$types  = self::types();
 		$rows   = IGE_FFM_Referentiels::all( $type );
 		$edit   = isset( $_GET['modifier'] ) ? IGE_FFM_Referentiels::get( $type, (int) $_GET['modifier'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$base   = get_permalink();
@@ -108,9 +121,9 @@ final class IGE_FFM_Ecran_Referentiels {
 						$comptes[ $c['service_id'] ] = ( $comptes[ $c['service_id'] ] ?? 0 ) + 1;
 					}
 				}
-				$h .= '<thead><tr><th>Code</th><th>Libellé</th><th class="ige-r">Comptes</th><th>Actif</th><th></th></tr></thead><tbody>';
+				$h .= '<thead><tr><th>Code</th><th>Libellé</th><th class="ige-r">Effectif</th><th class="ige-r">Comptes</th><th>Actif</th><th></th></tr></thead><tbody>';
 				foreach ( $rows as $r ) {
-					$h .= '<tr><td><b>' . esc_html( $r['code'] ) . '</b></td><td>' . esc_html( $r['libelle'] ) . '</td><td class="ige-r">' . (int) ( $comptes[ $r['id'] ] ?? 0 ) . '</td><td>' . ige_ffm_switch( (bool) $r['actif'] ) . '</td><td>' . $link( $r ) . '</td></tr>';
+					$h .= '<tr><td><b>' . esc_html( $r['code'] ) . '</b></td><td>' . esc_html( $r['libelle'] ) . '</td><td class="ige-r">' . esc_html( null === $r['effectif'] ? '—' : (string) $r['effectif'] ) . '</td><td class="ige-r">' . (int) ( $comptes[ $r['id'] ] ?? 0 ) . '</td><td>' . ige_ffm_switch( (bool) $r['actif'] ) . '</td><td>' . $link( $r ) . '</td></tr>';
 				}
 				break;
 			case 'categorie':
@@ -128,6 +141,12 @@ final class IGE_FFM_Ecran_Referentiels {
 				foreach ( $rows as $r ) {
 					$nom = $r['nomenclature'] ? '<span class="ige-code">' . esc_html( $r['nomenclature'] ) . '</span>' : ige_ffm_pill( 'À relier', 'neutre' );
 					$h  .= '<tr><td><span class="ige-code">' . esc_html( $r['code'] ) . '</span></td><td>' . esc_html( $r['libelle'] ) . '</td><td>' . esc_html( IGE_FFM_Referentiels::categorie_libelle( (int) $r['categorie_id'] ) ) . '</td><td>' . esc_html( $r['pieces_exigees'] ) . '</td><td>' . $nom . '</td><td>' . ige_ffm_switch( (bool) $r['actif'] ) . '</td><td>' . $link( $r ) . '</td></tr>';
+				}
+				break;
+			case 'nomenclature':
+				$h .= '<thead><tr><th>Code</th><th>Libellé officiel</th><th class="ige-r">Rubriques rattachées</th><th>Active</th><th></th></tr></thead><tbody>';
+				foreach ( $rows as $r ) {
+					$h .= '<tr><td><span class="ige-code">' . esc_html( $r['code'] ) . '</span></td><td>' . esc_html( $r['libelle'] ) . '</td><td class="ige-r">' . (int) IGE_FFM_Referentiels::usage( 'nomenclature', (int) $r['id'] ) . '</td><td>' . ige_ffm_switch( (bool) $r['actif'] ) . '</td><td>' . $link( $r ) . '</td></tr>';
 				}
 				break;
 			default:
@@ -155,14 +174,17 @@ final class IGE_FFM_Ecran_Referentiels {
 		$old = IGE_FFM_Ecrans::old();
 		$v   = static fn( $k, $d = '' ) => $old[ $k ] ?? ( $edit[ $k ] ?? $d );
 
-		$art = in_array( $t['single'], array( 'catégorie', 'rubrique' ), true ) ? 'une ' : 'un ';
+		$art = in_array( $t['single'], array( 'catégorie', 'rubrique', 'ligne de nomenclature' ), true ) ? 'une ' : 'un ';
 		$h   = '<h2>' . esc_html( $edit ? 'Modifier : ' . ( $edit['code'] ?? $edit['libelle'] ) : 'Ajouter ' . $art . $t['single'] ) . '</h2>';
 		$h .= IGE_FFM_Ecrans::form_open( 'referentiel' );
 		$h .= '<input type="hidden" name="type" value="' . esc_attr( $type ) . '"><input type="hidden" name="id" value="' . esc_attr( $edit['id'] ?? 0 ) . '">';
 		if ( in_array( 'code', $t['fields'], true ) ) {
-			$h .= IGE_FFM_Ecrans::field( 'code', 'Code', $v( 'code' ), array( 'required' => true, 'help' => 'rubrique' === $type ? 'Exemple : R11' : 'Exemple : 8019' ) );
+			$h .= IGE_FFM_Ecrans::field( 'code', 'Code', $v( 'code' ), array( 'required' => true, 'help' => 'rubrique' === $type ? 'Exemple : R11' : ( 'nomenclature' === $type ? 'Code de la ligne budgétaire officielle, par exemple 6.2.1.1' : 'Exemple : 8019' ) ) );
 		}
 		$h .= IGE_FFM_Ecrans::field( 'libelle', 'Libellé', $v( 'libelle' ), array( 'required' => true ) );
+		if ( 'service' === $type ) {
+			$h .= IGE_FFM_Ecrans::field( 'effectif', 'Effectif (nombre d’agents)', (string) $v( 'effectif' ), array( 'type' => 'number', 'attrs' => 'min="0" max="5000"', 'help' => 'Sert à comparer les dépenses entre services.' ) );
+		}
 		if ( 'rubrique' === $type ) {
 			$cats = array( '' => '— Choisir —' );
 			foreach ( IGE_FFM_Referentiels::all( 'categorie' ) as $c ) {
@@ -170,7 +192,18 @@ final class IGE_FFM_Ecran_Referentiels {
 			}
 			$h .= IGE_FFM_Ecrans::field( 'categorie_id', 'Catégorie', $v( 'categorie_id' ), array( 'type' => 'select', 'options' => $cats, 'required' => true ) );
 			$h .= IGE_FFM_Ecrans::field( 'pieces_exigees', 'Pièces exigées', $v( 'pieces_exigees' ), array( 'help' => 'Affichées à l’agent lors de la saisie. Exemple : Facture, bon de réception' ) );
-			$h .= IGE_FFM_Ecrans::field( 'nomenclature', 'Ligne de la nomenclature de l’État', $v( 'nomenclature' ), array( 'help' => 'À renseigner avec le service du Budget.' ) );
+			$lignes = IGE_FFM_Referentiels::all( 'nomenclature' );
+			if ( ! IGE_FFM_Fonctions::active( 'nomenclature' ) ) {
+				$h .= '<input type="hidden" name="nomenclature" value="' . esc_attr( $v( 'nomenclature' ) ) . '">';
+			} elseif ( $lignes ) {
+				$opts = array( '' => '— Non rattachée —' );
+				foreach ( $lignes as $n ) {
+					$opts[ $n['code'] ] = $n['code'] . ' · ' . $n['libelle'] . ( $n['actif'] ? '' : ' (inactive)' );
+				}
+				$h .= IGE_FFM_Ecrans::field( 'nomenclature', 'Ligne de la nomenclature de l’État', $v( 'nomenclature' ), array( 'type' => 'select', 'options' => $opts ) );
+			} else {
+				$h .= IGE_FFM_Ecrans::field( 'nomenclature', 'Ligne de la nomenclature de l’État', $v( 'nomenclature' ), array( 'help' => 'À renseigner avec le service du Budget (ou créez d’abord les lignes dans l’onglet « Nomenclature de l’État »).' ) );
+			}
 		}
 		$h .= IGE_FFM_Ecrans::field( 'ordre', 'Ordre d’affichage', $v( 'ordre', '' ), array( 'type' => 'number', 'help' => 'Laisser vide pour placer en fin de liste.' ) );
 		$h .= IGE_FFM_Ecrans::field( 'actif', 'Actif (proposé à la saisie)', $edit ? (bool) $v( 'actif' ) : true, array( 'type' => 'checkbox' ) );
@@ -200,7 +233,7 @@ final class IGE_FFM_Ecran_Referentiels {
 		$result = IGE_FFM_Referentiels::save( $type, $data, $id );
 		$back   = ige_ffm_url( 'referentiels', array( 'onglet' => $type ) );
 		if ( is_wp_error( $result ) ) {
-			IGE_FFM_Ecrans::remember( array_map( 'sanitize_text_field', array_intersect_key( $data, array_flip( array( 'code', 'libelle', 'categorie_id', 'pieces_exigees', 'nomenclature', 'ordre', 'actif' ) ) ) ) );
+			IGE_FFM_Ecrans::remember( array_map( 'sanitize_text_field', array_intersect_key( $data, array_flip( array( 'code', 'libelle', 'effectif', 'categorie_id', 'pieces_exigees', 'nomenclature', 'ordre', 'actif' ) ) ) ) );
 			ige_ffm_flash( 'ko', 'Enregistrement refusé', $result->get_error_message() );
 			wp_safe_redirect( $id ? add_query_arg( 'modifier', $id, $back ) . '#ige-formulaire' : $back . '#ige-formulaire' );
 			exit;

@@ -96,9 +96,10 @@ $u1 = IGE_FFM_Ecritures::saisir( $base + array( 'devise' => 'USD', 'montant_usd'
 $e  = is_int( $u1 ) ? IGE_FFM_Ecritures::get( $u1 ) : array();
 ige_t( is_int( $u1 ) && 342060 === (int) $e['montant'] && 'USD' === $e['devise_origine'] && 120.0 === (float) $e['montant_origine'], 'Écriture en USD : 342 060 CDF au livre, origine 120 USD conservée' );
 ige_t( false !== strpos( IGE_FFM_Devises::mention( $e ), 'USD × 2' ), 'Mention « 120,00 USD × 2 850,50 » affichable' );
-IGE_FFM_Reglages::save( array_merge( array_map( static fn( $v ) => is_bool( $v ) ? ( $v ? '1' : '' ) : (string) $v, (array) get_option( 'ige_ffm_reglages' ) ), array( 'saisie_usd' => '' ) ) );
-ige_t( is_wp_error( IGE_FFM_Ecritures::saisir( $base + array( 'devise' => 'USD', 'montant_usd' => '10', 'description' => 'Interdit', 'num_piece' => 'FU-2' ), ige_pdf() ) ), 'Saisie USD fermée dans les réglages : refusée' );
-IGE_FFM_Reglages::save( array_merge( array_map( static fn( $v ) => is_bool( $v ) ? ( $v ? '1' : '' ) : (string) $v, (array) get_option( 'ige_ffm_reglages' ) ), array( 'saisie_usd' => '1' ) ) );
+$fonctions = get_option( IGE_FFM_Fonctions::OPTION, null );
+IGE_FFM_Fonctions::enregistrer( array_merge( IGE_FFM_Fonctions::etats(), array( 'devise_usd' => false ) ), 1 );
+ige_t( is_wp_error( IGE_FFM_Ecritures::saisir( $base + array( 'devise' => 'USD', 'montant_usd' => '10', 'description' => 'Interdit', 'num_piece' => 'FU-2' ), ige_pdf() ) ), 'Devise USD désactivée (Fonctions du site) : saisie en dollars refusée' );
+IGE_FFM_Fonctions::enregistrer( array_merge( IGE_FFM_Fonctions::etats(), array( 'devise_usd' => true ) ), 1 );
 
 echo "\n3. Clé unique : pas de doublon (VA-50)\n";
 $cle = 'test-' . wp_generate_password( 10, false );

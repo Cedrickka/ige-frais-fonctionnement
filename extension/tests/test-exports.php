@@ -94,7 +94,7 @@ ige_t( false !== strpos( $t['titre'], 'X' . $sfx ) && 0 === stripos( $t['fichier
 wp_set_current_user( 1 );
 $cv = IGE_FFM_Ecran_Consolidation::export_donnees( 'services' );
 ige_t( 'montant' === $cv['colonnes'][1][1] && 'decimal' === $cv['colonnes'][6][1] && 'nombre' === $cv['colonnes'][8][1], 'Consolidation : types de colonnes (montants, pourcentages, nombres)' );
-ige_t( 4 === count( IGE_FFM_Ecran_Consolidation::vues() ), 'Consolidation : 4 vues, une par onglet' );
+ige_t( ( IGE_FFM_Fonctions::active( 'nomenclature' ) ? 5 : 4 ) === count( IGE_FFM_Ecran_Consolidation::vues() ), 'Consolidation : une vue par onglet (nomenclature comprise si active)' );
 
 echo "\n3. PDF\n";
 $pdf = IGE_FFM_Pdf::tableau( $t );

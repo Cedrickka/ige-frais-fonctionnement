@@ -31,6 +31,7 @@ final class IGE_FFM_Installer {
 	 */
 	public static function deactivate() {
 		wp_clear_scheduled_hook( 'ige_ffm_quotidien' );
+		wp_clear_scheduled_hook( 'ige_ffm_horaire' );
 	}
 
 	/**
@@ -45,6 +46,10 @@ final class IGE_FFM_Installer {
 			self::un_seul_exercice_ouvert();
 			// Les pages se créent une fois WordPress complètement chargé (permaliens disponibles).
 			add_action( 'init', array( __CLASS__, 'create_pages' ), 20 );
+			add_action( 'init', array( __CLASS__, 'menus_v21' ), 21 );
+			if ( false === get_option( IGE_FFM_Fonctions::OPTION, false ) && false === IGE_FFM_Reglages::get( 'saisie_usd' ) ) {
+				update_option( IGE_FFM_Fonctions::OPTION, array( 'devise_usd' => false ), true );
+			}
 			update_option( 'ige_ffm_db_version', IGE_FFM_DB_VERSION );
 		}
 	}
@@ -156,6 +161,8 @@ final class IGE_FFM_Installer {
 			'double-authentification' => array( 'Double authentification', 'Un code à usage unique en plus du mot de passe' ),
 			'deploiement'             => array( 'Déploiement', 'Comptes, invitations et reprise des fichiers Excel', 'templates/administration.php' ),
 			'visas'                   => array( 'Visas', 'Demandes de fonds, ordonnancements et ordres de mission à viser', 'templates/liste.php' ),
+			'fonctions-du-site'       => array( 'Fonctions du site', 'Activer ou désactiver les modules et leurs menus', 'templates/administration.php' ),
+			'vehicules'               => array( 'Véhicules', 'Demandes de véhicule, départs et retours, pleins', 'templates/liste.php' ),
 		);
 		foreach ( $pages as $slug => $p ) {
 			if ( get_page_by_path( $slug ) ) {
@@ -178,6 +185,12 @@ final class IGE_FFM_Installer {
 				if ( 'visas' === $slug ) {
 					self::ajouter_au_menu( 'menu-direction', $id, 'Visas' );
 				}
+				if ( 'fonctions-du-site' === $slug ) {
+					self::ajouter_sous_groupe( 'menu-admin', 'Règles', $id, 'Fonctions du site' );
+				}
+				if ( 'vehicules' === $slug ) {
+					self::ajouter_au_menu( 'menu-service', $id, 'Véhicules', 7 );
+				}
 			}
 		}
 	}
@@ -189,7 +202,7 @@ final class IGE_FFM_Installer {
 	 * @param int    $page_id  Page.
 	 * @param string $titre    Libellé.
 	 */
-	private static function ajouter_au_menu( $location, $page_id, $titre ) {
+	private static function ajouter_au_menu( $location, $page_id, $titre, $position = 1 ) {
 		$loc = get_nav_menu_locations();
 		if ( empty( $loc[ $location ] ) ) {
 			return;
@@ -203,9 +216,77 @@ final class IGE_FFM_Installer {
 				'menu-item-object-id' => $page_id,
 				'menu-item-type'      => 'post_type',
 				'menu-item-status'    => 'publish',
-				'menu-item-position'  => 1,
+				'menu-item-position'  => $position,
 			)
 		);
+	}
+
+	/**
+	 * Ajoute une page sous une rubrique existante d'un menu (créée si absente).
+	 *
+	 * @param string $location Emplacement.
+	 * @param string $groupe   Titre de la rubrique.
+	 * @param int    $page_id  Page.
+	 * @param string $titre    Libellé du lien.
+	 */
+	private static function ajouter_sous_groupe( $location, $groupe, $page_id, $titre ) {
+		$loc = get_nav_menu_locations();
+		if ( empty( $loc[ $location ] ) ) {
+			return;
+		}
+		$menu = (int) $loc[ $location ];
+		$gid  = 0;
+		foreach ( (array) wp_get_nav_menu_items( $menu ) as $it ) {
+			if ( 0 === (int) $it->menu_item_parent && $groupe === $it->title ) {
+				$gid = (int) $it->ID;
+			}
+			if ( 'page' === $it->object && (int) $it->object_id === (int) $page_id ) {
+				return;
+			}
+		}
+		if ( ! $gid ) {
+			$gid = wp_update_nav_menu_item( $menu, 0, array( 'menu-item-title' => $groupe, 'menu-item-url' => '#', 'menu-item-type' => 'custom', 'menu-item-status' => 'publish' ) );
+			if ( is_wp_error( $gid ) ) {
+				return;
+			}
+		}
+		wp_update_nav_menu_item(
+			$menu,
+			0,
+			array(
+				'menu-item-title'     => $titre,
+				'menu-item-object'    => 'page',
+				'menu-item-object-id' => $page_id,
+				'menu-item-type'      => 'post_type',
+				'menu-item-parent-id' => $gid,
+				'menu-item-status'    => 'publish',
+			)
+		);
+	}
+
+	/**
+	 * Menus du lot V2 sur un site déjà installé (une seule fois) : Risques et Parc pour la Direction.
+	 */
+	public static function menus_v21() {
+		if ( get_option( 'ige_ffm_menus_v21' ) ) {
+			return;
+		}
+		$loc = get_nav_menu_locations();
+		if ( empty( $loc['menu-direction'] ) ) {
+			return;
+		}
+		$deja = array();
+		foreach ( (array) wp_get_nav_menu_items( (int) $loc['menu-direction'] ) as $it ) {
+			$deja[] = (int) $it->object_id;
+		}
+		$pos = 10;
+		foreach ( array( 'risques' => 'Risques', 'parc-automobile' => 'Parc automobile' ) as $slug => $titre ) {
+			$p = get_page_by_path( $slug );
+			if ( $p && ! in_array( (int) $p->ID, $deja, true ) ) {
+				self::ajouter_au_menu( 'menu-direction', (int) $p->ID, $titre, $pos++ );
+			}
+		}
+		update_option( 'ige_ffm_menus_v21', 1, false );
 	}
 
 	/**

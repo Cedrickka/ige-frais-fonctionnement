@@ -80,7 +80,7 @@ final class IGE_FFM_Ecran_Nouvelle_Ecriture {
 					<?php echo IGE_FFM_Ecrans::field( 'date_operation', 'Date de l’opération', $v( 'date_operation', IGE_FFM_Contexte::aujourdhui() ), array( 'type' => 'date', 'required' => true, 'attrs' => 'min="' . esc_attr( $ex['date_debut'] ) . '" max="' . esc_attr( min( $ex['date_fin'], IGE_FFM_Contexte::aujourdhui() ) ) . '"' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					<?php echo IGE_FFM_Ecrans::field( 'montant', 'Montant (CDF)', $v( 'montant' ), array( 'required' => true, 'attrs' => 'inputmode="numeric" autocomplete="off" placeholder="0" class="ige-num"' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 				</div>
-				<?php if ( IGE_FFM_Reglages::get( 'saisie_usd' ) ) : ?>
+				<?php if ( IGE_FFM_Devises::active() ) : ?>
 					<?php $taux = array_map( static fn( $t ) => array( 'd' => $t['date_effet'], 't' => (float) $t['taux'] ), IGE_FFM_Devises::derniers( 60 ) ); ?>
 					<div class="ige-grid ige-cols-2" style="gap:0 16px" id="ige-devise-bloc" data-taux="<?php echo esc_attr( wp_json_encode( $taux ) ); ?>">
 						<div class="ige-field">

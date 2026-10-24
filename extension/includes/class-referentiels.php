@@ -25,7 +25,7 @@ final class IGE_FFM_Referentiels {
 			'service'       => array(
 				'label'  => 'Services',
 				'single' => 'service',
-				'fields' => array( 'code', 'libelle', 'actif', 'ordre' ),
+				'fields' => array( 'code', 'libelle', 'effectif', 'actif', 'ordre' ),
 			),
 			'categorie'     => array(
 				'label'  => 'Catégories',
@@ -41,6 +41,11 @@ final class IGE_FFM_Referentiels {
 				'label'  => 'Modes de paiement',
 				'single' => 'mode de paiement',
 				'fields' => array( 'libelle', 'actif', 'ordre' ),
+			),
+			'nomenclature'  => array(
+				'label'  => 'Nomenclature de l’État',
+				'single' => 'ligne de nomenclature',
+				'fields' => array( 'code', 'libelle', 'actif', 'ordre' ),
 			),
 		);
 	}
@@ -105,6 +110,8 @@ final class IGE_FFM_Referentiels {
 				$row['ordre'] = (int) ( $data['ordre'] ?? 0 );
 			} elseif ( 'categorie_id' === $f ) {
 				$row['categorie_id'] = (int) ( $data['categorie_id'] ?? 0 );
+			} elseif ( 'effectif' === $f ) {
+				$row['effectif'] = '' === trim( (string) ( $data['effectif'] ?? '' ) ) ? null : max( 0, (int) $data['effectif'] );
 			} else {
 				$row[ $f ] = trim( sanitize_text_field( (string) ( $data[ $f ] ?? '' ) ) );
 			}
@@ -119,6 +126,12 @@ final class IGE_FFM_Referentiels {
 		}
 		if ( '' === $row['libelle'] ) {
 			return new WP_Error( 'libelle', 'Le libellé est obligatoire.' );
+		}
+		if ( 'service' === $type && null !== $row['effectif'] && $row['effectif'] > 5000 ) {
+			return new WP_Error( 'effectif', 'Effectif invalide.' );
+		}
+		if ( 'rubrique' === $type && '' !== $row['nomenclature'] && self::all( 'nomenclature' ) && ! in_array( $row['nomenclature'], array_column( self::all( 'nomenclature' ), 'code' ), true ) ) {
+			return new WP_Error( 'nomenclature', 'Cette ligne n’existe pas dans la nomenclature : ajoutez-la d’abord dans l’onglet « Nomenclature de l’État ».' );
 		}
 		if ( 'rubrique' === $type ) {
 			$cat = self::get( 'categorie', $row['categorie_id'] );
@@ -179,6 +192,10 @@ final class IGE_FFM_Referentiels {
 			'rubrique'      => 'rubrique_id',
 			'mode_paiement' => 'mode_paiement_id',
 		);
+		if ( 'nomenclature' === $type ) {
+			$n = self::get( 'nomenclature', $id );
+			return $n ? count( array_filter( self::all( 'rubrique' ), static fn( $r ) => $r['nomenclature'] === $n['code'] ) ) : 0;
+		}
 		if ( ! isset( $cols[ $type ] ) ) {
 			return 0;
 		}
