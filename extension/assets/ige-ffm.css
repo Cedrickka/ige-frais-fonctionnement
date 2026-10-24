@@ -59,3 +59,11 @@
 .ige-etapes li{margin-bottom:10px}
 .ige-tabs a{cursor:pointer}
 @media (max-width:640px){.ige-exec{grid-template-columns:80px 1fr 44px}}
+
+/* Échanges sur une écriture (VA-15) */
+.ige-fil{display:flex;flex-direction:column;gap:8px;margin:4px 0 8px}
+.ige-msg{border-radius:8px;padding:8px 10px;font-size:13px;line-height:1.45;max-width:92%}
+.ige-msg-q{background:var(--ige-wait-bg,#fdeee2);align-self:flex-start;border-left:3px solid var(--ige-orange,#ed7016)}
+.ige-msg-r{background:var(--ige-info-bg,#e2f2f9);align-self:flex-end;border-left:3px solid var(--ige-bleu,#0095c9)}
+.ige-msg .ige-small{margin-bottom:2px}
+.ige-dossier{display:flex;flex-wrap:wrap;gap:6px 14px;margin:6px 0 10px;font-size:12.5px}

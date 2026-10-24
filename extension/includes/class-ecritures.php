@@ -244,7 +244,7 @@ final class IGE_FFM_Ecritures {
 			return $id;
 		}
 		if ( $has_file ) {
-			$pid = IGE_FFM_Pieces::enregistrer( $file, 'ecriture', $id, $user_id );
+			$pid = IGE_FFM_Pieces::enregistrer( $file, 'ecriture', $id, $user_id, (string) ( $data['piece_nature'] ?? '' ) );
 			if ( is_wp_error( $pid ) ) {
 				$wpdb->delete( $t, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				return $pid;

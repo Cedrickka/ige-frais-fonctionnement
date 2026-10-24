@@ -223,6 +223,8 @@ final class IGE_FFM_Ecran_Livre {
 		$orig   = $e['ecriture_origine_id'] ? IGE_FFM_Ecritures::get( (int) $e['ecriture_origine_id'] ) : null;
 		$peut   = IGE_FFM_Contexte::peut_saisir( $sid );
 		$pieces = IGE_FFM_Pieces::liste( 'ecriture', $id );
+		$dos    = IGE_FFM_Pieces::etat_dossier( $e );
+		$fil    = IGE_FFM_Echanges::fil( $id );
 		list( $lbl, $tone ) = IGE_FFM_Ecritures::etat( $e );
 		$modes  = array_filter( IGE_FFM_Referentiels::all( 'mode_paiement' ), static fn( $m ) => (int) $m['actif'] );
 
@@ -249,26 +251,51 @@ final class IGE_FFM_Ecran_Livre {
 					<?php if ( $cp ) : ?><dt>Annulée par</dt><dd><a href="<?php echo esc_url( add_query_arg( 'ecriture', $cp['id'], $base ) ); ?>"><?php echo esc_html( $cp['id_ecriture'] ); ?></a></dd><?php endif; ?>
 				</dl>
 				<div>
-					<h3 style="margin:0 0 8px;font-size:14px">Pièces jointes</h3>
+					<h3 style="margin:0 0 8px;font-size:14px">Pièces jointes <?php echo $dos['exigees'] ? ( $dos['complet'] ? ige_ffm_pill( 'Dossier complet', 'ok' ) : ige_ffm_pill( 'Dossier incomplet', 'ko' ) ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></h3>
+					<?php if ( $dos['exigees'] ) : ?>
+						<div class="ige-dossier">
+							<?php foreach ( $dos['presentes'] as $x => $ok ) : ?>
+								<span><?php echo $ok ? '<span class="ige-ok">✓</span>' : '<span class="ige-ko">✕</span>'; ?> <?php echo esc_html( $x ); ?></span>
+							<?php endforeach; ?>
+						</div>
+					<?php endif; ?>
 					<?php if ( $pieces ) : ?>
 						<ul style="margin:0 0 12px;padding-left:18px">
 							<?php foreach ( $pieces as $p ) : ?>
-								<li><a href="<?php echo esc_url( IGE_FFM_Pieces::url( $p ) ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $p['nom_original'] ); ?></a> <span class="ige-small ige-muted"><?php echo esc_html( size_format( (int) $p['taille'] ) ); ?></span></li>
+								<li><a href="<?php echo esc_url( IGE_FFM_Pieces::url( $p ) ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $p['nom_original'] ); ?></a> <span class="ige-small ige-muted"><?php echo esc_html( ( $p['nature'] ? $p['nature'] . ' · ' : '' ) . size_format( (int) $p['taille'] ) ); ?></span></li>
 							<?php endforeach; ?>
 						</ul>
 					<?php else : ?>
 						<p class="ige-small ige-muted">Aucune pièce jointe.</p>
 					<?php endif; ?>
 					<?php if ( $peut ) : ?>
-						<?php echo IGE_FFM_Ecrans::form_open( 'piece_ajout', 'enctype="multipart/form-data" class="ige-row ige-no-print"' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+						<?php echo IGE_FFM_Ecrans::form_open( 'piece_ajout', 'enctype="multipart/form-data" class="ige-row ige-no-print" style="flex-wrap:wrap"' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 							<input type="hidden" name="ecriture" value="<?php echo esc_attr( $id ); ?>">
 							<label class="screen-reader-text" for="ige-piece-ajout">Ajouter une pièce</label>
-							<input type="file" id="ige-piece-ajout" name="piece" class="ige-input" style="width:auto;flex:1" accept="image/jpeg,image/png,image/webp,application/pdf" required>
+							<input type="file" id="ige-piece-ajout" name="piece" class="ige-input" style="width:auto;flex:1;min-width:180px" accept="image/jpeg,image/png,image/webp,application/pdf" required>
+							<?php if ( $dos['exigees'] ) : ?>
+								<label class="screen-reader-text" for="ige-piece-nature">Nature de la pièce</label>
+								<select id="ige-piece-nature" name="nature" class="ige-input" style="width:auto">
+									<?php foreach ( $dos['exigees'] as $x ) : ?>
+										<option value="<?php echo esc_attr( $x ); ?>"<?php selected( $x, $dos['manquantes'][0] ?? '' ); ?>><?php echo esc_html( $x . ( $dos['presentes'][ $x ] ? '' : ' (manquante)' ) ); ?></option>
+									<?php endforeach; ?>
+									<option value="Autre pièce">Autre pièce</option>
+								</select>
+							<?php endif; ?>
 							<button type="submit" class="ige-btn ige-btn-line">Ajouter la pièce</button>
 						</form>
 					<?php endif; ?>
 				</div>
 			</div>
+			<?php if ( $fil ) : ?>
+				<div style="margin-top:16px;border-top:1px solid var(--ige-ligne);padding-top:12px">
+					<h3 style="margin:0 0 8px;font-size:14px">Échanges avec Administration et Finance <?php echo 'question' === $e['echange'] ? ige_ffm_pill( 'Réponse attendue', 'wait' ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></h3>
+					<?php echo IGE_FFM_Ecran_Verification::fil_html( $fil ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					<?php if ( 'question' === $e['echange'] && $peut ) : ?>
+						<p class="ige-no-print" style="margin:6px 0 0"><a class="ige-btn ige-btn-jaune" href="<?php echo esc_url( IGE_FFM_Ecran_Service::lien( ige_ffm_url( 'transmission' ), $sid ) . '#ige-questions' ); ?>">Répondre</a></p>
+					<?php endif; ?>
+				</div>
+			<?php endif; ?>
 			<?php if ( $e['avance_id'] && ! $orig ) : ?>
 				<p class="ige-small ige-muted ige-no-print" style="margin:16px 0 0">Entrée créée par Administration et Finance (avance de fonds) : seule Administration et Finance peut l’annuler.</p>
 			<?php endif; ?>
@@ -364,7 +391,7 @@ final class IGE_FFM_Ecran_Livre {
 			wp_die( 'Accès refusé.', '', array( 'response' => 403 ) );
 		}
 		$file = isset( $_FILES['piece'] ) ? $_FILES['piece'] : null; // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput
-		$res  = $file ? IGE_FFM_Pieces::enregistrer( $file, 'ecriture', $id, get_current_user_id() ) : new WP_Error( 'piece', 'Choisissez un fichier.' );
+		$res  = $file ? IGE_FFM_Pieces::enregistrer( $file, 'ecriture', $id, get_current_user_id(), ige_ffm_post( 'nature' ) ) : new WP_Error( 'piece', 'Choisissez un fichier.' );
 		if ( is_wp_error( $res ) ) {
 			ige_ffm_flash( 'ko', 'Pièce refusée', $res->get_error_message() );
 		} else {

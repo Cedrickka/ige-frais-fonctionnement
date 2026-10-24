@@ -19,6 +19,7 @@ final class IGE_FFM_Ecran_Verification {
 	public static function register() {
 		add_action( 'admin_post_ige_ffm_verifier', array( __CLASS__, 'handle_verifier' ) );
 		add_action( 'admin_post_ige_ffm_valider_tout', array( __CLASS__, 'handle_valider_tout' ) );
+		add_action( 'admin_post_ige_ffm_question', array( __CLASS__, 'handle_question' ) );
 		add_action(
 			'template_redirect',
 			static function () {
@@ -38,7 +39,7 @@ final class IGE_FFM_Ecran_Verification {
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		$vue = isset( $_GET['vue'] ) ? sanitize_key( $_GET['vue'] ) : 'a_verifier';
 		$f   = array(
-			'vue'        => in_array( $vue, array( 'a_verifier', 'anomalies', 'validee', 'rejetee', 'lots' ), true ) ? $vue : 'a_verifier',
+			'vue'        => in_array( $vue, array( 'a_verifier', 'anomalies', 'echanges', 'validee', 'rejetee', 'lots' ), true ) ? $vue : 'a_verifier',
 			'service_id' => isset( $_GET['service'] ) ? (int) $_GET['service'] : 0,
 			'lot_id'     => isset( $_GET['lot'] ) ? (int) $_GET['lot'] : 0,
 		);
@@ -118,7 +119,7 @@ final class IGE_FFM_Ecran_Verification {
 	 */
 	private static function compter_sans_anomalie( $exo, array $f ) {
 		$file = IGE_FFM_Verification::file( $exo, array( 'vue' => 'a_verifier' ) + $f, 5000 );
-		return count( array_filter( $file['rows'], static fn( $e ) => ! IGE_FFM_Anomalies::lire( $e ) ) );
+		return count( array_filter( $file['rows'], static fn( $e ) => ! IGE_FFM_Anomalies::lire( $e ) && '' === (string) $e['echange'] ) );
 	}
 
 	/**
@@ -136,6 +137,7 @@ final class IGE_FFM_Ecran_Verification {
 		$syn  = IGE_FFM_Verification::synthese( $exo, $f['service_id'] );
 		$svcs = wp_list_pluck( IGE_FFM_Referentiels::all( 'service' ), 'code', 'id' );
 		$sel  = isset( $_GET['ecriture'] ) ? (int) $_GET['ecriture'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$ech  = IGE_FFM_Echanges::compter( $exo, $f['service_id'] );
 
 		ob_start();
 		?>
@@ -151,6 +153,7 @@ final class IGE_FFM_Ecran_Verification {
 				$chips = array(
 					'a_verifier' => 'À vérifier (' . $syn['a_verifier']['n'] . ')',
 					'anomalies'  => 'Avec anomalie (' . $syn['anomalies']['n'] . ')',
+					'echanges'   => 'Échanges en cours (' . ( $ech['question'] + $ech['reponse'] ) . ( $ech['reponse'] ? ' · ' . $ech['reponse'] . ' réponse(s)' : '' ) . ')',
 					'validee'    => 'Validées',
 					'rejetee'    => 'Rejetées',
 					'lots'       => 'Lots reçus',
@@ -212,7 +215,7 @@ final class IGE_FFM_Ecran_Verification {
 		$rows  = $file['rows'];
 		$rubs  = wp_list_pluck( IGE_FFM_Referentiels::all( 'rubrique' ), 'code', 'id' );
 		$fourn = wp_list_pluck( IGE_FFM_Fournisseurs::all( false ), 'raison_sociale', 'id' );
-		$actif = in_array( $f['vue'], array( 'a_verifier', 'anomalies' ), true );
+		$actif = in_array( $f['vue'], array( 'a_verifier', 'anomalies', 'echanges' ), true );
 
 		ob_start();
 		if ( $actif ) {
@@ -250,6 +253,11 @@ final class IGE_FFM_Ecran_Verification {
 					<td>
 						<?php
 						if ( $actif ) {
+							if ( 'question' === $e['echange'] ) {
+								echo ige_ffm_pill( 'Question posée', 'wait' ) . '<br>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+							} elseif ( 'reponse' === $e['echange'] ) {
+								echo ige_ffm_pill( 'Réponse reçue', 'info' ) . '<br>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+							}
 							if ( $e['ecriture_origine_id'] ) {
 								echo ige_ffm_pill( 'Contrepassation', 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 							} elseif ( $maj && ! $a ) {
@@ -387,10 +395,11 @@ final class IGE_FFM_Ecran_Verification {
 			<div class="ige-piece">Aucune pièce jointe</div>
 		<?php endif; ?>
 
-		<?php if ( $r && $r['pieces_exigees'] && ! $orig ) : ?>
-			<p class="ige-small" style="margin:12px 0 4px;font-weight:600">Pièces exigées pour <?php echo esc_html( $r['code'] ); ?> (à contrôler)</p>
-			<?php foreach ( array_filter( array_map( 'trim', preg_split( '/[,;]/', $r['pieces_exigees'] ) ) ) as $pe ) : ?>
-				<div class="ige-check"><span class="ige-muted">☐</span><?php echo esc_html( ucfirst( $pe ) ); ?></div>
+		<?php $dos = IGE_FFM_Pieces::etat_dossier( $e ); ?>
+		<?php if ( $dos['exigees'] ) : ?>
+			<p class="ige-small" style="margin:12px 0 4px;font-weight:600">Pièces exigées pour <?php echo esc_html( $r['code'] ); ?> <?php echo $dos['complet'] ? ige_ffm_pill( 'Dossier complet', 'ok' ) : ige_ffm_pill( 'Dossier incomplet', 'ko' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></p>
+			<?php foreach ( $dos['presentes'] as $pe => $ok ) : ?>
+				<div class="ige-check"><?php echo $ok ? '<span class="ige-ok">✓</span>' : '<span class="ige-ko">✕</span>'; ?><?php echo esc_html( $pe ); ?></div>
 			<?php endforeach; ?>
 		<?php endif; ?>
 
@@ -402,6 +411,8 @@ final class IGE_FFM_Ecran_Verification {
 		<?php elseif ( 'a_verifier' === $e['etat_verification'] ) : ?>
 			<div class="ige-check"><span class="ige-ok">✓</span>Aucune anomalie détectée à la réception</div>
 		<?php endif; ?>
+
+		<?php echo self::echanges( $e, $retour ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 
 		<?php if ( 'transmise' === $e['etat_transmission'] && 'a_verifier' === $e['etat_verification'] ) : ?>
 			<?php if ( (int) $e['saisi_par'] === get_current_user_id() ) : ?>
@@ -420,6 +431,69 @@ final class IGE_FFM_Ecran_Verification {
 			<?php endif; ?>
 		<?php endif; ?>
 		<?php
+	}
+
+	/**
+	 * Fil des échanges d'une écriture et formulaire de question.
+	 *
+	 * @param array  $e      Écriture.
+	 * @param string $retour Adresse de retour.
+	 * @return string
+	 */
+	private static function echanges( array $e, $retour ) {
+		$fil = IGE_FFM_Echanges::fil( (int) $e['id'] );
+		$h   = '';
+		if ( $fil ) {
+			$h .= '<p class="ige-small" style="margin:14px 0 6px;font-weight:600">Échanges avec le service</p>' . self::fil_html( $fil );
+		}
+		if ( 'transmise' === $e['etat_transmission'] && 'a_verifier' === $e['etat_verification'] && current_user_can( 'ige_verifier' ) ) {
+			$h .= IGE_FFM_Ecrans::form_open( 'question', 'style="margin-top:12px"' )
+				. '<input type="hidden" name="ecriture" value="' . esc_attr( $e['id'] ) . '"><input type="hidden" name="retour" value="' . esc_attr( $retour ) . '">'
+				. '<label for="ige-question" class="ige-small" style="font-weight:600;display:block;margin-bottom:4px">' . ( 'question' === $e['echange'] ? 'Compléter la question' : 'Poser une question au service (sans rejeter)' ) . '</label>'
+				. '<textarea id="ige-question" name="message" class="ige-input" rows="2" maxlength="2000" required minlength="5" placeholder="Ex. : joignez le bon de réception signé ; précisez le nombre de ramettes."></textarea>'
+				. '<button type="submit" class="ige-btn ige-btn-line" style="margin-top:6px">Envoyer la question</button></form>';
+		}
+		return $h;
+	}
+
+	/**
+	 * Messages d'un échange.
+	 *
+	 * @param array[] $fil Messages.
+	 * @return string
+	 */
+	public static function fil_html( array $fil ) {
+		$h = '<div class="ige-fil">';
+		foreach ( $fil as $m ) {
+			$u     = get_userdata( (int) $m['user_id'] );
+			$q     = 'question' === $m['sens'];
+			$piece = $m['piece_id'] ? IGE_FFM_Pieces::get( (int) $m['piece_id'] ) : null;
+			$h    .= '<div class="ige-msg' . ( $q ? ' ige-msg-q' : ' ige-msg-r' ) . '"><div class="ige-small ige-muted">' . esc_html( ( $q ? 'Administration et Finance · ' : 'Service · ' ) . ( $u ? $u->display_name : '' ) . ' · ' . wp_date( 'd/m/Y H:i', strtotime( $m['created_at'] ) ) ) . '</div>'
+				. '<div>' . nl2br( esc_html( $m['message'] ) ) . '</div>'
+				. ( $piece ? '<div class="ige-small">Pièce jointe : <a href="' . esc_url( IGE_FFM_Pieces::url( $piece ) ) . '" target="_blank" rel="noopener">' . esc_html( ( $piece['nature'] ? $piece['nature'] . ' · ' : '' ) . $piece['nom_original'] ) . '</a></div>' : '' )
+				. '</div>';
+		}
+		return $h . '</div>';
+	}
+
+	/**
+	 * Question au service.
+	 */
+	public static function handle_question() {
+		ige_ffm_check_form( 'question' );
+		ige_ffm_require( 'ige_verifier' );
+		$id  = (int) ige_ffm_post( 'ecriture' );
+		$msg = isset( $_POST['message'] ) ? wp_unslash( $_POST['message'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$res = IGE_FFM_Echanges::poser( $id, $msg );
+		if ( is_wp_error( $res ) ) {
+			ige_ffm_flash( 'ko', 'Question non envoyée', $res->get_error_message() );
+		} else {
+			ige_ffm_flash( 'ok', 'Question envoyée au service', 'L’écriture reste à vérifier ; vous serez prévenu de la réponse.' );
+		}
+		$retour = ige_ffm_post( 'retour' );
+		$url    = $retour && 0 === strpos( $retour, home_url() ) ? $retour : ige_ffm_url( 'verification' );
+		wp_safe_redirect( add_query_arg( 'ecriture', $id, $url ) );
+		exit;
 	}
 
 	/**

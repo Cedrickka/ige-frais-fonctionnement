@@ -1,5 +1,15 @@
 # Journal des versions
 
+## 1.3.0 — 24 octobre 2026 · Fin du lot 1
+
+- Échanges sur une écriture (VA-15) : question du central sans rejet, réponse du service avec pièce, notifications par e-mail, filtre « Échanges en cours », clôture à la validation ou au rejet.
+- Dossier complet (VA-11) : nature de chaque pièce, indicateur et liste cochée des pièces exigées par la rubrique, anomalie « Dossier incomplet ».
+- Jours fériés de la RDC (10 jours légaux) modifiables, jours exceptionnels, nom du jour férié dans l'anomalie.
+- Contrôle d'intégrité de l'application (après restauration, mensuel) et procédure de sauvegarde et de restauration.
+- Revue de sécurité des points d'entrée ; accès direct interdit à `vendor/` et `tests/`.
+- Schéma version 8 (table des échanges, nature des pièces).
+- 52 tests automatiques supplémentaires (521 au total).
+
 ## 1.2.0 — 24 octobre 2026 · Exports Excel et PDF
 
 - Exports Excel au format .xlsx mis en forme selon la charte (armoiries, bande tricolore, en-têtes bleu institutionnel, montants et dates réels, total, filtres, volets figés, mise en page d'impression) : livre de caisse, consolidation (4 onglets), journal d'audit. Les exports CSV sont retirés.

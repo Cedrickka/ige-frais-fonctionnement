@@ -62,6 +62,7 @@ final class IGE_FFM_Ecran_Premiere_Connexion {
 	 */
 	public static function handle() {
 		ige_ffm_check_form( 'premier_mdp' );
+		ige_ffm_require( 'read' ); // Son propre compte seulement.
 		if ( ! is_user_logged_in() ) {
 			wp_safe_redirect( home_url( '/' ) );
 			exit;

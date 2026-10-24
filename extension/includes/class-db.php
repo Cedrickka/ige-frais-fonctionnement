@@ -193,6 +193,7 @@ final class IGE_FFM_DB {
   lot_id bigint(20) unsigned NULL,
   nb_transmissions smallint(5) unsigned NOT NULL DEFAULT 0,
   origine varchar(10) NOT NULL DEFAULT '',
+  echange varchar(10) NOT NULL DEFAULT '',
   saisi_par bigint(20) unsigned NOT NULL,
   saisi_le datetime NOT NULL,
   valide_par bigint(20) unsigned NULL,
@@ -218,6 +219,19 @@ final class IGE_FFM_DB {
   PRIMARY KEY  (id),
   UNIQUE KEY id_transmission (id_transmission)
 ) $c;",
+			'CREATE TABLE ' . $t( 'echange' ) . " (
+  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  ecriture_id bigint(20) unsigned NOT NULL,
+  service_id bigint(20) unsigned NOT NULL,
+  user_id bigint(20) unsigned NOT NULL,
+  sens varchar(8) NOT NULL,
+  message text NOT NULL,
+  piece_id bigint(20) unsigned NULL,
+  created_at datetime NOT NULL,
+  PRIMARY KEY  (id),
+  KEY ecriture_id (ecriture_id),
+  KEY service_id (service_id)
+) $c;",
 			'CREATE TABLE ' . $t( 'piece' ) . " (
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   objet varchar(20) NOT NULL,
@@ -229,6 +243,7 @@ final class IGE_FFM_DB {
   empreinte char(64) NOT NULL,
   televerse_par bigint(20) unsigned NOT NULL,
   televerse_le datetime NOT NULL,
+  nature varchar(80) NOT NULL DEFAULT '',
   PRIMARY KEY  (id),
   KEY objet (objet,objet_id)
 ) $c;",
@@ -315,6 +330,6 @@ final class IGE_FFM_DB {
 	 * @return string[]
 	 */
 	public static function tables() {
-		return array( 'exercice', 'service', 'categorie', 'rubrique', 'mode_paiement', 'budget', 'solde_initial', 'revision_budget', 'compte', 'fournisseur', 'ecriture', 'lot', 'piece', 'avance', 'arrete', 'document', 'audit' );
+		return array( 'exercice', 'service', 'categorie', 'rubrique', 'mode_paiement', 'budget', 'solde_initial', 'revision_budget', 'compte', 'fournisseur', 'ecriture', 'lot', 'piece', 'echange', 'avance', 'arrete', 'document', 'audit' );
 	}
 }

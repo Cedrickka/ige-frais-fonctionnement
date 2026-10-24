@@ -2,7 +2,7 @@
 
 Logique métier de l'application de gestion des frais de fonctionnement de l'Inspection Générale de l'Enseignement. Elle s'utilise avec le thème **IGE Frais de fonctionnement** (version 1.0.1 ou plus), qui fournit l'interface.
 
-Version **1.2.0** (lot 1 complet + déploiement + exports Excel et PDF au format de la charte). Thème requis : IGE Frais de fonctionnement **1.0.2**. WordPress 6.5 ou plus (testé sur 7.1.3), PHP 8.0 ou plus.
+Version **1.3.0** (lot 1 complet, y compris les échanges sur une écriture et le dossier complet ; déploiement ; exports Excel et PDF). Thème requis : IGE Frais de fonctionnement **1.0.2**. WordPress 6.5 ou plus (testé sur 7.1.3), PHP 8.0 ou plus.
 
 ## 1. Ce que contient l'étape 1
 
@@ -117,6 +117,16 @@ Les classeurs reprennent la charte : armoiries, intitulé du ministère, bande t
 
 Bibliothèques incluses (dossier `vendor/`) : Dompdf 3.1.0 (LGPL 2.1), php-font-lib et php-svg-lib (LGPL), Masterminds HTML5 (MIT), PHP-CSS-Parser (MIT), qrcode-generator de Kazuhiko Arase (MIT, classes préfixées `IGE_QR`). Polices de la charte converties en TTF dans `assets/fonts/` (SIL Open Font License). Extensions PHP requises : gd, mbstring, dom, zip (présentes chez Hostinger). Le cache des polices est écrit dans `wp-content/uploads/ige-ffm-pdf/` (accès direct interdit).
 
+### Version 1.3.0 : fin du lot 1
+
+| Élément | Contenu |
+| --- | --- |
+| Échanges sur une écriture (VA-15) | Dans le panneau de vérification, Administration et Finance pose une question au service sans rejeter l'écriture. Le service est prévenu par e-mail et sur son accueil ; il répond dans Transmission > « Questions à traiter », avec une pièce s'il le faut. Le vérificateur est prévenu de la réponse. Filtre « Échanges en cours » dans la vérification ; la validation en masse écarte les écritures dont l'échange est ouvert ; valider ou rejeter clôt l'échange. Tout est conservé et journalisé. |
+| Dossier complet (VA-11) | Chaque pièce jointe porte sa nature (facture, bon de réception, reçu…) choisie parmi les pièces exigées par la rubrique. Indicateur « Dossier complet / incomplet » avec la liste cochée dans le livre de caisse, la vérification et les questions ; nouvelle anomalie « Dossier incomplet » (désactivable). |
+| Jours fériés | Les 10 jours fériés légaux de la RDC sont préremplis et modifiables dans Exercice et règles de contrôle, avec les jours exceptionnels décrétés (deuil national, élection…). L'anomalie « jour non ouvré » affiche le nom du jour férié. |
+| Contrôle d'intégrité | Bouton « Lancer le contrôle » (Exercice et règles de contrôle) : chaîne du journal d'audit, empreintes des documents officiels, présence et empreinte de chaque pièce, unicité des écritures, version de la base. À lancer après toute restauration et chaque mois. |
+| Sécurité | Revue de tous les points d'entrée (53 formulaires et téléchargements) : jeton, droit et périmètre du service vérifiés côté serveur ; accès direct interdit aux dossiers `vendor/` et `tests/`. |
+
 ## 2. Installation sur ige-gestion.com
 
 **Mise à jour vers la 1.1.0** : après le téléversement, ouvrir **Exercice et règles de contrôle > Messagerie**, saisir `contact@ige-gestion.com` et le mot de passe de cette boîte (hPanel > E-mails), enregistrer, puis « Envoyer un e-mail de test ». Vérifier ensuite que **chaque compte a une adresse e-mail** : sans adresse, pas de code de connexion. Les comptes qui utilisent déjà une application d'authentification la gardent.
@@ -168,7 +178,11 @@ wp eval-file wp-content/plugins/ige-ff-metier/tests/test-deploiement.php
 wp eval-file wp-content/plugins/ige-ff-metier/tests/test-exports.php
 ```
 
-Résultats attendus : `63`, `76`, `57`, `74`, `57`, `109` puis `33 réussis`, sans échec (469 tests). Le test du déploiement n'envoie aucun e-mail (ils sont interceptés) et utilise les fichiers d'essai de `tests/fixtures/`. Le test des fonds suppose qu'on soit au moins en mai de l'exercice ; il clôture un exercice fictif (2030) puis le supprime, sans toucher l'exercice réel. Les tests couvrent le schéma, les données initiales, les droits de chaque rôle, la validation des référentiels, la création et la modification des comptes, la robustesse des mots de passe, le verrouillage, la désactivation, les bornes des règles et la détection d'une falsification du journal.
+```
+wp eval-file wp-content/plugins/ige-ff-metier/tests/test-priorite1.php
+```
+
+Résultats attendus : `64`, `76`, `57`, `74`, `57`, `109`, `33` puis `51 réussis`, sans échec (521 tests). Le test du déploiement n'envoie aucun e-mail (ils sont interceptés) et utilise les fichiers d'essai de `tests/fixtures/`. Le test des fonds suppose qu'on soit au moins en mai de l'exercice ; il clôture un exercice fictif (2030) puis le supprime, sans toucher l'exercice réel. Les tests couvrent le schéma, les données initiales, les droits de chaque rôle, la validation des référentiels, la création et la modification des comptes, la robustesse des mots de passe, le verrouillage, la désactivation, les bornes des règles et la détection d'une falsification du journal.
 
 Les tests de saisie couvrent les droits (lecteur, administrateur non rattaché, agent sur le budget), le blocage de la caisse négative et du dépassement du disponible, les validations (date future ou hors exercice, montant, rubrique, pièce, faux PDF, fichier PHP, plafond des espèces), le budget facultatif, les révisions motivées, le verrouillage du solde initial, le paiement d'un engagement, la contrepassation (et ses refus), le solde progressif du livre, la continuité de la numérotation, le mois clôturé, les doublons et la fusion des fournisseurs, le journal d'audit.
 
@@ -187,9 +201,21 @@ Des tests d'interface ont aussi été passés pour l'étape 5 : activation de la
 - **Journal d'audit** : l'application ne permet ni de modifier ni de supprimer une ligne. Un accès direct à la base (phpMyAdmin) le permettrait, mais la vérification d'intégrité le signalerait.
 - **Double authentification par e-mail** : sa sûreté dépend de celle des boîtes des agents. Recommander des adresses professionnelles et un mot de passe de messagerie différent de celui de l'application. Si la messagerie tombe en panne, les codes de secours permettent de se connecter ; en dernier recours, `define( 'IGE_FFM_DESACTIVER_2FA', true );` dans `wp-config.php` suspend la double authentification.
 - **Délivrabilité** : dans hPanel > Domaines > DNS, vérifier que les enregistrements SPF, DKIM et DMARC de ige-gestion.com sont actifs (Hostinger les propose) pour que les codes n'arrivent pas en indésirables.
-- **Revue du code** : avant la mise en production réelle, faire relire le code par un développeur ou un auditeur indépendant, en particulier les contrôles d'accès.
+- **Revue du code** : la revue interne de la 1.3.0 a contrôlé chaque point d'entrée (jeton, droit, périmètre du service), l'échappement des affichages et les requêtes SQL. Elle ne remplace pas une relecture par un développeur ou un auditeur indépendant avant la mise en production réelle, en particulier des contrôles d'accès.
 
-## 5. Pour les développeurs
+## 5. Sauvegarde et restauration
+
+Hostinger fait une sauvegarde automatique chaque jour (hPanel > Fichiers > Sauvegardes) ; elle couvre les fichiers et la base. Avant chaque mise à jour de l'extension, chaque reprise Excel et chaque vague de déploiement, faire en plus une sauvegarde manuelle.
+
+Restauration (à faire une fois en recette pour la chronométrer) :
+
+1. Prévenir les services et suspendre la saisie.
+2. hPanel > Sauvegardes : restaurer la base de données à la date voulue, puis les fichiers. Les pièces justificatives sont dans `wp-content/uploads/ige-pieces` : la base seule ne suffit pas.
+3. Vider le cache LiteSpeed et se reconnecter.
+4. Exercice et règles de contrôle > Contrôle d'intégrité > « Lancer le contrôle ». Tous les points doivent être conformes ; une pièce absente signifie que les fichiers n'ont pas été restaurés.
+5. Les écritures saisies entre la sauvegarde et la panne sont perdues : demander aux services concernés de les ressaisir (leurs pièces papier font foi), puis noter l'incident dans le registre de déploiement.
+
+## 6. Pour les développeurs
 
 - Point d'entrée : `ige-ff-metier.php`. Classes dans `includes/`, écrans dans `includes/ecrans/`.
 - Toute écriture passe par une classe métier (`IGE_FFM_Referentiels`, `IGE_FFM_Comptes`, `IGE_FFM_Reglages`, `IGE_FFM_Ecritures`, `IGE_FFM_Budget`, `IGE_FFM_Fournisseurs`, `IGE_FFM_Pieces`) qui valide, enregistre et inscrit au journal (`IGE_FFM_Audit::log()`).
@@ -198,7 +224,7 @@ Des tests d'interface ont aussi été passés pour l'étape 5 : activation de la
 - Fonctions utiles pour les étapes suivantes : `IGE_FFM_Contexte` (exercice, service de l'utilisateur, droits de voir, saisir, budgéter), `IGE_FFM_Budget::caisse()`, `::suivi()`, `IGE_FFM_Ecritures::livre()`, `::etat()`, `IGE_FFM_Reglages::get()`.
 - Le script `assets/ige-ffm.js` (pages Nouvelle écriture et Livre de caisse) ne fait que de l'affichage et de la réduction des photos : tous les contrôles sont refaits côté serveur.
 
-## 6. Étapes suivantes du lot 1
+## 7. Étapes suivantes du lot 1
 
 2. ~~Saisie~~ : livrée en 0.2.0.
 3. ~~Circuit avec le central~~ : livré en 0.3.0.

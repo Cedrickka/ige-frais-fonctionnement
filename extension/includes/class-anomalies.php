@@ -27,6 +27,7 @@ final class IGE_FFM_Anomalies {
 			'rubrique'        => 'Rubrique inconnue ou inactive',
 			'montant'         => 'Montant nul ou négatif',
 			'piece'           => 'Pièce manquante',
+			'dossier'         => 'Dossier incomplet',
 			'doublon'         => 'Doublon possible',
 			'depassement'     => 'Dépasse le budget de la rubrique',
 			'caisse'          => 'Caisse négative',
@@ -38,14 +39,14 @@ final class IGE_FFM_Anomalies {
 	}
 
 	/**
-	 * Jours fériés fixes de la RDC (mois-jour). À compléter par le filtre « ige_ffm_jours_feries ».
+	 * Jours fériés de la RDC d'une année (mois-jour), légaux et exceptionnels (voir IGE_FFM_Jours_Feries).
 	 *
 	 * @param int $annee Année.
 	 * @return string[]
 	 */
 	public static function jours_feries( $annee ) {
-		$fixes = array( '01-01', '01-04', '01-16', '01-17', '04-06', '05-01', '05-17', '06-30', '08-01', '12-25' );
-		return (array) apply_filters( 'ige_ffm_jours_feries', $fixes, (int) $annee );
+		$md = array_map( static fn( $d ) => substr( $d, 5 ), array_keys( IGE_FFM_Jours_Feries::annee( (int) $annee ) ) );
+		return (array) apply_filters( 'ige_ffm_jours_feries', $md, (int) $annee );
 	}
 
 	/**
@@ -143,6 +144,11 @@ final class IGE_FFM_Anomalies {
 				}
 				if ( 'excel' !== ( $e['origine'] ?? '' ) && ( '' === trim( (string) $e['num_piece'] ) || empty( $pieces[ $id ] ) ) ) {
 					$a['piece'] = '' === trim( (string) $e['num_piece'] ) ? 'Aucun n° de pièce.' : 'Aucun fichier joint.';
+				} elseif ( 'excel' !== ( $e['origine'] ?? '' ) && 'payee' === $e['statut'] && $on( 'dossier' ) ) {
+					$dos = IGE_FFM_Pieces::etat_dossier( $e );
+					if ( ! $dos['complet'] ) {
+						$a['dossier'] = 'Manque : ' . implode( ', ', $dos['manquantes'] ) . '.';
+					}
 				}
 				if ( $rid && array_key_exists( $rid, $budget ) ) {
 					$c = ( $conso[ $rid ]['engage'] ?? 0 ) + ( $conso[ $rid ]['paye'] ?? 0 );
@@ -162,7 +168,8 @@ final class IGE_FFM_Anomalies {
 					if ( (int) gmdate( 'N', $ts ) >= 6 ) {
 						$a['jour_non_ouvre'] = ( 6 === (int) gmdate( 'N', $ts ) ? 'Samedi' : 'Dimanche' ) . ' ' . wp_date( 'd/m/Y', $ts ) . '.';
 					} elseif ( in_array( gmdate( 'm-d', $ts ), self::jours_feries( (int) gmdate( 'Y', $ts ) ), true ) ) {
-						$a['jour_non_ouvre'] = 'Jour férié (' . wp_date( 'd/m/Y', $ts ) . ').';
+						$lf                  = IGE_FFM_Jours_Feries::libelle( $date );
+						$a['jour_non_ouvre'] = 'Jour férié' . ( $lf ? ' : ' . $lf : '' ) . ' (' . wp_date( 'd/m/Y', $ts ) . ').';
 					}
 				}
 				if ( $on( 'beneficiaire' ) && ! $e['fournisseur_id'] && '' !== trim( (string) $e['beneficiaire'] ) ) {
@@ -198,6 +205,24 @@ final class IGE_FFM_Anomalies {
 			$out[ $id ] = $a;
 		}
 		return $out;
+	}
+
+	/**
+	 * Recalcule et enregistre les anomalies d'une écriture déjà transmise et pas encore traitée
+	 * (après l'ajout d'une pièce ou une réponse du service).
+	 *
+	 * @param int $id Écriture.
+	 * @return array<string,string>
+	 */
+	public static function recalculer( $id ) {
+		global $wpdb;
+		$e = IGE_FFM_Ecritures::get( (int) $id );
+		if ( ! $e || 'transmise' !== $e['etat_transmission'] || 'a_verifier' !== $e['etat_verification'] ) {
+			return $e ? self::lire( $e ) : array();
+		}
+		$a = self::pour_service( (int) $e['exercice_id'], (int) $e['service_id'], array( (int) $id ) )[ (int) $id ] ?? array();
+		$wpdb->update( IGE_FFM_DB::t( 'ecriture' ), array( 'anomalies' => wp_json_encode( $a, JSON_UNESCAPED_UNICODE ) ), array( 'id' => (int) $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		return $a;
 	}
 
 	/**

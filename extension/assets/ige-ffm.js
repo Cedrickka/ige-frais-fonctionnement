@@ -174,6 +174,20 @@
 		var opt = rub.options[rub.selectedIndex];
 		var d = sortie && opt && opt.value ? opt.getAttribute('data-dispo') : null;
 		aide.textContent = sortie && opt && opt.value && opt.getAttribute('data-pieces') ? 'Pièces exigées : ' + opt.getAttribute('data-pieces') : '';
+		var nat = el('ige-piece_nature'), natBloc = el('ige-nature-bloc');
+		if (nat && natBloc) {
+			var liste = sortie && opt && opt.value ? (opt.getAttribute('data-pieces') || '').split(/[,;]/).map(function (x) { x = x.trim(); return x ? x.charAt(0).toUpperCase() + x.slice(1) : ''; }).filter(Boolean) : [];
+			var cle = liste.join('|');
+			if (nat.getAttribute('data-liste') !== cle) {
+				var garde = nat.value || nat.getAttribute('data-valeur') || '';
+				nat.innerHTML = '';
+				liste.concat(liste.length ? ['Autre pièce'] : []).forEach(function (x) {
+					var o = document.createElement('option'); o.value = x; o.textContent = x; if (x === garde) { o.selected = true; } nat.appendChild(o);
+				});
+				nat.setAttribute('data-liste', cle);
+			}
+			natBloc.hidden = !liste.length;
+		}
 		out.innerHTML = '';
 
 		var mvt = sortie ? (statut() === 'payee' ? -m : 0) : m;

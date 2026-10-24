@@ -71,6 +71,10 @@ final class IGE_FFM_Ecran_Accueil_Service {
 			$noms = IGE_FFM_Ecran_Livre::mois_noms();
 			echo ige_ffm_banner( 'warn', 'Arrêté de caisse de ' . strtolower( $noms[ $mref ] ) . ' à faire', ' <a href="' . esc_url( IGE_FFM_Ecran_Service::lien( ige_ffm_url( 'arrete-de-caisse', array( 'mois' => $closm + 1 ) ), $sid ) ) . '">Compter la caisse et signer l’arrêté</a>.' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		}
+		$quest = IGE_FFM_Echanges::en_attente( $exo, $sid );
+		if ( $quest ) {
+			echo ige_ffm_banner( 'warn', count( $quest ) . ' question(s) d’Administration et Finance', ' <a href="' . esc_url( $trans ) . '#ige-questions">Répondre</a> (l’écriture n’est pas rejetée).' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		}
 		if ( $rejets ) {
 			echo ige_ffm_banner( 'ko', count( $rejets ) . ' écriture(s) rejetée(s) par le central', ' <a href="' . esc_url( $trans ) . '">Voir les motifs et corriger</a>.' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		}

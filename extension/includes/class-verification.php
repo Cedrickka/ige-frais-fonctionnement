@@ -25,7 +25,10 @@ final class IGE_FFM_Verification {
 		$t     = IGE_FFM_DB::t( 'ecriture' );
 		$vue   = $f['vue'] ?? 'a_verifier';
 		$where = array( $wpdb->prepare( 'exercice_id = %d', $exo ), "etat_transmission = 'transmise'" );
-		if ( 'anomalies' === $vue ) {
+		if ( 'echanges' === $vue ) {
+			$where[] = "etat_verification = 'a_verifier'";
+			$where[] = "echange <> ''";
+		} elseif ( 'anomalies' === $vue ) {
 			$where[] = "etat_verification = 'a_verifier'";
 			$where[] = "anomalies IS NOT NULL AND anomalies NOT IN ('', '[]', '{}')";
 		} elseif ( in_array( $vue, array( 'a_verifier', 'validee', 'rejetee' ), true ) ) {
@@ -123,6 +126,7 @@ final class IGE_FFM_Verification {
 				array( 'id' => (int) $e['id'], 'etat_verification' => 'a_verifier' )
 			);
 		}
+		IGE_FFM_Echanges::clore( wp_list_pluck( $el['ok'], 'id' ) );
 		if ( $el['ok'] ) {
 			IGE_FFM_Audit::log( 'validation', 'ecriture', count( $el['ok'] ) . ' écriture(s)', null, array( 'ecritures' => implode( ', ', wp_list_pluck( $el['ok'], 'id_ecriture' ) ) ), $user_id );
 		}
@@ -130,7 +134,7 @@ final class IGE_FFM_Verification {
 	}
 
 	/**
-	 * Valide toutes les écritures à vérifier sans anomalie (éventuellement d'un service ou d'un lot).
+	 * Valide toutes les écritures à vérifier sans anomalie ni échange en cours (éventuellement d'un service ou d'un lot).
 	 *
 	 * @param int      $exo     Exercice.
 	 * @param array    $f       Filtres (service_id, lot_id).
@@ -141,7 +145,7 @@ final class IGE_FFM_Verification {
 		$file = self::file( $exo, array( 'vue' => 'a_verifier' ) + $f, 5000 );
 		$ids  = array();
 		foreach ( $file['rows'] as $e ) {
-			if ( ! IGE_FFM_Anomalies::lire( $e ) ) {
+			if ( ! IGE_FFM_Anomalies::lire( $e ) && '' === (string) $e['echange'] ) {
 				$ids[] = (int) $e['id'];
 			}
 		}
@@ -175,6 +179,7 @@ final class IGE_FFM_Verification {
 				array( 'id' => (int) $e['id'], 'etat_verification' => 'a_verifier' )
 			);
 		}
+		IGE_FFM_Echanges::clore( wp_list_pluck( $el['ok'], 'id' ) );
 		if ( $el['ok'] ) {
 			IGE_FFM_Audit::log( 'rejet', 'ecriture', count( $el['ok'] ) . ' écriture(s)', null, array( 'ecritures' => implode( ', ', wp_list_pluck( $el['ok'], 'id_ecriture' ) ), 'motif' => $motif ), $user_id );
 			$par_service = array();

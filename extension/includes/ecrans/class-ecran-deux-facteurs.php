@@ -172,6 +172,7 @@ final class IGE_FFM_Ecran_Deux_Facteurs {
 	 */
 	public static function handle_envoyer() {
 		ige_ffm_check_form( '2fa_envoyer' );
+		ige_ffm_require( 'read' ); // Son propre compte seulement.
 		$res = IGE_FFM_Deux_Facteurs::demander_activation_email( get_current_user_id() );
 		if ( is_wp_error( $res ) ) {
 			ige_ffm_flash( 'ko', 'Code non envoyé', $res->get_error_message() );
@@ -186,6 +187,7 @@ final class IGE_FFM_Ecran_Deux_Facteurs {
 	 */
 	public static function handle_activer_email() {
 		ige_ffm_check_form( '2fa_activer_email' );
+		ige_ffm_require( 'read' ); // Son propre compte seulement.
 		$uid = get_current_user_id();
 		$res = IGE_FFM_Deux_Facteurs::activer_email( $uid, ige_ffm_post( 'code' ) );
 		if ( is_wp_error( $res ) ) {
@@ -202,6 +204,7 @@ final class IGE_FFM_Ecran_Deux_Facteurs {
 	 */
 	public static function handle_activer() {
 		ige_ffm_check_form( '2fa_activer' );
+		ige_ffm_require( 'read' ); // Son propre compte seulement.
 		$uid = get_current_user_id();
 		$res = IGE_FFM_Deux_Facteurs::activer( $uid, ige_ffm_post( 'code' ) );
 		if ( is_wp_error( $res ) ) {
@@ -218,6 +221,7 @@ final class IGE_FFM_Ecran_Deux_Facteurs {
 	 */
 	public static function handle_gerer() {
 		ige_ffm_check_form( '2fa_gerer' );
+		ige_ffm_require( 'read' ); // Son propre compte seulement.
 		$u  = wp_get_current_user();
 		$op = ige_ffm_post( 'operation' );
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized

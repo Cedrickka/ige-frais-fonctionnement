@@ -18,6 +18,7 @@ final class IGE_FFM_Ecran_Transmission {
 	public static function register() {
 		add_action( 'admin_post_ige_ffm_transmettre', array( __CLASS__, 'handle_transmettre' ) );
 		add_action( 'admin_post_ige_ffm_remettre', array( __CLASS__, 'handle_remettre' ) );
+		add_action( 'admin_post_ige_ffm_repondre', array( __CLASS__, 'handle_repondre' ) );
 	}
 
 	/**
@@ -65,6 +66,7 @@ final class IGE_FFM_Ecran_Transmission {
 
 		ob_start();
 		echo $ctx['html']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo self::questions( $exo, $sid, $peut ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		if ( $rejets ) {
 			$txt = $cp_obl ? ' Ouvrez chaque écriture, contrepassez-la avec un motif, saisissez l’écriture juste puis transmettez de nouveau.' : ' Corrigez (par exemple en ajoutant la pièce manquante) puis renvoyez-la, ou contrepassez-la.';
 			echo ige_ffm_banner( 'ko', count( $rejets ) . ' écriture(s) rejetée(s) à corriger', $txt ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -187,6 +189,71 @@ final class IGE_FFM_Ecran_Transmission {
 		</div>
 		<?php
 		return ob_get_clean();
+	}
+
+	/**
+	 * Questions d'Administration et Finance en attente de réponse.
+	 *
+	 * @param int  $exo  Exercice.
+	 * @param int  $sid  Service.
+	 * @param bool $peut Le compte peut répondre.
+	 * @return string
+	 */
+	public static function questions( $exo, $sid, $peut ) {
+		$liste = IGE_FFM_Echanges::en_attente( $exo, $sid );
+		if ( ! $liste ) {
+			return '';
+		}
+		$h = ige_ffm_banner( 'warn', count( $liste ) . ' question(s) d’Administration et Finance', ' L’écriture n’est pas rejetée : répondez, et joignez la pièce demandée si besoin.' )
+			. '<section class="ige-card" id="ige-questions"><h2>Questions à traiter</h2>';
+		foreach ( $liste as $e ) {
+			$r     = $e['rubrique_id'] ? IGE_FFM_Referentiels::get( 'rubrique', (int) $e['rubrique_id'] ) : null;
+			$dos   = IGE_FFM_Pieces::etat_dossier( $e );
+			$lien  = IGE_FFM_Ecran_Service::lien( ige_ffm_url( 'livre-de-caisse', array( 'ecriture' => (int) $e['id'] ) ), $sid ) . '#ige-detail';
+			$h    .= '<div style="border-top:1px solid var(--ige-ligne);padding:12px 0">'
+				. '<p style="margin:0 0 6px"><a href="' . esc_url( $lien ) . '"><b>' . esc_html( $e['id_ecriture'] ) . '</b></a> · ' . esc_html( wp_date( 'd/m/Y', strtotime( $e['date_operation'] ) ) ) . ' · ' . esc_html( $e['description'] ) . ' · <b>' . esc_html( ige_ffm_montant( (int) $e['montant'] ) ) . '</b></p>'
+				. ( $dos['exigees'] && ! $dos['complet'] ? '<p class="ige-small" style="margin:0 0 6px;color:var(--ige-ko-txt)">Pièces manquantes : ' . esc_html( implode( ', ', $dos['manquantes'] ) ) . '</p>' : '' )
+				. IGE_FFM_Ecran_Verification::fil_html( IGE_FFM_Echanges::fil( (int) $e['id'] ) );
+			if ( $peut ) {
+				$natures = array( '' => '— Nature de la pièce —' );
+				foreach ( IGE_FFM_Pieces::exigees( $r ) as $x ) {
+					$natures[ $x ] = $x . ( isset( $dos['presentes'][ $x ] ) && ! $dos['presentes'][ $x ] ? ' (manquante)' : '' );
+				}
+				$natures['Autre pièce'] = 'Autre pièce';
+				$sel = '';
+				foreach ( $natures as $k => $l ) {
+					$sel .= '<option value="' . esc_attr( $k ) . '"' . selected( $k, $dos['manquantes'][0] ?? '', false ) . '>' . esc_html( $l ) . '</option>';
+				}
+				$h .= IGE_FFM_Ecrans::form_open( 'repondre', 'enctype="multipart/form-data"' )
+					. '<input type="hidden" name="ecriture" value="' . esc_attr( $e['id'] ) . '">'
+					. '<label class="screen-reader-text" for="ige-rep-' . esc_attr( $e['id'] ) . '">Votre réponse</label>'
+					. '<textarea id="ige-rep-' . esc_attr( $e['id'] ) . '" name="message" class="ige-input" rows="2" maxlength="2000" minlength="5" required placeholder="Votre réponse"></textarea>'
+					. '<div class="ige-row" style="margin-top:6px;flex-wrap:wrap"><input type="file" name="piece" class="ige-input" style="width:auto;flex:1;min-width:200px" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment">'
+					. '<select name="nature" class="ige-input" style="width:auto">' . $sel . '</select>'
+					. '<button type="submit" class="ige-btn ige-btn-jaune">Répondre</button></div></form>';
+			}
+			$h .= '</div>';
+		}
+		return $h . '</section>';
+	}
+
+	/**
+	 * Réponse du service à une question.
+	 */
+	public static function handle_repondre() {
+		ige_ffm_check_form( 'repondre' );
+		ige_ffm_require( 'ige_saisir' );
+		$id   = (int) ige_ffm_post( 'ecriture' );
+		$msg  = isset( $_POST['message'] ) ? wp_unslash( $_POST['message'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$file = isset( $_FILES['piece'] ) ? $_FILES['piece'] : null; // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput
+		$res  = IGE_FFM_Echanges::repondre( $id, $msg, $file, ige_ffm_post( 'nature' ) );
+		if ( is_wp_error( $res ) ) {
+			ige_ffm_flash( 'ko', 'Réponse non envoyée', $res->get_error_message() );
+		} else {
+			ige_ffm_flash( 'ok', 'Réponse envoyée à Administration et Finance', 'Elle reprend la vérification de l’écriture.' );
+		}
+		wp_safe_redirect( ige_ffm_url( 'transmission' ) . '#ige-questions' );
+		exit;
 	}
 
 	/**

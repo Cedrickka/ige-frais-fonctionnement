@@ -146,6 +146,11 @@ final class IGE_FFM_Ecran_Nouvelle_Ecriture {
 					<span class="ige-help">5 Mo au plus. Les photos sont réduites automatiquement avant l’envoi.</span>
 					<span class="ige-help" id="ige-piece-info" aria-live="polite"></span>
 				</div>
+				<div class="ige-field ige-sortie-only" id="ige-nature-bloc" hidden>
+					<label for="ige-piece_nature">Nature de cette pièce</label>
+					<select id="ige-piece_nature" name="piece_nature" data-valeur="<?php echo esc_attr( $v( 'piece_nature' ) ); ?>"></select>
+					<span class="ige-help">Les autres pièces exigées s’ajoutent ensuite depuis le livre de caisse ; le dossier est complet quand toutes sont jointes.</span>
+				</div>
 
 				<?php echo IGE_FFM_Ecrans::field( 'observations', 'Observations (facultatif)', $v( 'observations' ), array( 'attrs' => 'maxlength="500"' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 
@@ -187,7 +192,7 @@ final class IGE_FFM_Ecran_Nouvelle_Ecriture {
 	public static function handle() {
 		ige_ffm_check_form( 'ecriture' );
 		ige_ffm_require( 'ige_saisir' );
-		$keys = array( 'type', 'statut', 'date_operation', 'rubrique_id', 'montant', 'description', 'fournisseur_id', 'beneficiaire', 'beneficiaire_entree', 'num_piece', 'mode_paiement_id', 'observations', 'f_raison_sociale', 'f_telephone' );
+		$keys = array( 'type', 'statut', 'date_operation', 'rubrique_id', 'montant', 'description', 'fournisseur_id', 'beneficiaire', 'beneficiaire_entree', 'num_piece', 'mode_paiement_id', 'observations', 'f_raison_sociale', 'f_telephone', 'piece_nature' );
 		$data = array();
 		foreach ( $keys as $k ) {
 			$data[ $k ] = 'observations' === $k

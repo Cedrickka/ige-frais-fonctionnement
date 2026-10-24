@@ -22,6 +22,8 @@ final class IGE_FFM_Ecran_Parametres {
 		add_action( 'admin_post_ige_ffm_cloture_exercice', array( __CLASS__, 'handle_cloture' ) );
 		add_action( 'admin_post_ige_ffm_smtp', array( __CLASS__, 'handle_smtp' ) );
 		add_action( 'admin_post_ige_ffm_smtp_test', array( __CLASS__, 'handle_smtp_test' ) );
+		add_action( 'admin_post_ige_ffm_jours_feries', array( __CLASS__, 'handle_jours_feries' ) );
+		add_action( 'admin_post_ige_ffm_controle', array( __CLASS__, 'handle_controle' ) );
 	}
 
 	/**
@@ -105,6 +107,8 @@ final class IGE_FFM_Ecran_Parametres {
 				<p class="ige-small ige-muted">Un exercice « préparé » reçoit les budgets de l’année suivante mais aucune écriture ; il s’ouvre automatiquement à la clôture de l’exercice en cours.</p>
 				<?php echo self::cloture(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 				<?php echo self::messagerie(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				<?php echo self::jours_feries(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				<?php echo self::controle(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			</section>
 
 			<?php
@@ -182,6 +186,91 @@ final class IGE_FFM_Ecran_Parametres {
 		</form>
 		<?php
 		return ob_get_clean();
+	}
+
+	/**
+	 * Jours fériés (contrôle « jour non ouvré »).
+	 *
+	 * @return string
+	 */
+	private static function jours_feries() {
+		$r     = IGE_FFM_Jours_Feries::reglage();
+		$old   = IGE_FFM_Ecrans::old();
+		$annee = (int) wp_date( 'Y' );
+		$a_ven = array_filter( IGE_FFM_Jours_Feries::annee( $annee ), static fn( $d ) => $d >= wp_date( 'Y-m-d' ), ARRAY_FILTER_USE_KEY );
+		ob_start();
+		?>
+		<h3 id="ige-jours-feries" style="margin:26px 0 8px;font-size:15px">Jours fériés</h3>
+		<p class="ige-small" style="margin-top:0">Une dépense datée un samedi, un dimanche ou un jour férié est signalée à la vérification.<?php echo $a_ven ? ' Prochain : ' . esc_html( IGE_FFM_Pdf::date_fr( array_key_first( $a_ven ) ) . ', ' . reset( $a_ven ) ) . '.' : ''; ?></p>
+		<?php echo IGE_FFM_Ecrans::form_open( 'jours_feries' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			<div class="ige-grid ige-cols-2" style="gap:0 12px">
+				<div class="ige-field"><label for="ige-jf-fixes">Jours fériés légaux, chaque année (JJ/MM et nom)</label><textarea id="ige-jf-fixes" name="fixes" rows="10" class="ige-input" style="font-size:12.5px"><?php echo esc_textarea( $old['fixes'] ?? IGE_FFM_Jours_Feries::en_texte( $r['fixes'], 'md' ) ); ?></textarea></div>
+				<div class="ige-field"><label for="ige-jf-exc">Jours exceptionnels décrétés (JJ/MM/AAAA et motif)</label><textarea id="ige-jf-exc" name="exceptionnels" rows="10" class="ige-input" style="font-size:12.5px" placeholder="Ex. : 15/11/2026 Deuil national"><?php echo esc_textarea( $old['exceptionnels'] ?? IGE_FFM_Jours_Feries::en_texte( $r['exceptionnels'], 'ymd' ) ); ?></textarea><span class="ige-help">Deuil national, jour d’élection, pont décrété par le Gouvernement…</span></div>
+			</div>
+			<button type="submit" class="ige-btn ige-btn-line">Enregistrer les jours fériés</button>
+		</form>
+		<?php
+		return ob_get_clean();
+	}
+
+	/**
+	 * Contrôle d'intégrité (après une restauration de sauvegarde).
+	 *
+	 * @return string
+	 */
+	private static function controle() {
+		$d = IGE_FFM_Sante::dernier();
+		ob_start();
+		?>
+		<h3 id="ige-controle-integrite" style="margin:26px 0 8px;font-size:15px">Contrôle d’intégrité</h3>
+		<p class="ige-small" style="margin-top:0">À lancer après chaque restauration de sauvegarde, et une fois par mois : journal d’audit, documents officiels, fichiers des pièces, écritures.</p>
+		<?php if ( $d ) : ?>
+			<?php echo $d['ok'] ? ige_ffm_banner( 'ok', 'Dernier contrôle conforme', ' ' . esc_html( wp_date( 'd/m/Y à H:i', strtotime( $d['le'] ) ) ) . '.' ) : ige_ffm_banner( 'ko', 'Dernier contrôle : anomalies', ' ' . esc_html( wp_date( 'd/m/Y à H:i', strtotime( $d['le'] ) ) ) . '. Voir le détail ci-dessous.' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			<table class="ige-table" style="margin-bottom:10px"><tbody>
+				<?php foreach ( $d['controles'] as $x ) : ?>
+					<tr><td style="width:28px"><?php echo $x[1] ? '<span class="ige-ok">✓</span>' : '<span class="ige-ko">✕</span>'; ?></td><td><b><?php echo esc_html( $x[0] ); ?></b><br><span class="ige-small"><?php echo esc_html( $x[2] ); ?></span></td></tr>
+				<?php endforeach; ?>
+			</tbody></table>
+			<p class="ige-small ige-muted"><?php echo esc_html( implode( ' · ', array_map( static fn( $k, $v ) => $k . ' : ' . $v, array_keys( $d['chiffres'] ), $d['chiffres'] ) ) ); ?></p>
+		<?php endif; ?>
+		<?php echo IGE_FFM_Ecrans::form_open( 'controle' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			<button type="submit" class="ige-btn ige-btn-line">Lancer le contrôle</button>
+		</form>
+		<?php
+		return ob_get_clean();
+	}
+
+	/**
+	 * Lancement du contrôle d'intégrité.
+	 */
+	public static function handle_controle() {
+		ige_ffm_check_form( 'controle' );
+		ige_ffm_require( 'ige_administrer' );
+		$r = IGE_FFM_Sante::controler();
+		ige_ffm_flash( $r['ok'] ? 'ok' : 'ko', $r['ok'] ? 'Contrôle d’intégrité conforme' : 'Le contrôle a relevé des anomalies', $r['ok'] ? '' : 'Voir le détail dans « Contrôle d’intégrité ».' );
+		wp_safe_redirect( ige_ffm_url( 'parametres' ) . '#ige-controle-integrite' );
+		exit;
+	}
+
+	/**
+	 * Enregistrement des jours fériés.
+	 */
+	public static function handle_jours_feries() {
+		ige_ffm_check_form( 'jours_feries' );
+		ige_ffm_require( 'ige_administrer' );
+		// phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$f = isset( $_POST['fixes'] ) ? sanitize_textarea_field( wp_unslash( $_POST['fixes'] ) ) : '';
+		$e = isset( $_POST['exceptionnels'] ) ? sanitize_textarea_field( wp_unslash( $_POST['exceptionnels'] ) ) : '';
+		// phpcs:enable
+		$res = IGE_FFM_Jours_Feries::enregistrer( $f, $e );
+		if ( is_wp_error( $res ) ) {
+			IGE_FFM_Ecrans::remember( array( 'fixes' => $f, 'exceptionnels' => $e ) );
+			ige_ffm_flash( 'ko', 'Jours fériés non enregistrés', $res->get_error_message() );
+		} else {
+			ige_ffm_flash( 'ok', 'Jours fériés enregistrés', '' );
+		}
+		wp_safe_redirect( ige_ffm_url( 'parametres' ) . '#ige-jours-feries' );
+		exit;
 	}
 
 	/**

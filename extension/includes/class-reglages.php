@@ -37,6 +37,7 @@ final class IGE_FFM_Reglages {
 			'anomalie_jour_non_ouvre'    => array( 'bool', true, 'Dépense datée un jour non ouvré', 'anomalies' ),
 			'anomalie_beneficiaire'      => array( 'bool', true, "Bénéficiaire identique à l'agent qui saisit", 'anomalies' ),
 			'anomalie_saisie_tardive'    => array( 'bool', true, "Saisie tardive après l'opération", 'anomalies' ),
+			'anomalie_dossier'           => array( 'bool', true, 'Dossier incomplet : une pièce exigée par la rubrique manque', 'anomalies' ),
 			'verrouillage_essais'        => array( 'int', 5, 'Essais de connexion avant verrouillage', 'securite' ),
 			'verrouillage_minutes'       => array( 'int', 15, 'Durée du verrouillage (minutes)', 'securite' ),
 			'inactivite_minutes'         => array( 'int', 30, "Déconnexion après inactivité (minutes)", 'securite' ),

@@ -91,9 +91,10 @@ final class IGE_FFM_Pieces {
 	 * @param string $objet    Type d'objet.
 	 * @param int    $objet_id Identifiant.
 	 * @param int    $user_id  Auteur.
+	 * @param string $nature   Nature de la pièce (facture, bon de réception…), parmi les pièces exigées par la rubrique.
 	 * @return int|WP_Error Identifiant de la pièce.
 	 */
-	public static function enregistrer( array $file, $objet, $objet_id, $user_id ) {
+	public static function enregistrer( array $file, $objet, $objet_id, $user_id, $nature = '' ) {
 		global $wpdb;
 		$ok = self::valider( $file );
 		if ( is_wp_error( $ok ) ) {
@@ -133,11 +134,83 @@ final class IGE_FFM_Pieces {
 				'empreinte'     => hash_file( 'sha256', $dest ),
 				'televerse_par' => (int) $user_id,
 				'televerse_le'  => ige_ffm_now(),
+				'nature'        => mb_substr( sanitize_text_field( (string) $nature ), 0, 80 ),
 			)
 		);
 		$id = (int) $wpdb->insert_id;
-		IGE_FFM_Audit::log( 'ajout_piece', $objet, $objet_id, null, array( 'piece' => $id, 'fichier' => sanitize_file_name( $file['name'] ) ), $user_id );
+		IGE_FFM_Audit::log( 'ajout_piece', $objet, $objet_id, null, array( 'piece' => $id, 'fichier' => sanitize_file_name( $file['name'] ) ) + ( $nature ? array( 'nature' => $nature ) : array() ), $user_id );
+		if ( 'ecriture' === $objet ) {
+			IGE_FFM_Anomalies::recalculer( (int) $objet_id );
+		}
 		return $id;
+	}
+
+	/**
+	 * Une pièce.
+	 *
+	 * @param int $id Pièce.
+	 * @return array|null
+	 */
+	public static function get( $id ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$r = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . IGE_FFM_DB::t( 'piece' ) . ' WHERE id = %d', $id ), ARRAY_A );
+		return $r ?: null;
+	}
+
+	/**
+	 * Pièces exigées par une rubrique (liste « facture, bon de réception »).
+	 *
+	 * @param array|null $r Rubrique.
+	 * @return string[]
+	 */
+	public static function exigees( $r ) {
+		if ( ! $r || '' === trim( (string) ( $r['pieces_exigees'] ?? '' ) ) ) {
+			return array();
+		}
+		return array_values( array_unique( array_filter( array_map( static fn( $x ) => ucfirst( trim( $x ) ), preg_split( '/[,;]/', (string) $r['pieces_exigees'] ) ) ) ) );
+	}
+
+	/**
+	 * État du dossier d'une écriture : pièces exigées par sa rubrique, présentes, manquantes.
+	 * Une pièce jointe sans nature précisée couvre la première pièce exigée encore manquante.
+	 *
+	 * @param array $e Écriture.
+	 * @return array{exigees:string[], presentes:array<string,bool>, manquantes:string[], complet:bool, nb:int}
+	 */
+	public static function etat_dossier( array $e ) {
+		$r       = $e['rubrique_id'] ? IGE_FFM_Referentiels::get( 'rubrique', (int) $e['rubrique_id'] ) : null;
+		$exigees = 'sortie' === $e['type'] && ! $e['ecriture_origine_id'] ? self::exigees( $r ) : array();
+		$pieces  = self::liste( 'ecriture', (int) $e['id'] );
+		$norm    = static fn( $x ) => preg_replace( '/[^a-z0-9]/', '', strtolower( remove_accents( (string) $x ) ) );
+		$present = array_fill_keys( $exigees, false );
+		$libres  = 0;
+		foreach ( $pieces as $p ) {
+			$trouve = false;
+			foreach ( $exigees as $x ) {
+				if ( '' !== $p['nature'] && $norm( $p['nature'] ) === $norm( $x ) ) {
+					$present[ $x ] = true;
+					$trouve        = true;
+				}
+			}
+			if ( ! $trouve && '' === $p['nature'] ) {
+				++$libres;
+			}
+		}
+		foreach ( $exigees as $x ) {
+			if ( ! $present[ $x ] && $libres > 0 ) {
+				$present[ $x ] = true;
+				--$libres;
+			}
+		}
+		$manq = array_keys( array_filter( $present, static fn( $v ) => ! $v ) );
+		return array(
+			'exigees'    => $exigees,
+			'presentes'  => $present,
+			'manquantes' => $manq,
+			'complet'    => ( $pieces || 'sortie' !== $e['type'] || $e['ecriture_origine_id'] ) && ! $manq,
+			'nb'         => count( $pieces ),
+		);
 	}
 
 	/**
