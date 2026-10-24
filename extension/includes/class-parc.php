@@ -910,6 +910,10 @@ final class IGE_FFM_Parc {
 		}
 		$mode  = in_array( $d['mode'] ?? '', array( 'bon', 'carte', 'especes' ), true ) ? $d['mode'] : 'bon';
 		$plein = ! empty( $d['plein'] );
+		$ctrl  = IGE_FFM_Carburant::controler( $v, $date, $l, $m, $mode, (string) ( $d['bon_numero'] ?? '' ), (string) ( $d['derogation'] ?? '' ), $user_id );
+		if ( is_wp_error( $ctrl ) ) {
+			return $ctrl;
+		}
 		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$t,
 			array(
@@ -922,14 +926,17 @@ final class IGE_FFM_Parc {
 				'plein'       => $plein ? 1 : 0,
 				'station'     => mb_substr( trim( sanitize_text_field( (string) ( $d['station'] ?? '' ) ) ), 0, 120 ),
 				'mode'        => $mode,
-				'bon_numero'  => mb_substr( trim( sanitize_text_field( (string) ( $d['bon_numero'] ?? '' ) ) ), 0, 40 ),
+				'bon_numero'  => mb_substr( implode( ', ', IGE_FFM_Carburant::numeros( (string) ( $d['bon_numero'] ?? '' ) ) ), 0, 120 ),
+				'service_id'  => $v['service_id'] ? (int) $v['service_id'] : null,
+				'derogation'  => $ctrl['derogation'],
 				'ecriture_id' => $eid,
 				'saisi_par'   => (int) $user_id,
 				'created_at'  => ige_ffm_now(),
 			)
 		);
 		$id   = (int) $wpdb->insert_id;
-		$anom = array();
+		IGE_FFM_Carburant::apres( $id, $ctrl );
+		$anom = $ctrl['anomalies'];
 		$conso = null;
 		if ( $plein ) {
 			// Plein complet précédent : la consommation = litres mis depuis ce plein / distance parcourue.
@@ -959,7 +966,7 @@ final class IGE_FFM_Parc {
 		$wpdb->update( $t, array( 'conso' => $conso, 'anomalie' => mb_substr( implode( ' ; ', $anom ), 0, 255 ) ), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		self::releve( (int) $v['id'], $k );
 		IGE_FFM_Audit::log( 'carburant', 'vehicule', $v['immatriculation'], null, array_filter( array( 'litres' => $l, 'montant' => $m, 'km' => $k, 'conso' => $conso, 'anomalie' => implode( ' ; ', $anom ) ) ), $user_id );
-		return array( 'id' => $id, 'conso' => $conso, 'anomalie' => implode( ' ; ', $anom ) );
+		return array( 'id' => $id, 'conso' => $conso, 'anomalie' => implode( ' ; ', $anom ), 'alertes' => $ctrl['alertes'] );
 	}
 
 	/**
@@ -1299,7 +1306,8 @@ final class IGE_FFM_Parc {
 				$out[] = array( 'warn', sprintf( '%s : retour prévu le %s non enregistré.', $x['numero'], wp_date( 'd/m H:i', strtotime( $x['retour_prevu'] ) ) ), add_query_arg( 'deplacement', $x['id'], $base ) );
 			}
 		}
-		$ex = IGE_FFM_Contexte::exercice();
+		$out = array_merge( $out, IGE_FFM_Carburant::alertes() );
+		$ex  = IGE_FFM_Contexte::exercice();
 		if ( $ex ) {
 			$n = count( self::pleins( array( 'exercice_id' => (int) $ex['id'], 'anomalies' => true ) ) );
 			if ( $n ) {

@@ -577,7 +577,9 @@ final class IGE_FFM_DB {
   plein tinyint(1) NOT NULL DEFAULT 1,
   station varchar(120) NOT NULL DEFAULT '',
   mode varchar(10) NOT NULL DEFAULT 'bon',
-  bon_numero varchar(40) NOT NULL DEFAULT '',
+  bon_numero varchar(120) NOT NULL DEFAULT '',
+  service_id bigint(20) unsigned NULL,
+  derogation varchar(255) NOT NULL DEFAULT '',
   deplacement_id bigint(20) unsigned NULL,
   ecriture_id bigint(20) unsigned NULL,
   conso decimal(6,2) NULL,
@@ -585,7 +587,53 @@ final class IGE_FFM_DB {
   saisi_par bigint(20) unsigned NOT NULL,
   created_at datetime NOT NULL,
   PRIMARY KEY  (id),
-  KEY vehicule_km (vehicule_id,km)
+  KEY vehicule_km (vehicule_id,km),
+  KEY service_date (service_id,date_plein)
+) $c;",
+			'CREATE TABLE ' . $t( 'dotation' ) . " (
+  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  exercice_id bigint(20) unsigned NOT NULL,
+  cible varchar(10) NOT NULL,
+  cible_id bigint(20) unsigned NOT NULL,
+  unite varchar(6) NOT NULL DEFAULT 'litres',
+  quantite decimal(14,2) NOT NULL,
+  actif tinyint(1) NOT NULL DEFAULT 1,
+  created_by bigint(20) unsigned NOT NULL,
+  created_at datetime NOT NULL,
+  updated_at datetime NULL,
+  PRIMARY KEY  (id),
+  KEY cible (exercice_id,cible,cible_id)
+) $c;",
+			'CREATE TABLE ' . $t( 'carnet' ) . " (
+  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  station varchar(120) NOT NULL DEFAULT '',
+  prefixe varchar(10) NOT NULL DEFAULT '',
+  debut int(10) unsigned NOT NULL,
+  fin int(10) unsigned NOT NULL,
+  valeur_unitaire bigint(20) NULL,
+  litres_unitaire decimal(8,2) NULL,
+  recu_le date NOT NULL,
+  reference varchar(60) NOT NULL DEFAULT '',
+  ecriture_id bigint(20) unsigned NULL,
+  created_by bigint(20) unsigned NOT NULL,
+  created_at datetime NOT NULL,
+  PRIMARY KEY  (id)
+) $c;",
+			'CREATE TABLE ' . $t( 'bon' ) . " (
+  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  carnet_id bigint(20) unsigned NOT NULL,
+  numero varchar(40) NOT NULL,
+  statut varchar(10) NOT NULL DEFAULT 'disponible',
+  vehicule_id bigint(20) unsigned NULL,
+  chauffeur_id bigint(20) unsigned NULL,
+  remis_le datetime NULL,
+  remis_par bigint(20) unsigned NULL,
+  carburant_id bigint(20) unsigned NULL,
+  utilise_le datetime NULL,
+  motif varchar(190) NOT NULL DEFAULT '',
+  PRIMARY KEY  (id),
+  UNIQUE KEY numero (numero),
+  KEY statut (statut)
 ) $c;",
 			'CREATE TABLE ' . $t( 'entretien' ) . " (
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -686,6 +734,6 @@ final class IGE_FFM_DB {
 	 * @return string[]
 	 */
 	public static function tables() {
-		return array( 'exercice', 'service', 'categorie', 'rubrique', 'mode_paiement', 'budget', 'solde_initial', 'revision_budget', 'compte', 'fournisseur', 'ecriture', 'lot', 'piece', 'echange', 'avance', 'arrete', 'document', 'taux', 'visa', 'demande', 'mission', 'mission_membre', 'banque', 'releve', 'releve_ligne', 'mouvement', 'suspens', 'prevision', 'nomenclature', 'vehicule', 'chauffeur', 'vehicule_doc', 'deplacement', 'carburant', 'entretien', 'article', 'stock_mvt', 'inventaire', 'audit' );
+		return array( 'exercice', 'service', 'categorie', 'rubrique', 'mode_paiement', 'budget', 'solde_initial', 'revision_budget', 'compte', 'fournisseur', 'ecriture', 'lot', 'piece', 'echange', 'avance', 'arrete', 'document', 'taux', 'visa', 'demande', 'mission', 'mission_membre', 'banque', 'releve', 'releve_ligne', 'mouvement', 'suspens', 'prevision', 'nomenclature', 'vehicule', 'chauffeur', 'vehicule_doc', 'deplacement', 'carburant', 'entretien', 'article', 'stock_mvt', 'inventaire', 'dotation', 'carnet', 'bon', 'audit' );
 	}
 }

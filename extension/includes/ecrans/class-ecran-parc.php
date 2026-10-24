@@ -20,7 +20,7 @@ final class IGE_FFM_Ecran_Parc {
 	 * Crochets.
 	 */
 	public static function register() {
-		foreach ( array( 'vehicule', 'statut', 'chauffeur', 'document', 'demande', 'attribuer', 'clore', 'depart', 'retour', 'plein', 'intervention', 'realiser' ) as $a ) {
+		foreach ( array( 'vehicule', 'statut', 'chauffeur', 'document', 'demande', 'attribuer', 'clore', 'depart', 'retour', 'plein', 'intervention', 'realiser', 'dotation', 'carnet', 'remise', 'annuler_bon' ) as $a ) {
 			add_action( 'admin_post_ige_ffm_parc_' . $a, array( __CLASS__, 'handle_' . $a ) );
 		}
 		add_action( 'admin_post_ige_ffm_parc_export', array( __CLASS__, 'handle_export' ) );
@@ -45,7 +45,7 @@ final class IGE_FFM_Ecran_Parc {
 	 * @return array<string,string>
 	 */
 	public static function onglets() {
-		return array( 'vehicules' => 'Véhicules', 'deplacements' => 'Demandes et ordres de route', 'carburant' => 'Carburant', 'entretiens' => 'Entretien et sinistres', 'chauffeurs' => 'Chauffeurs', 'couts' => 'Coûts' );
+		return array( 'vehicules' => 'Véhicules', 'deplacements' => 'Demandes et ordres de route', 'carburant' => 'Carburant', 'dotations' => 'Dotations et bons', 'entretiens' => 'Entretien et sinistres', 'chauffeurs' => 'Chauffeurs', 'couts' => 'Coûts' );
 	}
 
 	/**
@@ -245,6 +245,13 @@ final class IGE_FFM_Ecran_Parc {
 							<div class="ige-card ige-kpi"><div class="ige-lbl">Consommation</div><div class="ige-val"><?php echo null === $c['conso'] ? '—' : esc_html( number_format( $c['conso'], 1, ',', ' ' ) ); ?> <span>L/100</span></div><div class="ige-meta">référence <?php echo $v['conso_ref'] ? esc_html( number_format( (float) $v['conso_ref'], 1, ',', ' ' ) ) : '—'; ?></div></div>
 						</div>
 					<?php endif; ?>
+					<?php
+					$dv = $ex ? IGE_FFM_Carburant::dotation( (int) $ex['id'], 'vehicule', $id ) : null;
+					$nb = count( IGE_FFM_Carburant::bons( array( 'vehicule_id' => $id, 'statut' => 'remis' ) ) );
+					if ( $dv || $nb ) :
+						?>
+						<p class="ige-small"><?php if ( $dv ) : ?><?php $sv = IGE_FFM_Carburant::suivi( $dv ); ?><b>Dotation du mois :</b> <?php echo esc_html( IGE_FFM_Carburant::fmt( $sv['consomme'], $dv['unite'] ) . ' sur ' . IGE_FFM_Carburant::fmt( $sv['dotation'], $dv['unite'] ) . ' (' . number_format( $sv['taux'], 0 ) . ' %)' ); ?>. <?php endif; ?><?php echo $nb ? '<b>Bons en main :</b> ' . (int) $nb . '.' : ''; ?></p>
+					<?php endif; ?>
 					<h3 style="font-size:14px;margin:14px 0 6px">Échéances d’entretien</h3>
 					<?php $ech = IGE_FFM_Parc::echeances( $v ); ?>
 					<?php if ( $ech ) : ?>
@@ -370,8 +377,9 @@ final class IGE_FFM_Ecran_Parc {
 			. IGE_FFM_Ecrans::field( 'litres', 'Litres', '', array( 'required' => true, 'attrs' => 'inputmode="decimal" class="ige-num"' ) )
 			. IGE_FFM_Ecrans::field( 'montant', 'Montant (CDF)', '', array( 'required' => true, 'attrs' => 'inputmode="numeric" class="ige-num"' ) )
 			. IGE_FFM_Ecrans::field( 'mode', 'Paiement', 'bon', array( 'type' => 'select', 'options' => array( 'bon' => 'Bon carburant', 'carte' => 'Carte carburant', 'especes' => 'Espèces' ) ) )
-			. IGE_FFM_Ecrans::field( 'bon_numero', 'N° du bon', '', array( 'attrs' => 'maxlength="40"' ) )
+			. IGE_FFM_Ecrans::field( 'bon_numero', 'N° du ou des bons', '', array( 'attrs' => 'maxlength="120" placeholder="1201, 1202"' ) )
 			. '</div>'
+			. ( IGE_FFM_Parc::gestionnaire() ? IGE_FFM_Ecrans::field( 'derogation', 'Dérogation à la dotation (si elle est dépassée)', '', array( 'attrs' => 'maxlength="255" placeholder="Motif : mission urgente…"', 'help' => 'Seule la gestion du parc peut dépasser une dotation, motif obligatoire.' ) ) : '' )
 			. IGE_FFM_Ecrans::field( 'station', 'Station', '', array( 'attrs' => 'maxlength="120"' ) )
 			. IGE_FFM_Ecrans::field( 'plein', 'Plein complet (sert au calcul de la consommation)', true, array( 'type' => 'checkbox' ) )
 			. IGE_FFM_Ecrans::field( 'ecriture', 'Écriture du livre de caisse (facultatif)', '', array( 'attrs' => 'maxlength="40" placeholder="8000IG-2026-000015"', 'help' => 'Relie le plein à la dépense payée.' ) )
@@ -795,7 +803,180 @@ final class IGE_FFM_Ecran_Parc {
 		return ob_get_clean();
 	}
 
+	/**
+	 * Tableau de suivi des dotations.
+	 *
+	 * @param array[] $dots Dotations.
+	 * @return string
+	 */
+	public static function table_dotations( array $dots ) {
+		$h = '<div class="ige-table-wrap"><table class="ige-table"><thead><tr><th>Bénéficiaire</th><th class="ige-r">Dotation mensuelle</th><th class="ige-r">Consommé ce mois</th><th class="ige-r">Reste</th><th>Utilisation</th></tr></thead><tbody>';
+		foreach ( $dots as $d ) {
+			$s  = IGE_FFM_Carburant::suivi( $d );
+			$ton = $s['consomme'] > $s['dotation'] ? 'ko' : ( $s['taux'] >= IGE_FFM_Carburant::SEUIL_ALERTE ? 'wait' : 'ok' );
+			$h .= '<tr><td><b>' . esc_html( $s['libelle'] ) . '</b></td><td class="ige-r ige-num">' . esc_html( IGE_FFM_Carburant::fmt( $s['dotation'], $d['unite'] ) ) . '</td><td class="ige-r ige-num">' . esc_html( IGE_FFM_Carburant::fmt( $s['consomme'], $d['unite'] ) ) . '</td><td class="ige-r ige-num' . ( $s['reste'] < 0 ? ' ige-neg' : '' ) . '">' . esc_html( IGE_FFM_Carburant::fmt( $s['reste'], $d['unite'] ) ) . '</td><td style="white-space:nowrap"><div class="ige-bar" style="display:inline-block;width:110px;vertical-align:middle"><i style="width:' . esc_attr( min( 100, $s['taux'] ) ) . '%' . ( 'ok' !== $ton ? ';background:var(--' . ( 'ko' === $ton ? 'ige-rouge,#db3832' : 'ige-orange,#ed7016' ) . ')' : '' ) . '"></i></div> ' . ige_ffm_pill( number_format( $s['taux'], 0 ) . ' %', $ton ) . '</td></tr>';
+		}
+		if ( ! $dots ) {
+			$h .= '<tr><td colspan="5" class="ige-empty">Aucune dotation fixée.</td></tr>';
+		}
+		return $h . '</tbody></table></div>';
+	}
+
+	/**
+	 * Onglet Dotations et bons.
+	 *
+	 * @return string
+	 */
+	private static function onglet_dotations() {
+		$ex   = IGE_FFM_Contexte::exercice();
+		$gest = IGE_FFM_Parc::gestionnaire();
+		$base = ige_ffm_url( 'parc-automobile', array( 'onglet' => 'dotations' ) );
+		$fb   = isset( $_GET['bons'] ) && isset( IGE_FFM_Carburant::statuts_bon()[ sanitize_key( $_GET['bons'] ) ] ) ? sanitize_key( $_GET['bons'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$auj  = IGE_FFM_Contexte::aujourdhui();
+		ob_start();
+		?>
+		<div class="ige-grid ige-cols-21 ige-start">
+			<div>
+				<section class="ige-card" style="padding:16px">
+					<h2 style="margin-top:0">Dotations du mois · <?php echo esc_html( IGE_FFM_Ecran_Livre::mois_noms()[ (int) substr( $auj, 5, 2 ) ] ); ?></h2>
+					<?php echo self::table_dotations( $ex ? IGE_FFM_Carburant::dotations( (int) $ex['id'] ) : array() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					<p class="ige-small ige-muted" style="margin:10px 0 0">Une dotation s’applique chaque mois de l’exercice. Un véhicule peut avoir sa propre dotation et compter aussi dans celle de son service : le plein doit respecter les deux. Au-delà, il est refusé ; seule la gestion du parc peut l’enregistrer, avec une dérogation motivée. Alerte à <?php echo (int) IGE_FFM_Carburant::SEUIL_ALERTE; ?> %.</p>
+				</section>
+				<section class="ige-card" style="padding:16px">
+					<div class="ige-toolbar"><h2 style="margin:0">Bons carburant</h2>
+						<a class="ige-chip<?php echo '' === $fb ? ' ige-on' : ''; ?>" href="<?php echo esc_url( $base ); ?>">En circulation</a>
+						<?php foreach ( IGE_FFM_Carburant::statuts_bon() as $k => $st ) : ?><a class="ige-chip<?php echo $k === $fb ? ' ige-on' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'bons', $k, $base ) ); ?>"><?php echo esc_html( $st[0] ); ?></a><?php endforeach; ?>
+					</div>
+					<div class="ige-table-wrap"><table class="ige-table"><thead><tr><th>N°</th><th>Station</th><th class="ige-r">Valeur</th><th>Véhicule</th><th>Remis le</th><th>État</th></tr></thead><tbody>
+					<?php $bs = IGE_FFM_Carburant::bons( array( 'statut' => $fb, 'sauf_reserve' => '' === $fb, 'limite' => 200 ) ); ?>
+					<?php foreach ( $bs as $b ) : ?>
+						<?php $st = IGE_FFM_Carburant::statuts_bon()[ $b['statut'] ]; ?>
+						<tr><td><b><?php echo esc_html( $b['numero'] ); ?></b></td><td><?php echo esc_html( $b['station'] ?: '—' ); ?></td><td class="ige-r ige-num"><?php echo esc_html( $b['valeur_unitaire'] ? ige_ffm_montant( (int) $b['valeur_unitaire'], '' ) : number_format( (float) $b['litres_unitaire'], 0, ',', ' ' ) . ' L' ); ?></td><td><?php echo esc_html( $b['immatriculation'] ?: '—' ); ?></td><td class="ige-small"><?php echo esc_html( $b['remis_le'] ? wp_date( 'd/m/Y', strtotime( $b['remis_le'] ) ) : '—' ); ?></td><td><?php echo ige_ffm_pill( $st[0], $st[1] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php echo $b['motif'] ? '<div class="ige-small ige-muted">' . esc_html( $b['motif'] ) . '</div>' : ''; ?></td></tr>
+					<?php endforeach; ?>
+					<?php if ( ! $bs ) : ?><tr><td colspan="6" class="ige-empty">Aucun bon. Enregistrez les carnets reçus des stations.</td></tr><?php endif; ?>
+					</tbody></table></div>
+					<?php $cs = IGE_FFM_Carburant::carnets(); ?>
+					<?php if ( $cs ) : ?>
+						<h3 style="font-size:14px;margin:14px 0 6px">Carnets</h3>
+						<div class="ige-table-wrap"><table class="ige-table"><thead><tr><th>Numéros</th><th>Station</th><th>Reçu le</th><th class="ige-r">En réserve</th><th class="ige-r">Remis</th><th class="ige-r">Utilisés</th></tr></thead><tbody>
+						<?php foreach ( $cs as $c ) : ?>
+							<tr><td><?php echo esc_html( IGE_FFM_Carburant::numero( $c['prefixe'], $c['debut'] ) . ' → ' . IGE_FFM_Carburant::numero( $c['prefixe'], $c['fin'] ) ); ?></td><td><?php echo esc_html( $c['station'] ?: '—' ); ?></td><td><?php echo esc_html( wp_date( 'd/m/Y', strtotime( $c['recu_le'] ) ) ); ?></td><td class="ige-r"><?php echo (int) $c['dispo']; ?></td><td class="ige-r"><?php echo (int) $c['remis']; ?></td><td class="ige-r"><?php echo (int) $c['utilises']; ?></td></tr>
+						<?php endforeach; ?>
+						</tbody></table></div>
+					<?php endif; ?>
+				</section>
+			</div>
+			<?php if ( $gest ) : ?>
+				<aside>
+					<section class="ige-card"><h2 style="margin-top:0">Fixer une dotation mensuelle</h2>
+					<?php
+					$cibles = array( '' => '— Choisir —' );
+					foreach ( IGE_FFM_Parc::vehicules( array( 'sans_reformes' => true ) ) as $v ) {
+						$cibles[ 'vehicule:' . $v['id'] ] = 'Véhicule ' . IGE_FFM_Parc::nom( $v );
+					}
+					foreach ( IGE_FFM_Referentiels::all( 'service', true ) as $s ) {
+						$cibles[ 'service:' . $s['id'] ] = 'Service ' . $s['code'];
+					}
+					echo IGE_FFM_Ecrans::form_open( 'parc_dotation' ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						. IGE_FFM_Ecrans::field( 'cible', 'Pour', '', array( 'type' => 'select', 'options' => $cibles, 'required' => true ) )
+						. '<div class="ige-grid ige-cols-2" style="gap:0 12px">'
+						. IGE_FFM_Ecrans::field( 'quantite', 'Quantité par mois', '', array( 'attrs' => 'inputmode="decimal" class="ige-num"', 'help' => 'Vide : supprime la dotation.' ) )
+						. IGE_FFM_Ecrans::field( 'unite', 'Unité', 'litres', array( 'type' => 'select', 'options' => array( 'litres' => 'Litres', 'cdf' => 'Francs congolais' ) ) )
+						. '</div><button type="submit" class="ige-btn ige-btn-jaune">Enregistrer</button></form>';
+					?>
+					</section>
+					<section class="ige-card"><h2 style="margin-top:0">Recevoir un carnet de bons</h2>
+					<?php
+					echo IGE_FFM_Ecrans::form_open( 'parc_carnet' ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						. IGE_FFM_Ecrans::field( 'station', 'Station / fournisseur', '', array( 'attrs' => 'maxlength="120" placeholder="Engen Gombe"' ) )
+						. '<div class="ige-grid ige-cols-2" style="gap:0 12px">'
+						. IGE_FFM_Ecrans::field( 'prefixe', 'Préfixe', '', array( 'attrs' => 'maxlength="10" placeholder="ENG-"' ) )
+						. IGE_FFM_Ecrans::field( 'recu_le', 'Reçu le', $auj, array( 'type' => 'date', 'required' => true ) )
+						. IGE_FFM_Ecrans::field( 'debut', 'Du n°', '', array( 'required' => true, 'attrs' => 'inputmode="numeric"' ) )
+						. IGE_FFM_Ecrans::field( 'fin', 'Au n°', '', array( 'required' => true, 'attrs' => 'inputmode="numeric"' ) )
+						. IGE_FFM_Ecrans::field( 'valeur_unitaire', 'Valeur d’un bon (CDF)', '', array( 'attrs' => 'inputmode="numeric" class="ige-num"' ) )
+						. IGE_FFM_Ecrans::field( 'litres_unitaire', 'ou litres par bon', '', array( 'attrs' => 'inputmode="decimal" class="ige-num"' ) )
+						. '</div>'
+						. IGE_FFM_Ecrans::field( 'reference', 'Facture / bon de livraison', '', array( 'attrs' => 'maxlength="60"' ) )
+						. IGE_FFM_Ecrans::field( 'ecriture', 'Écriture d’achat au livre de caisse (facultatif)', '', array( 'attrs' => 'maxlength="40"' ) )
+						. '<button type="submit" class="ige-btn ige-btn-line">Enregistrer le carnet</button></form>';
+					?>
+					</section>
+					<section class="ige-card"><h2 style="margin-top:0">Remettre des bons</h2>
+					<?php
+					echo IGE_FFM_Ecrans::form_open( 'parc_remise' ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						. IGE_FFM_Ecrans::field( 'numeros', 'Bons', '', array( 'required' => true, 'attrs' => 'maxlength="300" placeholder="ENG-1201-1210 ou ENG-1201, ENG-1205"' ) )
+						. IGE_FFM_Ecrans::field( 'vehicule_id', 'Véhicule', '', array( 'type' => 'select', 'options' => self::options( 'vehicules', '— Choisir —' ), 'required' => true ) )
+						. IGE_FFM_Ecrans::field( 'chauffeur_id', 'Remis à', '', array( 'type' => 'select', 'options' => self::options( 'chauffeurs', '— Chauffeur —' ) ) )
+						. '<button type="submit" class="ige-btn ige-btn-line">Remettre</button></form>';
+					?>
+					</section>
+					<section class="ige-card"><h2 style="margin-top:0">Annuler un bon</h2>
+					<?php
+					echo IGE_FFM_Ecrans::form_open( 'parc_annuler_bon' ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						. '<div class="ige-grid ige-cols-2" style="gap:0 12px">'
+						. IGE_FFM_Ecrans::field( 'numero', 'N°', '', array( 'required' => true, 'attrs' => 'maxlength="40"' ) )
+						. IGE_FFM_Ecrans::field( 'motif', 'Motif', '', array( 'required' => true, 'attrs' => 'maxlength="190" placeholder="Perdu, volé…"' ) )
+						. '</div><button type="submit" class="ige-btn ige-btn-line">Annuler le bon</button></form>';
+					?>
+					</section>
+				</aside>
+			<?php endif; ?>
+		</div>
+		<?php
+		return ob_get_clean();
+	}
+
 	/* ------------------------------------------------------------------ Traitements */
+
+	/** Dotation. */
+	public static function handle_dotation() {
+		ige_ffm_check_form( 'parc_dotation' );
+		ige_ffm_require( 'ige_logistique' );
+		list( $cible, $id ) = array_pad( explode( ':', ige_ffm_post( 'cible' ) ), 2, 0 );
+		$r = IGE_FFM_Carburant::fixer_dotation( array( 'cible' => $cible, 'cible_id' => (int) $id, 'quantite' => ige_ffm_post( 'quantite' ), 'unite' => ige_ffm_post( 'unite' ) ) );
+		self::fin_onglet( $r, true === $r ? 'Dotation supprimée' : 'Dotation enregistrée', 'Dotation refusée' );
+	}
+
+	/** Carnet. */
+	public static function handle_carnet() {
+		ige_ffm_check_form( 'parc_carnet' );
+		ige_ffm_require( 'ige_logistique' );
+		$r = IGE_FFM_Carburant::ajouter_carnet( self::post( array( 'station', 'prefixe', 'debut', 'fin', 'valeur_unitaire', 'litres_unitaire', 'recu_le', 'reference', 'ecriture' ) ) );
+		self::fin_onglet( $r, 'Carnet enregistré', 'Carnet refusé' );
+	}
+
+	/** Remise de bons. */
+	public static function handle_remise() {
+		ige_ffm_check_form( 'parc_remise' );
+		ige_ffm_require( 'ige_logistique' );
+		$r = IGE_FFM_Carburant::remettre( ige_ffm_post( 'numeros' ), (int) ige_ffm_post( 'vehicule_id' ), (int) ige_ffm_post( 'chauffeur_id' ) );
+		self::fin_onglet( $r, is_int( $r ) ? $r . ' bon(s) remis' : '', 'Remise refusée' );
+	}
+
+	/** Annulation d'un bon. */
+	public static function handle_annuler_bon() {
+		ige_ffm_check_form( 'parc_annuler_bon' );
+		ige_ffm_require( 'ige_logistique' );
+		self::fin_onglet( IGE_FFM_Carburant::annuler_bon( ige_ffm_post( 'numero' ), ige_ffm_post( 'motif' ) ), 'Bon annulé', 'Annulation refusée' );
+	}
+
+	/**
+	 * Retour à l'onglet Dotations et bons.
+	 *
+	 * @param mixed  $r  Résultat.
+	 * @param string $ok Succès.
+	 * @param string $ko Échec.
+	 */
+	private static function fin_onglet( $r, $ok, $ko ) {
+		if ( is_wp_error( $r ) ) {
+			ige_ffm_flash( 'ko', $ko, $r->get_error_message() );
+		} else {
+			ige_ffm_flash( 'ok', $ok, '' );
+		}
+		wp_safe_redirect( ige_ffm_url( 'parc-automobile', array( 'onglet' => 'dotations' ) ) );
+		exit;
+	}
 
 	/**
 	 * Résultat standard et retour.
@@ -937,7 +1118,11 @@ final class IGE_FFM_Ecran_Parc {
 	public static function handle_plein() {
 		ige_ffm_check_form( 'parc_plein' );
 		ige_ffm_require( 'ige_acceder' );
-		$r = IGE_FFM_Parc::ajouter_plein( self::post( array( 'vehicule_id', 'date', 'litres', 'montant', 'km', 'plein', 'station', 'mode', 'bon_numero', 'ecriture' ) ) );
+		$r = IGE_FFM_Parc::ajouter_plein( self::post( array( 'vehicule_id', 'date', 'litres', 'montant', 'km', 'plein', 'station', 'mode', 'bon_numero', 'ecriture', 'derogation' ) ) );
+		if ( is_array( $r ) && ! $r['anomalie'] && $r['alertes'] ) {
+			ige_ffm_flash( 'warn', 'Plein enregistré', implode( ' ; ', $r['alertes'] ) . '.' );
+			IGE_FFM_Ecran_Demandes::retour( 'parc-automobile' );
+		}
 		if ( is_array( $r ) && $r['anomalie'] ) {
 			ige_ffm_flash( 'warn', 'Plein enregistré, mais signalé', $r['anomalie'] . '.' );
 			IGE_FFM_Ecran_Demandes::retour( 'parc-automobile' );
@@ -996,6 +1181,17 @@ final class IGE_FFM_Ecran_Parc {
 			$l[] = array( $e['date_realisee'] ?: $e['date_prevue'], $e['immatriculation'], IGE_FFM_Parc::natures()[ $e['nature'] ] ?? '', $e['objet'], $e['garage'], (int) $e['montant'], 'realise' === $e['statut'] ? 'Réalisé' : 'Planifié' );
 		}
 		$c->feuille( 'Entretien et sinistres', array( 'titre' => 'Entretien, réparations et sinistres ' . $ex['annee'], 'colonnes' => array( array( 'Date', 'date' ), array( 'Véhicule', 'texte', 12 ), array( 'Nature', 'texte', 18 ), array( 'Objet', 'long', 34 ), array( 'Garage', 'texte', 18 ), array( 'Montant', 'montant' ), array( 'État', 'texte', 10 ) ), 'lignes' => $l ) );
+		$l = array();
+		foreach ( IGE_FFM_Carburant::dotations( (int) $ex['id'] ) as $d ) {
+			$s   = IGE_FFM_Carburant::suivi( $d );
+			$l[] = array( $s['libelle'], IGE_FFM_Carburant::unites()[ $d['unite'] ], $s['dotation'], $s['consomme'], $s['reste'], $s['taux'] );
+		}
+		$c->feuille( 'Dotations', array( 'titre' => 'Dotations carburant · ' . IGE_FFM_Ecran_Livre::mois_noms()[ (int) wp_date( 'n' ) ] . ' ' . $ex['annee'], 'colonnes' => array( array( 'Bénéficiaire', 'texte', 20 ), array( 'Unité', 'texte', 8 ), array( 'Dotation', 'decimal' ), array( 'Consommé', 'decimal' ), array( 'Reste', 'decimal' ), array( 'Utilisation (%)', 'decimal' ) ), 'lignes' => $l ) );
+		$l = array();
+		foreach ( IGE_FFM_Carburant::bons( array( 'limite' => 5000 ) ) as $b ) {
+			$l[] = array( $b['numero'], $b['station'], $b['valeur_unitaire'] ? (int) $b['valeur_unitaire'] : null, $b['litres_unitaire'] ? (float) $b['litres_unitaire'] : null, IGE_FFM_Carburant::statuts_bon()[ $b['statut'] ][0], $b['immatriculation'], $b['remis_le'], $b['utilise_le'], $b['motif'] );
+		}
+		$c->feuille( 'Bons carburant', array( 'titre' => 'Bons carburant', 'colonnes' => array( array( 'N°', 'texte', 12 ), array( 'Station', 'texte', 16 ), array( 'Valeur', 'montant' ), array( 'Litres', 'decimal' ), array( 'État', 'texte', 10 ), array( 'Véhicule', 'texte', 12 ), array( 'Remis le', 'dateheure' ), array( 'Utilisé le', 'dateheure' ), array( 'Motif', 'long', 24 ) ), 'lignes' => $l ) );
 		IGE_FFM_Audit::log( 'export_parc', 'exercice', $ex['annee'], null, array( 'format' => 'xlsx' ) );
 		$c->telecharger( 'parc-automobile-' . $ex['annee'] );
 	}
@@ -1057,6 +1253,21 @@ final class IGE_FFM_Ecran_Vehicules {
 							<tr><td><b><?php echo esc_html( $v['immatriculation'] ); ?></b> · <?php echo esc_html( trim( $v['marque'] . ' ' . $v['modele'] ) ); ?></td><td class="ige-r ige-num"><?php echo esc_html( number_format( (int) $v['km_actuel'], 0, ',', "\u{202F}" ) ); ?> km</td><td class="ige-small"><?php foreach ( IGE_FFM_Parc::etat_documents( (int) $v['id'] ) as $e ) { echo esc_html( $e[0] . ( 'ok' === $e[1] ? ' ✓' : ( 'expire' === $e[1] ? ' : expiré' : ( 'manquant' === $e[1] ? ' : absent' : ' : à renouveler' ) ) ) ) . '<br>'; } ?></td><td><?php echo ige_ffm_pill( $si[0], $si[1] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td></tr>
 						<?php endforeach; ?>
 						</tbody></table></div>
+						<?php
+						$ex   = IGE_FFM_Contexte::exercice();
+						$dots = array();
+						if ( $ex ) {
+							foreach ( IGE_FFM_Carburant::dotations( (int) $ex['id'] ) as $d ) {
+								if ( ( 'service' === $d['cible'] && (int) $d['cible_id'] === $sid ) || ( 'vehicule' === $d['cible'] && in_array( (int) $d['cible_id'], array_map( 'intval', array_column( $vs, 'id' ) ), true ) ) ) {
+									$dots[] = $d;
+								}
+							}
+						}
+						?>
+						<?php if ( $dots ) : ?>
+							<h3 style="font-size:14px;margin:14px 0 6px">Dotations carburant du mois</h3>
+							<?php echo IGE_FFM_Ecran_Parc::table_dotations( $dots ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+						<?php endif; ?>
 						<h3 style="font-size:14px;margin:14px 0 6px">Derniers pleins</h3>
 						<?php echo IGE_FFM_Ecran_Parc::table_pleins( IGE_FFM_Parc::pleins( array( 'service_id' => $sid, 'limite' => 10 ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					</section>

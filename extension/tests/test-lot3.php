@@ -179,18 +179,18 @@ ige_t( (bool) array_filter( $GLOBALS['ige_mails'], static fn( $m ) => false !== 
 
 echo "\n5. Carburant et consommation\n";
 wp_set_current_user( $agent2 );
-ige_t( is_wp_error( IGE_FFM_Parc::ajouter_plein( array( 'vehicule_id' => $v1, 'date' => $auj, 'litres' => '40', 'montant' => '120000', 'km' => '50300', 'plein' => 1 ) ) ), 'Un service ne saisit pas de plein pour un véhicule d’un autre service' );
+ige_t( is_wp_error( IGE_FFM_Parc::ajouter_plein( array( 'mode' => 'carte', 'vehicule_id' => $v1, 'date' => $auj, 'litres' => '40', 'montant' => '120000', 'km' => '50300', 'plein' => 1 ) ) ), 'Un service ne saisit pas de plein pour un véhicule d’un autre service' );
 wp_set_current_user( $agent );
-ige_t( is_wp_error( IGE_FFM_Parc::ajouter_plein( array( 'vehicule_id' => $v1, 'date' => $auj, 'litres' => '120', 'montant' => '360000', 'km' => '50300', 'plein' => 1 ) ) ), 'Plus de litres que le réservoir (90 L) refusé' );
-$p1 = IGE_FFM_Parc::ajouter_plein( array( 'vehicule_id' => $v1, 'date' => $auj, 'litres' => '60', 'montant' => '180 000', 'km' => '50 300', 'plein' => 1, 'mode' => 'bon', 'bon_numero' => 'B-1' ) );
+ige_t( is_wp_error( IGE_FFM_Parc::ajouter_plein( array( 'mode' => 'carte', 'vehicule_id' => $v1, 'date' => $auj, 'litres' => '120', 'montant' => '360000', 'km' => '50300', 'plein' => 1 ) ) ), 'Plus de litres que le réservoir (90 L) refusé' );
+$p1 = IGE_FFM_Parc::ajouter_plein( array( 'vehicule_id' => $v1, 'date' => $auj, 'litres' => '60', 'montant' => '180 000', 'km' => '50 300', 'plein' => 1, 'mode' => 'carte', 'bon_numero' => '' ) );
 ige_t( is_array( $p1 ) && null === $p1['conso'] && '' === $p1['anomalie'], 'Premier plein complet : pas encore de consommation' );
-IGE_FFM_Parc::ajouter_plein( array( 'vehicule_id' => $v1, 'date' => $auj, 'litres' => '20', 'montant' => '60000', 'km' => '50 450', 'plein' => 0 ) );
-$p3 = IGE_FFM_Parc::ajouter_plein( array( 'vehicule_id' => $v1, 'date' => $auj, 'litres' => '40', 'montant' => '120000', 'km' => '50 800', 'plein' => 1 ) );
+IGE_FFM_Parc::ajouter_plein( array( 'mode' => 'carte', 'vehicule_id' => $v1, 'date' => $auj, 'litres' => '20', 'montant' => '60000', 'km' => '50 450', 'plein' => 0 ) );
+$p3 = IGE_FFM_Parc::ajouter_plein( array( 'mode' => 'carte', 'vehicule_id' => $v1, 'date' => $auj, 'litres' => '40', 'montant' => '120000', 'km' => '50 800', 'plein' => 1 ) );
 ige_t( is_array( $p3 ) && 12.0 === (float) $p3['conso'] && '' === $p3['anomalie'], '60 L sur 500 km = 12 L/100 km, conforme à la référence' );
-$p4 = IGE_FFM_Parc::ajouter_plein( array( 'vehicule_id' => $v1, 'date' => $auj, 'litres' => '40', 'montant' => '120000', 'km' => '51 000', 'plein' => 1 ) );
+$p4 = IGE_FFM_Parc::ajouter_plein( array( 'mode' => 'carte', 'vehicule_id' => $v1, 'date' => $auj, 'litres' => '40', 'montant' => '120000', 'km' => '51 000', 'plein' => 1 ) );
 ige_t( is_array( $p4 ) && 20.0 === (float) $p4['conso'] && false !== strpos( $p4['anomalie'], 'Consommation' ), '40 L sur 200 km = 20 L/100 km : consommation anormale signalée' );
-ige_t( is_wp_error( IGE_FFM_Parc::ajouter_plein( array( 'vehicule_id' => $v1, 'date' => $auj, 'litres' => '10', 'montant' => '30000', 'km' => '50 900', 'plein' => 0 ) ) ), 'Compteur inférieur au plein précédent refusé' );
-ige_t( false !== strpos( ige_err( IGE_FFM_Parc::ajouter_plein( array( 'vehicule_id' => $v1, 'date' => $auj, 'litres' => '10', 'montant' => '30000', 'km' => '51 100', 'ecriture' => 'INCONNU-1' ) ) ), 'introuvable' ), 'Lien vers une écriture inexistante refusé' );
+ige_t( is_wp_error( IGE_FFM_Parc::ajouter_plein( array( 'mode' => 'carte', 'vehicule_id' => $v1, 'date' => $auj, 'litres' => '10', 'montant' => '30000', 'km' => '50 900', 'plein' => 0 ) ) ), 'Compteur inférieur au plein précédent refusé' );
+ige_t( false !== strpos( ige_err( IGE_FFM_Parc::ajouter_plein( array( 'mode' => 'carte', 'vehicule_id' => $v1, 'date' => $auj, 'litres' => '10', 'montant' => '30000', 'km' => '51 100', 'ecriture' => 'INCONNU-1' ) ) ), 'introuvable' ), 'Lien vers une écriture inexistante refusé' );
 
 echo "\n6. Entretien, réparations, sinistres\n";
 wp_set_current_user( $agent );

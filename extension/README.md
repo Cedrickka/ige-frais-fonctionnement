@@ -2,7 +2,7 @@
 
 Logique métier de l'application de gestion des frais de fonctionnement de l'Inspection Générale de l'Enseignement. Elle s'utilise avec le thème **IGE Frais de fonctionnement** (version 1.0.1 ou plus), qui fournit l'interface.
 
-Version **2.1.0** (lot 1 complet ; lot 2 : missions d'inspection, demandes de fonds, circuit de visas et chaîne de la dépense, rapprochement bancaire, plan de trésorerie, saisie hors connexion, double devise CDF/USD ; priorité 3 : parc automobile et gestion du charroi, stocks de fournitures, score de risque, comparaison des services, nomenclature budgétaire, rapport hebdomadaire ; fonctions du site activables). Thème requis : IGE Frais de fonctionnement **1.0.2**. WordPress 6.5 ou plus (testé sur 7.1.3), PHP 8.0 ou plus.
+Version **2.2.0** (lot 1 complet ; lot 2 : missions d'inspection, demandes de fonds, circuit de visas et chaîne de la dépense, rapprochement bancaire, plan de trésorerie, saisie hors connexion, double devise CDF/USD ; priorité 3 : parc automobile et gestion du charroi, stocks de fournitures, score de risque, comparaison des services, nomenclature budgétaire, rapport hebdomadaire ; dotations et bons carburant ; fonctions du site activables). Thème requis : IGE Frais de fonctionnement **1.0.2**. WordPress 6.5 ou plus (testé sur 7.1.3), PHP 8.0 ou plus.
 
 ## 1. Ce que contient l'étape 1
 
@@ -141,6 +141,13 @@ Bibliothèques incluses (dossier `vendor/`) : Dompdf 3.1.0 (LGPL 2.1), php-font-
 
 **Hypothèses à confirmer** : le compte bancaire principal porte les paiements des services par chèque ou virement, les avances remises par chèque ou virement et les mouvements saisis ; les espèces restent dans les caisses. Le plan de trésorerie peut compter deux fois une demande de fonds destinée à payer une mission. Les seuils de la chaîne et des visas se règlent dans « Circuit de la dépense, devises et banque ».
 
+### Version 2.2.0 : dotations et bons carburant
+
+| Élément | Contenu |
+| --- | --- |
+| Dotations de carburant | Parc automobile > Dotations et bons : dotation mensuelle par véhicule et/ou par service, en litres ou en francs congolais, valable chaque mois de l'exercice. Suivi du mois : dotation, consommé, reste, pourcentage. Alerte à 80 %. Un plein qui dépasse la dotation du véhicule ou celle de son service est refusé ; seule la gestion du parc peut l'enregistrer, avec une dérogation motivée conservée sur le plein et signalée. Dépassements au tableau de bord ; dotations visibles par le service sur sa page « Véhicules ». |
+| Bons carburant | Carnets reçus des stations (préfixe, numéros de début et de fin, valeur en CDF ou en litres, facture, écriture d'achat) ; chaque bon est créé et suivi : en réserve, remis (à un véhicule et à son chauffeur), utilisé, annulé (motif). Dès qu'un carnet existe, un plein payé par bon exige le ou les numéros : bon inconnu, en réserve, déjà utilisé ou annulé refusé ; bon remis à un autre véhicule, montant ou litres supérieurs à la valeur des bons signalés. Alerte sur les bons remis depuis plus de 30 jours et non utilisés. Export Excel : onglets Dotations et Bons carburant. |
+
 ### Version 2.1.0 : priorité 3, stocks et fonctions du site
 
 | Élément | Contenu |
@@ -155,6 +162,8 @@ Bibliothèques incluses (dossier `vendor/`) : Dompdf 3.1.0 (LGPL 2.1), php-font-
 | Rapport hebdomadaire (VA-34) | Administration > Notifications : jour, heure, copies ; envoyé aux comptes Administration et Finance (écritures à vérifier, alertes, fonds à décaisser, services à risque), une fois par semaine ; aperçu et envoi à soi-même. |
 
 ## 2. Installation sur ige-gestion.com
+
+**Mise à jour vers la 2.2.0** : téléverser l'extension (schéma version 11 : dotations, carnets, bons). Puis Parc automobile > Dotations et bons : fixer les dotations, enregistrer les carnets en stock et remettre les bons aux véhicules. Tant qu'aucun carnet n'est enregistré, le numéro de bon reste facultatif.
 
 **Mise à jour vers la 2.1.0** : téléverser l'extension ; le schéma passe en version 10 (10 nouvelles tables, effectif des services), les pages « Fonctions du site » et « Véhicules » se créent et s'ajoutent aux menus, la Direction reçoit « Risques » et « Parc automobile ». Puis : (1) Administration > Fonctions du site : désactiver ce qui n'est pas encore utilisé ; (2) Référentiels > Services : saisir l'effectif de chaque service ; (3) Référentiels > Nomenclature de l'État, puis rattacher les rubriques ; (4) Parc automobile : chauffeurs, véhicules et documents de bord ; (5) Stocks : catalogue, puis un inventaire d'ouverture (bon d'entrée au prix connu) ; (6) Notifications : jour du rapport hebdomadaire. La tâche planifiée du rapport repose sur WP-Cron : sur Hostinger, ajouter si possible une tâche cron qui appelle `wp-cron.php` toutes les heures.
 
@@ -221,7 +230,11 @@ wp eval-file wp-content/plugins/ige-ff-metier/tests/test-lot2.php
 wp eval-file wp-content/plugins/ige-ff-metier/tests/test-lot3.php
 ```
 
-Résultats attendus : `85`, `76`, `57`, `74`, `57`, `109`, `33`, `51`, `102` puis `102 réussis`, sans échec (746 tests). Le test du déploiement n'envoie aucun e-mail (ils sont interceptés) et utilise les fichiers d'essai de `tests/fixtures/`. Le test des fonds suppose qu'on soit au moins en mai de l'exercice ; il clôture un exercice fictif (2030) puis le supprime, sans toucher l'exercice réel. Les tests couvrent le schéma, les données initiales, les droits de chaque rôle, la validation des référentiels, la création et la modification des comptes, la robustesse des mots de passe, le verrouillage, la désactivation, les bornes des règles et la détection d'une falsification du journal.
+```
+wp eval-file wp-content/plugins/ige-ff-metier/tests/test-carburant.php
+```
+
+Résultats attendus : `88`, `76`, `57`, `74`, `57`, `109`, `33`, `51`, `102`, `102` puis `40 réussis`, sans échec (789 tests). Le test du déploiement n'envoie aucun e-mail (ils sont interceptés) et utilise les fichiers d'essai de `tests/fixtures/`. Le test des fonds suppose qu'on soit au moins en mai de l'exercice ; il clôture un exercice fictif (2030) puis le supprime, sans toucher l'exercice réel. Les tests couvrent le schéma, les données initiales, les droits de chaque rôle, la validation des référentiels, la création et la modification des comptes, la robustesse des mots de passe, le verrouillage, la désactivation, les bornes des règles et la détection d'une falsification du journal.
 
 Les tests de saisie couvrent les droits (lecteur, administrateur non rattaché, agent sur le budget), le blocage de la caisse négative et du dépassement du disponible, les validations (date future ou hors exercice, montant, rubrique, pièce, faux PDF, fichier PHP, plafond des espèces), le budget facultatif, les révisions motivées, le verrouillage du solde initial, le paiement d'un engagement, la contrepassation (et ses refus), le solde progressif du livre, la continuité de la numérotation, le mois clôturé, les doublons et la fusion des fournisseurs, le journal d'audit.
 

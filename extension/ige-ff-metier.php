@@ -3,7 +3,7 @@
  * Plugin Name:       IGE Frais de fonctionnement (métier)
  * Plugin URI:        https://ige-gestion.com/
  * Description:       Gestion des frais de fonctionnement de l'Inspection Générale de l'Enseignement : budgets, caisses, transmission et vérification, avances, arrêtés, consolidation et rapports ; missions, demandes de fonds, visas, banque, trésorerie, double devise, saisie hors connexion ; parc automobile, stocks de fournitures, risques, rapport hebdomadaire ; fonctions activables.
- * Version:           2.1.0
+ * Version:           2.2.0
  * Requires at least: 6.5
  * Requires PHP:      8.0
  * Author:            Inspection Générale de l'Enseignement
@@ -15,8 +15,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'IGE_FFM_VERSION', '2.1.0' );
-define( 'IGE_FFM_DB_VERSION', '10' );
+define( 'IGE_FFM_VERSION', '2.2.0' );
+define( 'IGE_FFM_DB_VERSION', '11' );
 define( 'IGE_FFM_FILE', __FILE__ );
 define( 'IGE_FFM_DIR', plugin_dir_path( __FILE__ ) );
 define( 'IGE_FFM_URL', plugin_dir_url( __FILE__ ) );
@@ -64,6 +64,7 @@ require_once IGE_FFM_DIR . 'includes/class-tresorerie.php';
 require_once IGE_FFM_DIR . 'includes/class-hors-connexion.php';
 require_once IGE_FFM_DIR . 'includes/class-fonctions.php';
 require_once IGE_FFM_DIR . 'includes/class-parc.php';
+require_once IGE_FFM_DIR . 'includes/class-carburant.php';
 require_once IGE_FFM_DIR . 'includes/class-stocks.php';
 require_once IGE_FFM_DIR . 'includes/class-analyses.php';
 require_once IGE_FFM_DIR . 'includes/class-ecrans.php';

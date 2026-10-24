@@ -1,5 +1,12 @@
 # Journal des versions
 
+## 2.2.0 — 24 octobre 2026 · Dotations et bons carburant
+
+- Dotations mensuelles de carburant par véhicule et par service (litres ou CDF), suivi du mois, alerte à 80 %, refus au-delà sauf dérogation motivée de la gestion du parc.
+- Bons carburant : carnets numérotés, remise aux véhicules et chauffeurs, contrôle à l'utilisation (inconnu, en réserve, déjà utilisé, annulé, autre véhicule, valeur dépassée), alerte sur les bons non utilisés, annulation motivée.
+- Nouvel onglet « Dotations et bons », dotations visibles par les services, export Excel complété.
+- Schéma version 11. 40 tests automatiques supplémentaires (789 au total).
+
 ## 2.1.0 — 24 octobre 2026 · Priorité 3, stocks et fonctions du site
 
 - Fonctions du site : 12 modules activables par Administration et Finance ; menus, pages, formulaires, alertes et e-mails suivent ; données conservées.
