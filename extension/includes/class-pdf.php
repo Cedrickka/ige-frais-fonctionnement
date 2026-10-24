@@ -425,6 +425,21 @@ final class IGE_FFM_Pdf {
 				IGE_FFM_Audit::log( 'telechargement_pdf', 'document', $d['reference'] );
 				self::envoyer( self::document( $d ), $d['reference'] . '.pdf' );
 				break;
+			case 'om':
+				$m = IGE_FFM_Missions::get( $id );
+				$d = $m ? IGE_FFM_Documents::pour_objet( 'ordre_mission', (int) $m['id'] ) : null;
+				if ( ! $d || ! IGE_FFM_Contexte::peut_voir( (int) $m['service_id'] ) ) {
+					wp_die( 'Ordre de mission introuvable.', '', array( 'response' => 404 ) );
+				}
+				IGE_FFM_Audit::log( 'telechargement_pdf', 'mission', $m['numero'] );
+				self::envoyer( self::document( $d ), $m['numero'] . '.pdf' );
+				break;
+			case 'rapprochement':
+				if ( ! current_user_can( 'ige_gerer_fonds' ) ) {
+					wp_die( 'Accès refusé.', '', array( 'response' => 403 ) );
+				}
+				self::envoyer( IGE_FFM_Banque::etat_pdf( $id ), 'etat-rapprochement-' . wp_date( 'Y-m-d' ) . '.pdf' );
+				break;
 			case 'pv':
 				$a = IGE_FFM_Arretes::get( $id );
 				if ( ! $a || ! IGE_FFM_Contexte::peut_voir( (int) $a['service_id'] ) ) {

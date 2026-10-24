@@ -229,8 +229,9 @@ final class IGE_FFM_Consolidation {
 				$out[] = array( 'info', sprintf( '%d arrêté(s) de caisse de %s restent à signer.', $manque, strtolower( IGE_FFM_Ecran_Livre::mois_noms()[ $ref ] ) ), ige_ffm_url( 'caisses' ) );
 			}
 		}
+		$out   = (array) apply_filters( 'ige_ffm_alertes', $out, $exo );
 		$ordre = array( 'ko' => 0, 'warn' => 1, 'info' => 2 );
-		usort( $out, static fn( $a, $b ) => $ordre[ $a[0] ] <=> $ordre[ $b[0] ] );
+		usort( $out, static fn( $a, $b ) => ( $ordre[ $a[0] ] ?? 3 ) <=> ( $ordre[ $b[0] ] ?? 3 ) );
 		return $out;
 	}
 }

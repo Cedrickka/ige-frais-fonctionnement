@@ -370,7 +370,7 @@ final class IGE_FFM_Ecran_Verification {
 			<dt>Description</dt><dd><?php echo esc_html( $e['description'] ); ?></dd>
 			<dt>Bénéficiaire</dt><dd><?php echo esc_html( $f ? $f['raison_sociale'] : ( $e['beneficiaire'] ?: '—' ) ); ?></dd>
 			<dt>Pièce n°</dt><dd><?php echo esc_html( $e['num_piece'] ?: '—' ); ?></dd>
-			<dt>Montant</dt><dd><b><?php echo esc_html( ige_ffm_montant( (int) $e['montant'] ) ); ?></b></dd>
+			<dt>Montant</dt><dd><b><?php echo esc_html( ige_ffm_montant( (int) $e['montant'] ) ); ?></b><?php echo IGE_FFM_Devises::mention( $e ) ? ' <span class="ige-small ige-muted">(' . esc_html( IGE_FFM_Devises::mention( $e ) ) . ')</span>' : ''; ?></dd>
 			<?php if ( null !== $dispo ) : ?><dt>Disponible</dt><dd<?php echo $dispo < 0 ? ' style="color:var(--ige-rouge)"' : ''; ?>><?php echo esc_html( ige_ffm_montant( $dispo ) . ' sur la rubrique' ); ?></dd><?php endif; ?>
 			<dt>Saisi par</dt><dd><?php echo esc_html( ( $auteur ? $auteur->display_name : '—' ) . ' · ' . wp_date( 'd/m H:i', strtotime( $e['saisi_le'] ) ) ); ?></dd>
 			<?php if ( $orig ) : ?><dt>Annule</dt><dd><a href="<?php echo esc_url( self::url( array( 'vue' => 'validee', 'ecriture' => (int) $orig['id'] ) ) ); ?>"><?php echo esc_html( $orig['id_ecriture'] ); ?></a></dd><?php endif; ?>

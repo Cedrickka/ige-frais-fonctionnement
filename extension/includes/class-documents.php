@@ -31,6 +31,8 @@ final class IGE_FFM_Documents {
 			'rapport_annuel'      => 'Rapport annuel',
 			'pv_arrete'           => 'Procès-verbal d’arrêté de caisse',
 			'pv_inopine'          => 'Procès-verbal de comptage inopiné',
+			'ordre_mission'       => 'Ordre de mission',
+			'etat_rapprochement'  => 'État de rapprochement bancaire',
 		);
 	}
 
@@ -56,7 +58,7 @@ final class IGE_FFM_Documents {
 		$user_id = $user_id ?? get_current_user_id();
 		$t       = IGE_FFM_DB::t( 'document' );
 		$annee   = (int) wp_date( 'Y' );
-		$prefixe = in_array( $d['type'], array( 'pv_arrete', 'pv_inopine' ), true ) ? 'IGE-PV' : 'IGE-AF';
+		$prefixe = in_array( $d['type'], array( 'pv_arrete', 'pv_inopine' ), true ) ? 'IGE-PV' : ( 'ordre_mission' === $d['type'] ? 'IGE-OM' : 'IGE-AF' );
 		$now     = ige_ffm_now();
 		for ( $essai = 0; $essai < 5; $essai++ ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared

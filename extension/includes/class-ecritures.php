@@ -157,12 +157,33 @@ final class IGE_FFM_Ecritures {
 			return new WP_Error( 'exercice', 'Aucun exercice ouvert.' );
 		}
 
+		// Saisie hors connexion renvoyée deux fois : l'écriture déjà enregistrée est rendue telle quelle.
+		$cle = preg_replace( '/[^A-Za-z0-9-]/', '', (string) ( $data['cle_client'] ?? '' ) );
+		if ( '' !== $cle ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$deja = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . IGE_FFM_DB::t( 'ecriture' ) . ' WHERE service_id = %d AND cle_client = %s', $sid, $cle ) );
+			if ( $deja ) {
+				return $deja;
+			}
+		}
+
 		$type   = 'entree' === ( $data['type'] ?? '' ) ? 'entree' : 'sortie';
 		$statut = 'entree' === $type ? 'payee' : ( 'engagee' === ( $data['statut'] ?? '' ) ? 'engagee' : 'payee' );
 		$date   = (string) ( $data['date_operation'] ?? '' );
 		$rid    = (int) ( $data['rubrique_id'] ?? 0 );
 		$mode   = (int) ( $data['mode_paiement_id'] ?? 0 );
 		$mnt    = ige_ffm_parse_montant( $data['montant'] ?? '' );
+		$devise = null;
+		if ( 'USD' === strtoupper( (string) ( $data['devise'] ?? 'CDF' ) ) ) {
+			if ( ! IGE_FFM_Reglages::get( 'saisie_usd' ) ) {
+				return new WP_Error( 'devise', 'La saisie en dollars n’est pas ouverte.' );
+			}
+			$devise = IGE_FFM_Devises::convertir( $data['montant_usd'] ?? ( $data['montant'] ?? '' ), (string) ( $data['date_operation'] ?? '' ) );
+			if ( is_wp_error( $devise ) ) {
+				return $devise;
+			}
+			$mnt = $devise['cdf'];
+		}
 		$desc   = trim( sanitize_text_field( (string) ( $data['description'] ?? '' ) ) );
 		$piece  = trim( sanitize_text_field( (string) ( $data['num_piece'] ?? '' ) ) );
 		$fid    = (int) ( $data['fournisseur_id'] ?? 0 );
@@ -236,9 +257,18 @@ final class IGE_FFM_Ecritures {
 			'observations'     => $obs,
 			'date_paiement'    => 'payee' === $statut ? $date : null,
 			'etat_transmission' => 'non_transmise',
+			'cle_client'       => $cle,
 			'saisi_par'        => (int) $user_id,
 			'saisi_le'         => ige_ffm_now(),
 		);
+		if ( $devise ) {
+			$row['devise_origine']  = 'USD';
+			$row['montant_origine'] = $devise['usd'];
+			$row['taux']            = $devise['taux'];
+		}
+		if ( ! empty( $data['_extra'] ) && is_array( $data['_extra'] ) ) {
+			$row = array_merge( $row, array_intersect_key( $data['_extra'], array_flip( array( 'mission_id', 'etape', 'liquidee_le', 'liquidee_par', 'facture_ref', 'ordonnancee_le' ) ) ) );
+		}
 		$id = self::inserer_numerotee( $row, $code, (int) $ex['annee'] );
 		if ( is_wp_error( $id ) ) {
 			return $id;
@@ -262,7 +292,7 @@ final class IGE_FFM_Ecritures {
 				'date'     => $date,
 				'rubrique' => $rid ? IGE_FFM_Referentiels::get( 'rubrique', $rid )['code'] : '',
 				'montant'  => $mnt,
-			),
+			) + ( $devise ? array( 'devise' => $devise['usd'] . ' USD au taux de ' . $devise['taux'] ) : array() ) + ( '' !== $cle ? array( 'hors_connexion' => $cle ) : array() ),
 			$user_id
 		);
 		do_action( 'ige_ffm_ecriture_enregistree', $id, $user_id );
@@ -316,6 +346,10 @@ final class IGE_FFM_Ecritures {
 		}
 		if ( 'rejetee' === $e['etat_verification'] && 'transmise' === $e['etat_transmission'] && IGE_FFM_Reglages::get( 'contrepassation_rejet' ) ) {
 			return new WP_Error( 'rejet', 'Cet engagement a été rejeté par le central : contrepassez-le puis saisissez l’engagement correct.' );
+		}
+		$ok = IGE_FFM_Chaine::payable( $e );
+		if ( is_wp_error( $ok ) ) {
+			return $ok;
 		}
 		$ex = IGE_FFM_Contexte::exercice();
 		if ( ! $ex || (int) $ex['id'] !== (int) $e['exercice_id'] ) {
@@ -450,6 +484,35 @@ final class IGE_FFM_Ecritures {
 			'valide_par'        => (int) $user_id,
 			'valide_le'         => ige_ffm_now(),
 		);
+	}
+
+	/**
+	 * Insère une écriture produite par l'application (complément ou reversement de mission),
+	 * numérotée normalement et à transmettre comme toute écriture du service.
+	 *
+	 * @param array $row     Ligne complète (exercice_id, service_id, date_operation, type, montant, description…).
+	 * @param int   $annee   Année de l'exercice.
+	 * @param int   $user_id Auteur.
+	 * @return int|WP_Error
+	 */
+	public static function inserer_systeme( array $row, $annee, $user_id ) {
+		$row  = array_merge(
+			array(
+				'mois'              => (int) substr( $row['date_operation'], 5, 2 ),
+				'statut'            => 'payee',
+				'date_paiement'     => $row['date_operation'],
+				'etat_transmission' => 'non_transmise',
+				'saisi_par'         => (int) $user_id,
+				'saisi_le'          => ige_ffm_now(),
+			),
+			$row
+		);
+		$code = preg_replace( '/[^A-Za-z0-9]/', '', IGE_FFM_Comptes::service_code( (int) $row['service_id'] ) ) ?: 'S' . (int) $row['service_id'];
+		$id   = self::inserer_numerotee( $row, $code, (int) $annee );
+		if ( ! is_wp_error( $id ) ) {
+			do_action( 'ige_ffm_ecriture_enregistree', $id, $user_id );
+		}
+		return $id;
 	}
 
 	/**

@@ -27,4 +27,5 @@ if ( defined( 'IGE_FFM_SUPPRIMER_DONNEES' ) && IGE_FFM_SUPPRIMER_DONNEES ) {
 	delete_option( 'ige_ffm_audit_verification' );
 	delete_option( 'ige_ffm_smtp' );
 	delete_option( 'ige_ffm_reprise_central' );
+	delete_option( 'ige_ffm_bareme' );
 }

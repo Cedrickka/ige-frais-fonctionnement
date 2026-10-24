@@ -2,7 +2,7 @@
 
 Logique métier de l'application de gestion des frais de fonctionnement de l'Inspection Générale de l'Enseignement. Elle s'utilise avec le thème **IGE Frais de fonctionnement** (version 1.0.1 ou plus), qui fournit l'interface.
 
-Version **1.3.0** (lot 1 complet, y compris les échanges sur une écriture et le dossier complet ; déploiement ; exports Excel et PDF). Thème requis : IGE Frais de fonctionnement **1.0.2**. WordPress 6.5 ou plus (testé sur 7.1.3), PHP 8.0 ou plus.
+Version **2.0.0** (lot 1 complet et lot 2 : missions d'inspection, demandes de fonds, circuit de visas et chaîne de la dépense, rapprochement bancaire, plan de trésorerie, saisie hors connexion, double devise CDF/USD). Thème requis : IGE Frais de fonctionnement **1.0.2**. WordPress 6.5 ou plus (testé sur 7.1.3), PHP 8.0 ou plus.
 
 ## 1. Ce que contient l'étape 1
 
@@ -127,7 +127,23 @@ Bibliothèques incluses (dossier `vendor/`) : Dompdf 3.1.0 (LGPL 2.1), php-font-
 | Contrôle d'intégrité | Bouton « Lancer le contrôle » (Exercice et règles de contrôle) : chaîne du journal d'audit, empreintes des documents officiels, présence et empreinte de chaque pièce, unicité des écritures, version de la base. À lancer après toute restauration et chaque mois. |
 | Sécurité | Revue de tous les points d'entrée (53 formulaires et téléchargements) : jeton, droit et périmètre du service vérifiés côté serveur ; accès direct interdit aux dossiers `vendor/` et `tests/`. |
 
+### Version 2.0.0 : lot 2
+
+| Élément | Contenu |
+| --- | --- |
+| Missions d'inspection (VA-40) | Écran Missions : ordre de mission (membres, catégorie, destination, zone, dates, transport), frais calculés selon le **barème** (indemnité par jour, hébergement par nuit, transport aller-retour par membre, frais divers par mission), circuit de visas, ordre de mission officiel en PDF avec code QR (registre des documents, préfixe IGE-OM), paiement par la caisse du service (sortie R07 liée à la mission, l'ordre de mission joint en pièce), dépôt du rapport et de l'état de paiement émargé, liquidation au retour (complément ou reversement automatique), annulation avant paiement. Chiffres : coût réel, coût moyen, coût par membre, rapports manquants. **Le barème fourni est fictif** : Administration et Finance saisit le barème officiel dans Exercice et règles de contrôle > Barème des frais de mission. |
+| Demandes de fonds (VA-03) | Le service exprime un besoin (objet, rubriques, montant, date de besoin, justification) ; visa du chef de service, puis Administration et Finance accorde (montant réduit possible, avec avis) ou refuse, puis visa de l'Inspecteur Général au-delà du seuil ; le décaissement crée l'avance de fonds et son entrée de caisse (règle des 80 % et dérogation inchangées). Notifications par e-mail à chaque étape. |
+| Circuit de visas et chaîne de la dépense (VA-10, VA-14) | À partir d'un seuil réglable (1 000 000 CDF par défaut), un engagement suit liquidation (service fait, facture) puis ordonnancement (visas chef de service, Administration et Finance, Inspecteur Général au-delà de 5 000 000 CDF) avant de pouvoir être payé. En dessous, chaîne simplifiée. Écran « Dossiers de dépense » et écran « Visas » (tout ce qui attend le visa de la personne connectée) ; un refus exige un motif ; une personne ne vise qu'une fois un dossier. |
+| Rapprochement bancaire (VA-06) | Compte(s) bancaire(s) avec solde de départ ; import du relevé CSV ou Excel (date, libellé, référence, débit/crédit ou montant ; aucun doublon au réimport) ; rapprochement automatique (même montant, dates proches, référence reconnue) puis manuel ; mouvements bancaires (dotations, frais) créés depuis le relevé ; explication des suspens ; écart inexpliqué calculé avec le solde final du relevé ; état de rapprochement en PDF ; alerte au tableau de bord au-delà de 60 jours de suspens. |
+| Plan de trésorerie (VA-07) | Disponible (caisses des services et banque principale), fonds attendus saisis par mois, demandes de fonds et missions à venir, engagements non payés, dépenses courantes (moyenne des trois derniers mois) ; solde de fin par mois et alerte de tension. |
+| Double devise (VA-51) | Taux du jour fixé par Administration et Finance (Trésorerie) ; saisie en dollars convertie en francs au taux de la date (refusée sans taux de moins de 31 jours) ; montant d'origine et taux conservés et affichés. |
+| Saisie hors connexion (VA-50) | Application installable sur le téléphone ; la page Nouvelle écriture s'ouvre sans réseau ; l'écriture et la photo de la pièce sont rangées sur le téléphone puis envoyées automatiquement au retour du réseau, avec les mêmes contrôles qu'en ligne et sans doublon possible (clé unique par écriture). Page « Saisie hors connexion » : file d'attente, motifs de refus, envoi manuel. |
+
+**Hypothèses à confirmer** : le compte bancaire principal porte les paiements des services par chèque ou virement, les avances remises par chèque ou virement et les mouvements saisis ; les espèces restent dans les caisses. Le plan de trésorerie peut compter deux fois une demande de fonds destinée à payer une mission. Les seuils de la chaîne et des visas se règlent dans « Circuit de la dépense, devises et banque ».
+
 ## 2. Installation sur ige-gestion.com
+
+**Mise à jour vers la 2.0.0** : téléverser l'extension (« Remplacer la version installée ») ; le schéma passe en version 9 sans perte de données. Puis, avec un compte Administration et Finance : (1) Exercice et règles de contrôle > vérifier les seuils de « Circuit de la dépense, devises et banque » et saisir le **barème officiel** des missions ; (2) Fonds > Trésorerie > fixer le **taux du jour** ; (3) Fonds > Rapprochement bancaire > déclarer le compte avec le solde du dernier relevé déjà rapproché. Vider le cache LiteSpeed. Le profil Lecteur (Direction) reçoit le droit de viser au-delà du seuil : vérifier que seuls l'Inspecteur Général et ses adjoints ont ce profil.
 
 **Mise à jour vers la 1.1.0** : après le téléversement, ouvrir **Exercice et règles de contrôle > Messagerie**, saisir `contact@ige-gestion.com` et le mot de passe de cette boîte (hPanel > E-mails), enregistrer, puis « Envoyer un e-mail de test ». Vérifier ensuite que **chaque compte a une adresse e-mail** : sans adresse, pas de code de connexion. Les comptes qui utilisent déjà une application d'authentification la gardent.
 
@@ -182,7 +198,11 @@ wp eval-file wp-content/plugins/ige-ff-metier/tests/test-exports.php
 wp eval-file wp-content/plugins/ige-ff-metier/tests/test-priorite1.php
 ```
 
-Résultats attendus : `64`, `76`, `57`, `74`, `57`, `109`, `33` puis `51 réussis`, sans échec (521 tests). Le test du déploiement n'envoie aucun e-mail (ils sont interceptés) et utilise les fichiers d'essai de `tests/fixtures/`. Le test des fonds suppose qu'on soit au moins en mai de l'exercice ; il clôture un exercice fictif (2030) puis le supprime, sans toucher l'exercice réel. Les tests couvrent le schéma, les données initiales, les droits de chaque rôle, la validation des référentiels, la création et la modification des comptes, la robustesse des mots de passe, le verrouillage, la désactivation, les bornes des règles et la détection d'une falsification du journal.
+```
+wp eval-file wp-content/plugins/ige-ff-metier/tests/test-lot2.php
+```
+
+Résultats attendus : `75`, `76`, `57`, `74`, `57`, `109`, `33`, `51` puis `102 réussis`, sans échec (634 tests). Le test du déploiement n'envoie aucun e-mail (ils sont interceptés) et utilise les fichiers d'essai de `tests/fixtures/`. Le test des fonds suppose qu'on soit au moins en mai de l'exercice ; il clôture un exercice fictif (2030) puis le supprime, sans toucher l'exercice réel. Les tests couvrent le schéma, les données initiales, les droits de chaque rôle, la validation des référentiels, la création et la modification des comptes, la robustesse des mots de passe, le verrouillage, la désactivation, les bornes des règles et la détection d'une falsification du journal.
 
 Les tests de saisie couvrent les droits (lecteur, administrateur non rattaché, agent sur le budget), le blocage de la caisse négative et du dépassement du disponible, les validations (date future ou hors exercice, montant, rubrique, pièce, faux PDF, fichier PHP, plafond des espèces), le budget facultatif, les révisions motivées, le verrouillage du solde initial, le paiement d'un engagement, la contrepassation (et ses refus), le solde progressif du livre, la continuité de la numérotation, le mois clôturé, les doublons et la fusion des fournisseurs, le journal d'audit.
 
@@ -201,7 +221,8 @@ Des tests d'interface ont aussi été passés pour l'étape 5 : activation de la
 - **Journal d'audit** : l'application ne permet ni de modifier ni de supprimer une ligne. Un accès direct à la base (phpMyAdmin) le permettrait, mais la vérification d'intégrité le signalerait.
 - **Double authentification par e-mail** : sa sûreté dépend de celle des boîtes des agents. Recommander des adresses professionnelles et un mot de passe de messagerie différent de celui de l'application. Si la messagerie tombe en panne, les codes de secours permettent de se connecter ; en dernier recours, `define( 'IGE_FFM_DESACTIVER_2FA', true );` dans `wp-config.php` suspend la double authentification.
 - **Délivrabilité** : dans hPanel > Domaines > DNS, vérifier que les enregistrements SPF, DKIM et DMARC de ige-gestion.com sont actifs (Hostinger les propose) pour que les codes n'arrivent pas en indésirables.
-- **Revue du code** : la revue interne de la 1.3.0 a contrôlé chaque point d'entrée (jeton, droit, périmètre du service), l'échappement des affichages et les requêtes SQL. Elle ne remplace pas une relecture par un développeur ou un auditeur indépendant avant la mise en production réelle, en particulier des contrôles d'accès.
+- **Lot 2** : le barème des missions et les taux de change d'exemple sont fictifs ; rien ne doit être payé avant la saisie du barème officiel. Les écritures en attente hors connexion vivent dans le navigateur du téléphone : un téléphone perdu ou réinitialisé avant l'envoi les perd (la pièce papier fait foi).
+- **Revue du code** : la revue interne de la 1.3.0 et de la 2.0.0 a contrôlé chaque point d'entrée (jeton, droit, périmètre du service), l'échappement des affichages et les requêtes SQL. Elle ne remplace pas une relecture par un développeur ou un auditeur indépendant avant la mise en production réelle, en particulier des contrôles d'accès.
 
 ## 5. Sauvegarde et restauration
 

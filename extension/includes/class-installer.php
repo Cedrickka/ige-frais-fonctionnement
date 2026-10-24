@@ -155,6 +155,7 @@ final class IGE_FFM_Installer {
 			'premiere-connexion'      => array( 'Première connexion', 'Choisissez votre mot de passe personnel' ),
 			'double-authentification' => array( 'Double authentification', 'Un code à usage unique en plus du mot de passe' ),
 			'deploiement'             => array( 'Déploiement', 'Comptes, invitations et reprise des fichiers Excel', 'templates/administration.php' ),
+			'visas'                   => array( 'Visas', 'Demandes de fonds, ordonnancements et ordres de mission à viser', 'templates/liste.php' ),
 		);
 		foreach ( $pages as $slug => $p ) {
 			if ( get_page_by_path( $slug ) ) {
@@ -174,8 +175,37 @@ final class IGE_FFM_Installer {
 				if ( 'deploiement' === $slug ) {
 					self::ajouter_au_menu_admin( $id, 'Déploiement', 'Services et reprise Excel' );
 				}
+				if ( 'visas' === $slug ) {
+					self::ajouter_au_menu( 'menu-direction', $id, 'Visas' );
+				}
 			}
 		}
+	}
+
+	/**
+	 * Ajoute une page en tête d'un menu (premier niveau).
+	 *
+	 * @param string $location Emplacement.
+	 * @param int    $page_id  Page.
+	 * @param string $titre    Libellé.
+	 */
+	private static function ajouter_au_menu( $location, $page_id, $titre ) {
+		$loc = get_nav_menu_locations();
+		if ( empty( $loc[ $location ] ) ) {
+			return;
+		}
+		wp_update_nav_menu_item(
+			(int) $loc[ $location ],
+			0,
+			array(
+				'menu-item-title'     => $titre,
+				'menu-item-object'    => 'page',
+				'menu-item-object-id' => $page_id,
+				'menu-item-type'      => 'post_type',
+				'menu-item-status'    => 'publish',
+				'menu-item-position'  => 1,
+			)
+		);
 	}
 
 	/**

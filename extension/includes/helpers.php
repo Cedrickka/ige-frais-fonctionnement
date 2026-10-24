@@ -63,8 +63,17 @@ function ige_ffm_montant( $montant, $devise = 'CDF' ) {
  * @return string
  */
 function ige_ffm_url( $slug, $query = array() ) {
-	$page = get_page_by_path( $slug );
-	$url  = $page ? get_permalink( $page ) : home_url( '/' . $slug . '/' );
+	static $cache = array();
+	if ( ! isset( $cache[ $slug ] ) ) {
+		$page = get_page_by_path( $slug );
+		if ( ! $page && false === strpos( $slug, '/' ) ) {
+			// Page enfant (ex. « nouvelle-ecriture/hors-connexion ») : recherche par son seul identifiant.
+			$ids  = get_posts( array( 'post_type' => 'page', 'name' => $slug, 'post_status' => 'publish', 'posts_per_page' => 1, 'fields' => 'ids', 'no_found_rows' => true ) );
+			$page = $ids ? get_post( $ids[0] ) : null;
+		}
+		$cache[ $slug ] = $page ? get_permalink( $page ) : home_url( '/' . $slug . '/' );
+	}
+	$url = $cache[ $slug ];
 	return $query ? add_query_arg( $query, $url ) : $url;
 }
 

@@ -17,6 +17,13 @@ defined( 'ABSPATH' ) || exit;
  */
 final class IGE_FFM_Pieces {
 
+	/**
+	 * Enregistrement en cours d'un fichier produit par l'application (ordre de mission en PDF).
+	 *
+	 * @var bool
+	 */
+	private static $genere = false;
+
 	const TAILLE_MAX = 5242880; // 5 Mo.
 
 	/**
@@ -85,7 +92,35 @@ final class IGE_FFM_Pieces {
 	}
 
 	/**
-	 * Enregistre une pièce validée et la rattache à un objet (écriture, avance…).
+	 * Autorise (le temps d'un enregistrement) une pièce produite par l'application et non téléversée
+	 * (ex. ordre de mission en PDF).
+	 *
+	 * @param bool $oui Autoriser.
+	 */
+	public static function autoriser_genere( $oui ) {
+		self::$genere = (bool) $oui;
+	}
+
+	/**
+	 * Rattache à un objet un fichier produit par l'application.
+	 *
+	 * @param string $chemin   Fichier temporaire.
+	 * @param string $nom      Nom affiché.
+	 * @param string $objet    Type d'objet.
+	 * @param int    $objet_id Identifiant.
+	 * @param int    $user_id  Auteur.
+	 * @param string $nature   Nature de la pièce.
+	 * @return int|WP_Error
+	 */
+	public static function enregistrer_genere( $chemin, $nom, $objet, $objet_id, $user_id, $nature = '' ) {
+		self::$genere = true;
+		$r            = self::enregistrer( array( 'name' => $nom, 'type' => '', 'tmp_name' => $chemin, 'error' => UPLOAD_ERR_OK, 'size' => (int) filesize( $chemin ) ), $objet, $objet_id, $user_id, $nature );
+		self::$genere = false;
+		return $r;
+	}
+
+	/**
+	 * Enregistre une pièce téléversée.
 	 *
 	 * @param array  $file     Fichier ($_FILES).
 	 * @param string $objet    Type d'objet.
@@ -107,7 +142,7 @@ final class IGE_FFM_Pieces {
 		wp_mkdir_p( $dir );
 		$nom    = wp_generate_password( 24, false, false ) . '.' . $ext;
 		$dest   = $dir . $nom;
-		$moved  = is_uploaded_file( $file['tmp_name'] ) ? move_uploaded_file( $file['tmp_name'], $dest ) : ( defined( 'IGE_FFM_TESTS' ) && IGE_FFM_TESTS && copy( $file['tmp_name'], $dest ) );
+		$moved  = is_uploaded_file( $file['tmp_name'] ) ? move_uploaded_file( $file['tmp_name'], $dest ) : ( ( self::$genere || ( defined( 'IGE_FFM_TESTS' ) && IGE_FFM_TESTS ) ) && copy( $file['tmp_name'], $dest ) );
 		if ( ! $moved ) {
 			return new WP_Error( 'piece', "Impossible d'enregistrer la pièce sur le serveur." );
 		}
@@ -274,8 +309,13 @@ final class IGE_FFM_Pieces {
 		if ( 'ecriture' === $p['objet'] ) {
 			$e       = IGE_FFM_Ecritures::get( (int) $p['objet_id'] );
 			$service = $e ? (int) $e['service_id'] : 0;
+		} elseif ( 'mission' === $p['objet'] ) {
+			$m       = IGE_FFM_Missions::get( (int) $p['objet_id'] );
+			$service = $m ? (int) $m['service_id'] : 0;
+		} elseif ( 'releve' === $p['objet'] && current_user_can( 'ige_gerer_fonds' ) ) {
+			$service = -1;
 		}
-		if ( ! $service || ! IGE_FFM_Contexte::peut_voir( $service ) ) {
+		if ( ! $service || ( $service > 0 && ! IGE_FFM_Contexte::peut_voir( $service ) ) ) {
 			wp_die( 'Accès refusé.', '', array( 'response' => 403 ) );
 		}
 		$path = self::dossier() . $p['fichier'];

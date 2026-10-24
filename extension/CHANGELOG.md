@@ -1,5 +1,16 @@
 # Journal des versions
 
+## 2.0.0 — 24 octobre 2026 · Lot 2
+
+- Missions d'inspection (VA-40) : ordre de mission, barème paramétrable (fictif tant que le barème officiel n'est pas saisi), visas, ordre de mission officiel en PDF avec code QR, paiement par la caisse du service avec l'ordre de mission en pièce, rapport de retour, liquidation (complément ou reversement).
+- Demandes de fonds (VA-03) avec visas, accord (réduction motivée), refus, décaissement en avance de fonds.
+- Circuit de visas (VA-14) et chaîne de la dépense (VA-10) : liquidation et ordonnancement au-delà d'un seuil réglable, visa de l'Inspecteur Général au-delà de 5 000 000 CDF ; écrans « Dossiers de dépense » et « Visas ».
+- Rapprochement bancaire (VA-06) : comptes, import CSV/Excel sans doublon, rapprochement automatique et manuel, mouvements, suspens expliqués, état en PDF, alerte.
+- Plan de trésorerie (VA-07) et taux du jour ; saisie en dollars convertie en francs (VA-51).
+- Saisie hors connexion (VA-50) : application installable, file d'attente sur le téléphone, envoi automatique par l'API sans doublon.
+- Correctif : adresse des pages enfants (ex. « Saisie hors connexion »).
+- Schéma version 9 (11 nouvelles tables). 102 tests automatiques supplémentaires (634 au total).
+
 ## 1.3.0 — 24 octobre 2026 · Fin du lot 1
 
 - Échanges sur une écriture (VA-15) : question du central sans rejet, réponse du service avec pièce, notifications par e-mail, filtre « Échanges en cours », clôture à la validation ou au rejet.

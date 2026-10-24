@@ -80,6 +80,23 @@ final class IGE_FFM_Ecran_Nouvelle_Ecriture {
 					<?php echo IGE_FFM_Ecrans::field( 'date_operation', 'Date de l’opération', $v( 'date_operation', IGE_FFM_Contexte::aujourdhui() ), array( 'type' => 'date', 'required' => true, 'attrs' => 'min="' . esc_attr( $ex['date_debut'] ) . '" max="' . esc_attr( min( $ex['date_fin'], IGE_FFM_Contexte::aujourdhui() ) ) . '"' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					<?php echo IGE_FFM_Ecrans::field( 'montant', 'Montant (CDF)', $v( 'montant' ), array( 'required' => true, 'attrs' => 'inputmode="numeric" autocomplete="off" placeholder="0" class="ige-num"' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 				</div>
+				<?php if ( IGE_FFM_Reglages::get( 'saisie_usd' ) ) : ?>
+					<?php $taux = array_map( static fn( $t ) => array( 'd' => $t['date_effet'], 't' => (float) $t['taux'] ), IGE_FFM_Devises::derniers( 60 ) ); ?>
+					<div class="ige-grid ige-cols-2" style="gap:0 16px" id="ige-devise-bloc" data-taux="<?php echo esc_attr( wp_json_encode( $taux ) ); ?>">
+						<div class="ige-field">
+							<label for="ige-devise">Devise du paiement</label>
+							<select id="ige-devise" name="devise">
+								<option value="CDF"<?php selected( $v( 'devise', 'CDF' ), 'CDF' ); ?>>Francs congolais (CDF)</option>
+								<option value="USD"<?php selected( $v( 'devise' ), 'USD' ); ?>>Dollars (USD), convertis au taux du jour</option>
+							</select>
+						</div>
+						<div class="ige-field" id="ige-usd-bloc"<?php echo 'USD' === $v( 'devise' ) ? '' : ' hidden'; ?>>
+							<label for="ige-montant_usd">Montant en dollars (USD)</label>
+							<input type="text" id="ige-montant_usd" name="montant_usd" value="<?php echo esc_attr( $v( 'montant_usd' ) ); ?>" inputmode="decimal" autocomplete="off" placeholder="0,00" class="ige-num">
+							<span class="ige-help" id="ige-conv" aria-live="polite"></span>
+						</div>
+					</div>
+				<?php endif; ?>
 
 				<div class="ige-field ige-sortie-only">
 					<label for="ige-rubrique_id">Rubrique</label>
@@ -187,55 +204,65 @@ final class IGE_FFM_Ecran_Nouvelle_Ecriture {
 	}
 
 	/**
-	 * Enregistrement.
+	 * Champs du formulaire de saisie.
+	 *
+	 * @return string[]
 	 */
-	public static function handle() {
-		ige_ffm_check_form( 'ecriture' );
-		ige_ffm_require( 'ige_saisir' );
-		$keys = array( 'type', 'statut', 'date_operation', 'rubrique_id', 'montant', 'description', 'fournisseur_id', 'beneficiaire', 'beneficiaire_entree', 'num_piece', 'mode_paiement_id', 'observations', 'f_raison_sociale', 'f_telephone', 'piece_nature' );
-		$data = array();
-		foreach ( $keys as $k ) {
-			$data[ $k ] = 'observations' === $k
-				? ( isset( $_POST[ $k ] ) ? sanitize_textarea_field( wp_unslash( $_POST[ $k ] ) ) : '' ) // phpcs:ignore WordPress.Security.NonceVerification.Missing
-				: ige_ffm_post( $k );
-		}
-		$saisie = $data;
-		$retour = ige_ffm_url( 'nouvelle-ecriture' );
+	public static function champs() {
+		return array( 'type', 'statut', 'date_operation', 'rubrique_id', 'montant', 'description', 'fournisseur_id', 'beneficiaire', 'beneficiaire_entree', 'num_piece', 'mode_paiement_id', 'observations', 'f_raison_sociale', 'f_telephone', 'piece_nature', 'devise', 'montant_usd', 'cle_client' );
+	}
 
-		if ( 'entree' === $data['type'] ) {
-			$saisie['beneficiaire']   = $data['beneficiaire_entree'];
+	/**
+	 * Prépare et enregistre une saisie (formulaire en ligne ou envoi différé hors connexion).
+	 *
+	 * @param array      $data    Champs bruts (déjà « unslashés »).
+	 * @param array|null $file    Pièce.
+	 * @param int|null   $user_id Auteur.
+	 * @return int|WP_Error Écriture.
+	 */
+	public static function enregistrer( array $data, $file = null, $user_id = null ) {
+		$user_id = $user_id ?? get_current_user_id();
+		$propre  = array();
+		foreach ( self::champs() as $k ) {
+			$propre[ $k ] = 'observations' === $k ? sanitize_textarea_field( (string) ( $data[ $k ] ?? '' ) ) : sanitize_text_field( (string) ( $data[ $k ] ?? '' ) );
+		}
+		$saisie = $propre;
+		if ( 'entree' === $propre['type'] ) {
+			$saisie['beneficiaire']   = $propre['beneficiaire_entree'];
 			$saisie['fournisseur_id'] = 0;
-		} elseif ( 'nouveau' === $data['fournisseur_id'] ) {
-			$fid = IGE_FFM_Fournisseurs::save(
-				array(
-					'raison_sociale' => $data['f_raison_sociale'],
-					'telephone'      => $data['f_telephone'],
-				),
-				0,
-				get_current_user_id()
-			);
+		} elseif ( 'nouveau' === $propre['fournisseur_id'] ) {
+			$fid = IGE_FFM_Fournisseurs::save( array( 'raison_sociale' => $propre['f_raison_sociale'], 'telephone' => $propre['f_telephone'] ), 0, $user_id );
 			if ( is_wp_error( $fid ) && 'doublon' === $fid->get_error_code() ) {
 				$fid = (int) $fid->get_error_data()['id'];
 			}
 			if ( is_wp_error( $fid ) ) {
-				IGE_FFM_Ecrans::remember( $data );
-				ige_ffm_flash( 'ko', 'Écriture non enregistrée', $fid->get_error_message() );
-				wp_safe_redirect( $retour );
-				exit;
+				return $fid;
 			}
 			$saisie['fournisseur_id'] = $fid;
 			$saisie['beneficiaire']   = '';
-			$data['fournisseur_id']   = (string) $fid;
-		} elseif ( 'autre' === $data['fournisseur_id'] ) {
+		} elseif ( 'autre' === $propre['fournisseur_id'] ) {
 			$saisie['fournisseur_id'] = 0;
 		} else {
 			$saisie['beneficiaire'] = '';
 		}
+		return IGE_FFM_Ecritures::saisir( $saisie, $file, $user_id );
+	}
 
+	/**
+	 * Enregistrement du formulaire.
+	 */
+	public static function handle() {
+		ige_ffm_check_form( 'ecriture' );
+		ige_ffm_require( 'ige_saisir' );
+		$data   = array();
+		foreach ( self::champs() as $k ) {
+			$data[ $k ] = isset( $_POST[ $k ] ) ? wp_unslash( $_POST[ $k ] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		}
+		$retour = ige_ffm_url( 'nouvelle-ecriture' );
 		$file   = isset( $_FILES['piece'] ) ? $_FILES['piece'] : null; // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput
-		$result = IGE_FFM_Ecritures::saisir( $saisie, $file );
+		$result = self::enregistrer( $data, $file );
 		if ( is_wp_error( $result ) ) {
-			IGE_FFM_Ecrans::remember( $data );
+			IGE_FFM_Ecrans::remember( array_map( static fn( $v ) => sanitize_text_field( (string) $v ), $data ) );
 			ige_ffm_flash( 'ko', 'Écriture non enregistrée', $result->get_error_message() );
 			wp_safe_redirect( $retour );
 			exit;

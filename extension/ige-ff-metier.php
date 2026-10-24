@@ -3,7 +3,7 @@
  * Plugin Name:       IGE Frais de fonctionnement (métier)
  * Plugin URI:        https://ige-gestion.com/
  * Description:       Gestion des frais de fonctionnement de l'Inspection Générale de l'Enseignement : référentiels, comptes et profils, budgets, écritures de caisse, transmission, vérification, consolidation. Étapes 1 et 2 : socle (base, rôles, référentiels, comptes, règles, audit, sécurité) et saisie (budget, écritures, contrôles bloquants, livre de caisse, contrepassation, pièces, fournisseurs).
- * Version:           1.3.0
+ * Version:           2.0.0
  * Requires at least: 6.5
  * Requires PHP:      8.0
  * Author:            Inspection Générale de l'Enseignement
@@ -15,8 +15,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'IGE_FFM_VERSION', '1.3.0' );
-define( 'IGE_FFM_DB_VERSION', '8' );
+define( 'IGE_FFM_VERSION', '2.0.0' );
+define( 'IGE_FFM_DB_VERSION', '9' );
 define( 'IGE_FFM_FILE', __FILE__ );
 define( 'IGE_FFM_DIR', plugin_dir_path( __FILE__ ) );
 define( 'IGE_FFM_URL', plugin_dir_url( __FILE__ ) );
@@ -54,6 +54,14 @@ require_once IGE_FFM_DIR . 'includes/class-invitations.php';
 require_once IGE_FFM_DIR . 'includes/class-echanges.php';
 require_once IGE_FFM_DIR . 'includes/class-jours-feries.php';
 require_once IGE_FFM_DIR . 'includes/class-sante.php';
+require_once IGE_FFM_DIR . 'includes/class-visas.php';
+require_once IGE_FFM_DIR . 'includes/class-devises.php';
+require_once IGE_FFM_DIR . 'includes/class-chaine.php';
+require_once IGE_FFM_DIR . 'includes/class-demandes.php';
+require_once IGE_FFM_DIR . 'includes/class-missions.php';
+require_once IGE_FFM_DIR . 'includes/class-banque.php';
+require_once IGE_FFM_DIR . 'includes/class-tresorerie.php';
+require_once IGE_FFM_DIR . 'includes/class-hors-connexion.php';
 require_once IGE_FFM_DIR . 'includes/class-ecrans.php';
 
 register_activation_hook( __FILE__, array( 'IGE_FFM_Installer', 'activate' ) );
@@ -69,6 +77,10 @@ add_action( 'plugins_loaded', array( 'IGE_FFM_Deux_Facteurs', 'init' ) );
 add_action( 'plugins_loaded', array( 'IGE_FFM_Messagerie', 'init' ) );
 add_action( 'plugins_loaded', array( 'IGE_FFM_Invitations', 'init' ) );
 add_action( 'plugins_loaded', array( 'IGE_FFM_Pdf', 'init' ) );
+add_action( 'plugins_loaded', array( 'IGE_FFM_Banque', 'init' ) );
+add_action( 'plugins_loaded', array( 'IGE_FFM_Hors_Connexion', 'init' ) );
+add_action( 'admin_post_ige_ffm_viser', array( 'IGE_FFM_Visas', 'handle' ) );
+add_action( 'admin_post_ige_ffm_liquider', array( 'IGE_FFM_Chaine', 'handle_liquider' ) );
 
 add_action(
 	'wp_enqueue_scripts',
@@ -77,7 +89,7 @@ add_action(
 		if ( is_user_logged_in() && is_page( array( 'rapports', 'arrete-de-caisse', 'double-authentification' ) ) ) {
 			wp_enqueue_script( 'ige-ffm-qrcode', IGE_FFM_URL . 'assets/vendor/qrcode.js', array(), '1.4.4', true );
 		}
-		if ( is_user_logged_in() && is_page( array( 'nouvelle-ecriture', 'livre-de-caisse', 'verification', 'transmission', 'arrete-de-caisse', 'caisses', 'avances', 'rapports', 'double-authentification' ) ) ) {
+		if ( is_user_logged_in() && is_page( array( 'nouvelle-ecriture', 'livre-de-caisse', 'verification', 'transmission', 'arrete-de-caisse', 'caisses', 'avances', 'rapports', 'double-authentification', 'missions', 'mes-demandes-de-fonds', 'demandes-de-fonds', 'dossier-de-depense', 'rapprochement-bancaire', 'tresorerie', 'visas' ) ) ) {
 			wp_enqueue_script( 'ige-ffm-saisie', IGE_FFM_URL . 'assets/ige-ffm.js', wp_script_is( 'ige-ffm-qrcode', 'enqueued' ) ? array( 'ige-ffm-qrcode' ) : array(), (string) filemtime( IGE_FFM_DIR . 'assets/ige-ffm.js' ), true );
 		}
 	},

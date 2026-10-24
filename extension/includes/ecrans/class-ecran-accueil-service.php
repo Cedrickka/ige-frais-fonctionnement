@@ -75,6 +75,14 @@ final class IGE_FFM_Ecran_Accueil_Service {
 		if ( $quest ) {
 			echo ige_ffm_banner( 'warn', count( $quest ) . ' question(s) d’Administration et Finance', ' <a href="' . esc_url( $trans ) . '#ige-questions">Répondre</a> (l’écriture n’est pas rejetée).' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		}
+		$a_viser = IGE_FFM_Contexte::service_utilisateur() === $sid ? IGE_FFM_Visas::a_viser( get_current_user_id() ) : array();
+		if ( $a_viser ) {
+			echo ige_ffm_banner( 'warn', count( $a_viser ) . ' dossier(s) attendent votre visa', ' Demandes de fonds, ordonnancements ou ordres de mission : <a href="' . esc_url( ige_ffm_url( 'visas' ) ) . '">les examiner</a>.' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		}
+		$accordees = IGE_FFM_Demandes::liste( $exo, $sid, 'visee' );
+		if ( $accordees ) {
+			echo ige_ffm_banner( 'info', count( $accordees ) . ' demande(s) de fonds accordée(s), en attente de décaissement', ' <a href="' . esc_url( IGE_FFM_Ecran_Service::lien( ige_ffm_url( 'mes-demandes-de-fonds' ), $sid ) ) . '">Suivre mes demandes</a>.' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		}
 		if ( $rejets ) {
 			echo ige_ffm_banner( 'ko', count( $rejets ) . ' écriture(s) rejetée(s) par le central', ' <a href="' . esc_url( $trans ) . '">Voir les motifs et corriger</a>.' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		}

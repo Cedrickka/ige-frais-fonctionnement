@@ -179,7 +179,7 @@ final class IGE_FFM_Ecran_Livre {
 						<td><a href="<?php echo esc_url( add_query_arg( 'ecriture', $e['id'], $base ) ); ?>" title="<?php echo esc_attr( $e['id_ecriture'] ); ?>"><?php echo esc_html( sprintf( '%06d', $e['numero'] ) ); ?></a></td>
 						<td><?php echo esc_html( wp_date( 'd/m', strtotime( $e['date_operation'] ) ) ); ?></td>
 						<td><?php echo esc_html( $rubs[ $e['rubrique_id'] ] ?? '—' ); ?></td>
-						<td><?php echo esc_html( $e['description'] ); ?><?php echo $e['contrepassee_par'] ? '<br><span class="ige-small ige-muted">Contrepassée par ' . esc_html( $e['contrepassee_par'] ) . '</span>' : ''; ?></td>
+						<td><?php echo esc_html( $e['description'] ); ?><?php echo IGE_FFM_Devises::mention( $e ) ? '<br><span class="ige-small ige-muted">' . esc_html( IGE_FFM_Devises::mention( $e ) ) . '</span>' : ''; ?><?php echo $e['contrepassee_par'] ? '<br><span class="ige-small ige-muted">Contrepassée par ' . esc_html( $e['contrepassee_par'] ) . '</span>' : ''; ?></td>
 						<td><?php echo esc_html( $benef ); ?></td>
 						<td><?php echo esc_html( $e['num_piece'] ); ?><?php echo $n ? ' <span class="ige-small" title="Pièce(s) jointe(s)">📎' . ( $n > 1 ? esc_html( $n ) : '' ) . '</span>' : ''; ?></td>
 						<td><?php echo 'engagee' === $e['statut'] ? ige_ffm_pill( 'Engagée', 'info' ) : 'Payée'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td>
@@ -239,7 +239,7 @@ final class IGE_FFM_Ecran_Livre {
 				<dl>
 					<dt>Type</dt><dd><?php echo 'entree' === $e['type'] ? 'Entrée (approvisionnement)' : 'Sortie'; ?> · <?php echo 'engagee' === $e['statut'] ? 'engagée' : 'payée'; ?></dd>
 					<dt>Date</dt><dd><?php echo esc_html( wp_date( 'd/m/Y', strtotime( $e['date_operation'] ) ) ); ?><?php echo $e['date_paiement'] && $e['date_paiement'] !== $e['date_operation'] ? esc_html( ' · payée le ' . wp_date( 'd/m/Y', strtotime( $e['date_paiement'] ) ) ) : ''; ?></dd>
-					<dt>Montant</dt><dd class="ige-num"><b><?php echo esc_html( ige_ffm_montant( (int) $e['montant'] ) ); ?></b></dd>
+					<dt>Montant</dt><dd class="ige-num"><b><?php echo esc_html( ige_ffm_montant( (int) $e['montant'] ) ); ?></b><?php echo IGE_FFM_Devises::mention( $e ) ? '<br><span class="ige-small ige-muted">' . esc_html( IGE_FFM_Devises::mention( $e ) ) . '</span>' : ''; ?></dd>
 					<dt>Rubrique</dt><dd><?php echo esc_html( $r ? $r['code'] . ' — ' . $r['libelle'] : '—' ); ?></dd>
 					<dt>Description</dt><dd><?php echo esc_html( $e['description'] ); ?></dd>
 					<dt>Bénéficiaire</dt><dd><?php echo esc_html( $f ? $f['raison_sociale'] : ( $e['beneficiaire'] ?: '—' ) ); ?></dd>
@@ -299,9 +299,15 @@ final class IGE_FFM_Ecran_Livre {
 			<?php if ( $e['avance_id'] && ! $orig ) : ?>
 				<p class="ige-small ige-muted ige-no-print" style="margin:16px 0 0">Entrée créée par Administration et Finance (avance de fonds) : seule Administration et Finance peut l’annuler.</p>
 			<?php endif; ?>
+			<?php $chaine = $cp || $orig ? '' : IGE_FFM_Chaine::bloc( $e, IGE_FFM_Ecran_Service::lien( ige_ffm_url( 'livre-de-caisse', array( 'ecriture' => $id ) ), $sid ) ); ?>
+			<?php if ( $chaine ) : ?>
+				<div style="margin-top:16px;border-top:1px solid var(--ige-ligne);padding-top:12px"><?php echo $chaine; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+			<?php endif; ?>
 			<?php if ( $peut && ! $cp && ! $orig && ! $e['avance_id'] ) : ?>
 				<div class="ige-grid ige-cols-2 ige-start ige-no-print" style="margin-top:16px;border-top:1px solid var(--ige-ligne);padding-top:16px">
-					<?php if ( 'sortie' === $e['type'] && 'engagee' === $e['statut'] && ! ( 'rejetee' === $e['etat_verification'] && IGE_FFM_Reglages::get( 'contrepassation_rejet' ) ) ) : ?>
+					<?php if ( 'sortie' === $e['type'] && 'engagee' === $e['statut'] && true !== IGE_FFM_Chaine::payable( $e ) ) : ?>
+						<div><h3 style="margin:0 0 8px;font-size:14px">Payer l’engagement</h3><p class="ige-small ige-muted"><?php echo esc_html( IGE_FFM_Chaine::payable( $e )->get_error_message() ); ?></p></div>
+					<?php elseif ( 'sortie' === $e['type'] && 'engagee' === $e['statut'] && ! ( 'rejetee' === $e['etat_verification'] && IGE_FFM_Reglages::get( 'contrepassation_rejet' ) ) ) : ?>
 						<?php echo IGE_FFM_Ecrans::form_open( 'payer' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 							<h3 style="margin:0 0 8px;font-size:14px">Payer l’engagement</h3>
 							<input type="hidden" name="ecriture" value="<?php echo esc_attr( $id ); ?>">
@@ -456,7 +462,7 @@ final class IGE_FFM_Ecran_Livre {
 				$e['description'],
 				$e['fournisseur_id'] ? ( $fourn[ $e['fournisseur_id'] ] ?? '' ) : $e['beneficiaire'],
 				$e['num_piece'],
-				$modes[ $e['mode_paiement_id'] ] ?? '',
+				( $modes[ $e['mode_paiement_id'] ] ?? '' ) . ( IGE_FFM_Devises::mention( $e ) ? ' · ' . IGE_FFM_Devises::mention( $e ) : '' ),
 				'entree' === $e['type'] ? $m : null,
 				'sortie' === $e['type'] ? $m : null,
 				(int) $e['solde'],
@@ -476,7 +482,7 @@ final class IGE_FFM_Ecran_Livre {
 				array( 'Description', 'long', 36 ),
 				array( 'Fournisseur / bénéficiaire', 'long', 24 ),
 				array( 'N° pièce', 'texte', 12 ),
-				array( 'Mode', 'texte', 12 ),
+				array( 'Mode', 'texte', 16 ),
 				array( 'Entrée', 'montant' ),
 				array( 'Sortie', 'montant' ),
 				array( 'Solde', 'montant' ),

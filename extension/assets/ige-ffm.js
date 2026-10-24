@@ -155,7 +155,30 @@
 		out.appendChild(d);
 	}
 
+	var devise = el('ige-devise'), usd = el('ige-montant_usd'), usdBloc = el('ige-usd-bloc'), conv = el('ige-conv'), dbloc = el('ige-devise-bloc');
+	var taux = [];
+	try { taux = dbloc ? JSON.parse(dbloc.getAttribute('data-taux') || '[]') : []; } catch (e) { taux = []; }
+	function tauxDu(d) {
+		for (var i = 0; i < taux.length; i++) { if (taux[i].d <= d) { return taux[i]; } }
+		return null;
+	}
+	function majDevise() {
+		if (!devise) { return; }
+		var enUsd = devise.value === 'USD';
+		usdBloc.hidden = !enUsd;
+		usd.required = enUsd;
+		mnt.readOnly = enUsd;
+		if (!enUsd) { conv.textContent = ''; return; }
+		var dt = el('ige-date_operation').value, tx = tauxDu(dt);
+		var u = parseFloat((usd.value || '').replace(/\s/g, '').replace(',', '.'));
+		if (!tx) { conv.textContent = 'Aucun taux du jour connu pour cette date : la conversion sera faite par le serveur, ou refusée si le taux manque.'; mnt.value = ''; return; }
+		var j = tx.d.split('-');
+		conv.textContent = 'Taux du ' + j[2] + '/' + j[1] + ' : 1 USD = ' + fmt(tx.t) + (u > 0 ? ' · ' + fmt(Math.round(u * tx.t)) : '');
+		mnt.value = u > 0 ? Math.round(u * tx.t).toLocaleString('fr-FR').replace(/\s/g, ' ') : '';
+	}
+
 	function maj() {
+		majDevise();
 		var t = type(), sortie = t === 'sortie';
 		form.querySelectorAll('.ige-sortie-only').forEach(function (n) {
 			if (n.id === 'ige-nouveau-fournisseur') { n.hidden = !sortie || four.value !== 'nouveau'; }

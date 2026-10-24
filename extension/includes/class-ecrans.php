@@ -33,6 +33,12 @@ require_once __DIR__ . '/ecrans/class-ecran-consolidation.php';
 require_once __DIR__ . '/ecrans/class-ecran-rapports.php';
 require_once __DIR__ . '/ecrans/class-ecran-deux-facteurs.php';
 require_once __DIR__ . '/ecrans/class-ecran-deploiement.php';
+require_once __DIR__ . '/ecrans/class-ecran-dossier.php';
+require_once __DIR__ . '/ecrans/class-ecran-demandes.php';
+require_once __DIR__ . '/ecrans/class-ecran-missions.php';
+require_once __DIR__ . '/ecrans/class-ecran-tresorerie.php';
+require_once __DIR__ . '/ecrans/class-ecran-rapprochement.php';
+require_once __DIR__ . '/ecrans/class-ecran-hors-connexion.php';
 
 /**
  * Routeur des écrans.
@@ -67,6 +73,14 @@ final class IGE_FFM_Ecrans {
 			'synthese'           => array( 'ige_voir_tout', 'IGE_FFM_Ecran_Synthese' ),
 			'double-authentification' => array( 'read', 'IGE_FFM_Ecran_Deux_Facteurs' ),
 			'deploiement'        => array( 'ige_administrer', 'IGE_FFM_Ecran_Deploiement' ),
+			'dossier-de-depense' => array( 'ige_acceder', 'IGE_FFM_Ecran_Dossier' ),
+			'mes-demandes-de-fonds' => array( 'ige_acceder', 'IGE_FFM_Ecran_Demandes_Service' ),
+			'demandes-de-fonds'  => array( 'ige_verifier', 'IGE_FFM_Ecran_Demandes_Central' ),
+			'visas'              => array( 'ige_acceder', 'IGE_FFM_Ecran_Visas' ),
+			'missions'           => array( 'ige_acceder', 'IGE_FFM_Ecran_Missions' ),
+			'tresorerie'         => array( 'ige_gerer_fonds', 'IGE_FFM_Ecran_Tresorerie' ),
+			'rapprochement-bancaire' => array( 'ige_gerer_fonds', 'IGE_FFM_Ecran_Rapprochement' ),
+			'hors-connexion'     => array( 'ige_saisir', 'IGE_FFM_Ecran_Hors_Connexion' ),
 		);
 	}
 
@@ -78,16 +92,9 @@ final class IGE_FFM_Ecrans {
 	public static function a_venir() {
 		$l2 = 'lot 2';
 		return array(
-			'dossier-de-depense'     => $l2,
-			'demandes-de-fonds'      => $l2,
-			'mes-demandes-de-fonds'  => $l2,
-			'tresorerie'             => $l2,
-			'rapprochement-bancaire' => $l2,
-			'missions'               => $l2,
 			'parc-automobile'        => $l2,
 			'stocks'                 => $l2,
 			'risques'                => $l2,
-			'hors-connexion'         => $l2,
 			'notifications'          => $l2,
 		);
 	}

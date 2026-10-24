@@ -53,6 +53,7 @@ final class IGE_FFM_Ecran_Parametres {
 			'controles' => 'Contrôles bloquants',
 			'seuils'    => 'Seuils',
 			'anomalies' => 'Détection d’anomalies à la vérification',
+			'circuit'   => 'Circuit de la dépense, devises et banque',
 			'securite'  => 'Sécurité des comptes',
 		);
 		$unites  = array(
@@ -65,6 +66,10 @@ final class IGE_FFM_Ecran_Parametres {
 			'verrouillage_minutes' => 'minutes',
 			'inactivite_minutes'   => 'minutes',
 			'mdp_longueur'         => 'caractères',
+			'chaine_seuil'         => 'CDF',
+			'visa_direction_seuil' => 'CDF',
+			'rappro_jours'         => 'jours',
+			'suspens_alerte_jours' => 'jours',
 		);
 
 		ob_start();
@@ -111,6 +116,7 @@ final class IGE_FFM_Ecran_Parametres {
 				<?php echo self::controle(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			</section>
 
+
 			<?php
 			echo IGE_FFM_Ecrans::form_open( 'reglages', 'id="ige-form-reglages" class="ige-grid" style="gap:16px"' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			foreach ( $groupes as $g => $titre ) :
@@ -126,7 +132,7 @@ final class IGE_FFM_Ecran_Parametres {
 						if ( 'bool' === $def[0] ) {
 							echo IGE_FFM_Ecrans::field( $key, $def[2], (bool) $val, array( 'type' => 'checkbox' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 						} else {
-							$shown = 'plafond_especes' === $key ? ige_ffm_montant( (int) $val, '' ) : (string) $val;
+							$shown = in_array( $key, array( 'plafond_especes', 'chaine_seuil', 'visa_direction_seuil' ), true ) ? ige_ffm_montant( (int) $val, '' ) : (string) $val;
 							echo IGE_FFM_Ecrans::field( $key, $def[2], $shown, array( 'attrs' => 'inputmode="numeric"', 'help' => isset( $unites[ $key ] ) ? 'En ' . $unites[ $key ] . '.' : '' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 						}
 					}
@@ -136,6 +142,7 @@ final class IGE_FFM_Ecran_Parametres {
 				<div><button type="submit" class="ige-btn ige-btn-jaune">Enregistrer les règles</button></div>
 			</form>
 		</div>
+		<div style="margin-top:16px"><?php echo IGE_FFM_Ecran_Missions::formulaire_bareme(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
 		<?php
 		return ob_get_clean();
 	}

@@ -67,3 +67,29 @@
 .ige-msg-r{background:var(--ige-info-bg,#e2f2f9);align-self:flex-end;border-left:3px solid var(--ige-bleu,#0095c9)}
 .ige-msg .ige-small{margin-bottom:2px}
 .ige-dossier{display:flex;flex-wrap:wrap;gap:6px 14px;margin:6px 0 10px;font-size:12.5px}
+
+/* Lot 2 : visas, chaîne de la dépense, saisie hors connexion */
+.ige-visas{list-style:none;margin:6px 0 10px;padding:0;display:grid;gap:6px}
+.ige-visas li{display:flex;flex-direction:column;border-left:3px solid var(--ige-ligne,#e1e5ea);padding:4px 0 4px 10px;font-size:13px}
+.ige-visas li span{font-size:12px;color:var(--ige-muted,#5d6670)}
+.ige-visas .ige-visa-ok{border-color:var(--ige-vert,#65b32e)}
+.ige-visas .ige-visa-ko{border-color:var(--ige-rouge,#db3832)}
+.ige-visas .ige-visa-wait{border-color:var(--ige-orange,#ed7016)}
+.ige-visa-form{margin-top:6px}
+.ige-chaine{list-style:none;margin:6px 0 10px;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ige-chaine li{background:var(--ige-fond,#f3f5f8);border-radius:8px;padding:8px 10px;font-size:12.5px;display:flex;flex-direction:column;gap:2px;border-top:3px solid var(--ige-gris,#afb8be)}
+.ige-chaine li.ige-fait{border-top-color:var(--ige-vert,#65b32e)}
+.ige-chaine .ige-n{font-weight:700;color:var(--ige-bleu-inst,#17418a)}
+.ige-chaine li>span:last-child{color:var(--ige-muted,#5d6670)}
+@media (max-width:640px){.ige-chaine{grid-template-columns:1fr 1fr}}
+.ige-hc-badge{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:60;background:var(--ige-bleu-inst,#17418a);color:#fff!important;padding:9px 16px;border-radius:999px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.25);text-decoration:none;max-width:92vw;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ige-hc-badge.ige-hc-ko{background:var(--ige-rouge,#db3832)}
+.ige-plan{display:grid;gap:10px;margin:8px 0 14px}
+.ige-plan-l{display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:center;font-size:12.5px}
+.ige-plan-b{display:grid;gap:3px}
+.ige-plan-b i{display:block;height:12px;border-radius:3px;min-width:2px}
+.ige-plan-b .b{background:var(--ige-orange,#ed7016)}
+.ige-plan-b .f{background:var(--ige-bleu,#0095c9)}
+.ige-legende{display:flex;gap:14px;font-size:12px;color:var(--ige-muted,#5d6670)}
+.ige-legende i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.ige-membres td input,.ige-membres td select{width:100%}
