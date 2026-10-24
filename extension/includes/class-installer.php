@@ -265,6 +265,55 @@ final class IGE_FFM_Installer {
 	}
 
 	/**
+	 * Liens de menu des pages ajoutées par les versions successives.
+	 *
+	 * Une page créée avant les menus du thème (extension activée avant le thème, ou menus
+	 * recréés) n'avait pas son lien : « Véhicules » pour les services, « Visas », « Risques »
+	 * et « Parc automobile » pour la Direction, « Fonctions du site » et « Déploiement » dans
+	 * l'administration. Vérifié une fois par version, quand les menus du thème existent ;
+	 * un lien déjà présent n'est jamais dupliqué.
+	 */
+	public static function assurer_menus() {
+		if ( IGE_FFM_VERSION === get_option( 'ige_ffm_menus_ok' ) ) {
+			return;
+		}
+		$loc = get_nav_menu_locations();
+		foreach ( array( 'menu-service', 'menu-direction', 'menu-admin' ) as $l ) {
+			if ( empty( $loc[ $l ] ) ) {
+				return; // Menus du thème pas encore créés : nouvel essai plus tard.
+			}
+		}
+		$present = static function ( $location, $page_id ) use ( $loc ) {
+			foreach ( (array) wp_get_nav_menu_items( (int) $loc[ $location ] ) as $it ) {
+				if ( 'page' === $it->object && (int) $it->object_id === (int) $page_id ) {
+					return true;
+				}
+			}
+			return false;
+		};
+		$liens = array(
+			array( 'menu-service', 'vehicules', 'Véhicules', '', 7 ),
+			array( 'menu-direction', 'visas', 'Visas', '', 2 ),
+			array( 'menu-direction', 'risques', 'Risques', '', 10 ),
+			array( 'menu-direction', 'parc-automobile', 'Parc automobile', '', 11 ),
+			array( 'menu-admin', 'fonctions-du-site', 'Fonctions du site', 'Règles', 0 ),
+			array( 'menu-admin', 'deploiement', 'Services et reprise Excel', 'Déploiement', 0 ),
+		);
+		foreach ( $liens as $l ) {
+			$p = get_page_by_path( $l[1] );
+			if ( ! $p || $present( $l[0], $p->ID ) ) {
+				continue;
+			}
+			if ( '' !== $l[3] ) {
+				self::ajouter_sous_groupe( $l[0], $l[3], (int) $p->ID, $l[2] );
+			} else {
+				self::ajouter_au_menu( $l[0], (int) $p->ID, $l[2], $l[4] );
+			}
+		}
+		update_option( 'ige_ffm_menus_ok', IGE_FFM_VERSION, false );
+	}
+
+	/**
 	 * Menus du lot V2 sur un site déjà installé (une seule fois) : Risques et Parc pour la Direction.
 	 */
 	public static function menus_v21() {

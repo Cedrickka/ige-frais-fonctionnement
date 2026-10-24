@@ -3,7 +3,7 @@
  * Plugin Name:       IGE Frais de fonctionnement (métier)
  * Plugin URI:        https://ige-gestion.com/
  * Description:       Gestion des frais de fonctionnement de l'Inspection Générale de l'Enseignement : budgets, caisses, transmission et vérification, avances, arrêtés, consolidation et rapports ; missions, demandes de fonds, visas, banque, trésorerie, double devise, saisie hors connexion ; parc automobile, stocks de fournitures, risques, rapport hebdomadaire ; fonctions activables.
- * Version:           2.2.0
+ * Version:           2.2.1
  * Requires at least: 6.5
  * Requires PHP:      8.0
  * Author:            Inspection Générale de l'Enseignement
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'IGE_FFM_VERSION', '2.2.0' );
+define( 'IGE_FFM_VERSION', '2.2.1' );
 define( 'IGE_FFM_DB_VERSION', '11' );
 define( 'IGE_FFM_FILE', __FILE__ );
 define( 'IGE_FFM_DIR', plugin_dir_path( __FILE__ ) );
@@ -73,6 +73,7 @@ register_activation_hook( __FILE__, array( 'IGE_FFM_Installer', 'activate' ) );
 register_deactivation_hook( __FILE__, array( 'IGE_FFM_Installer', 'deactivate' ) );
 
 add_action( 'plugins_loaded', array( 'IGE_FFM_Installer', 'maybe_upgrade' ) );
+add_action( 'init', array( 'IGE_FFM_Installer', 'assurer_menus' ), 22 );
 add_action( 'plugins_loaded', array( 'IGE_FFM_Securite', 'init' ) );
 add_action( 'plugins_loaded', array( 'IGE_FFM_Ecrans', 'init' ) );
 add_action( 'plugins_loaded', array( 'IGE_FFM_Comptes', 'init' ) );

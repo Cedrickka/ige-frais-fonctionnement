@@ -1,5 +1,12 @@
 # Journal des versions
 
+## 2.2.1 — 24 octobre 2026 · Correctifs bons carburant et menus
+
+- Saisie d'une plage de bons « BC-1001 à BC-1060 » : le « à » accentué en minuscules est désormais compris (seuls les deux numéros extrêmes étaient retenus).
+- Une lettre A dans le préfixe d'un carnet (ex. « CA-7-9 ») n'est plus confondue avec « à ».
+- Liens de menu des pages récentes rétablis automatiquement s'ils manquent (« Véhicules » pour les services ; « Visas », « Risques », « Parc automobile » pour la Direction ; « Fonctions du site » et « Déploiement » dans l'administration), par exemple quand l'extension a été activée avant le thème. Aucun doublon.
+- 4 tests automatiques supplémentaires (793 au total).
+
 ## 2.2.0 — 24 octobre 2026 · Dotations et bons carburant
 
 - Dotations mensuelles de carburant par véhicule et par service (litres ou CDF), suivi du mois, alerte à 80 %, refus au-delà sauf dérogation motivée de la gestion du parc.

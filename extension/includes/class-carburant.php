@@ -350,12 +350,13 @@ final class IGE_FFM_Carburant {
 	 * @return string[]|WP_Error
 	 */
 	public static function plage( $s ) {
-		$s = strtoupper( trim( (string) $s ) );
+		$s = mb_strtoupper( trim( (string) $s ) );
 		if ( '' !== $s && self::bon( $s ) ) {
 			return array( $s ); // Un numéro existant n'est jamais lu comme une plage.
 		}
 		if ( ! preg_match( '/[,;]/', $s ) ) {
-			$s2 = preg_replace( '/\s*(?:À|A)\s*/u', '~', preg_replace( '/\s+/', ' ', $s ) );
+			// « à » (ou « a ») entouré d'espaces sépare les bornes ; une lettre A d'un préfixe n'est pas touchée.
+			$s2 = preg_replace( '/\s+(?:À|A)\s+/u', '~', preg_replace( '/\s+/u', ' ', $s ) );
 			$s2 = str_replace( ' ', '', $s2 );
 			$pos = array();
 			for ( $i = 0, $n = strlen( $s2 ); $i < $n; $i++ ) {

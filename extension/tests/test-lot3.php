@@ -347,5 +347,24 @@ if ( null === $hebdo ) {
 } else {
 	update_option( IGE_FFM_Analyses::OPTION_HEBDO, $hebdo, false );
 }
+echo "\n13. Liens de menu des nouvelles pages\n";
+$loc = get_nav_menu_locations();
+$pv  = get_page_by_path( 'vehicules' );
+if ( ! empty( $loc['menu-service'] ) && $pv ) {
+	$liens = static function () use ( $loc, $pv ) {
+		return array_values( array_filter( (array) wp_get_nav_menu_items( (int) $loc['menu-service'] ), static fn( $it ) => 'page' === $it->object && (int) $it->object_id === (int) $pv->ID ) );
+	};
+	foreach ( $liens() as $it ) {
+		wp_delete_post( $it->ID, true );
+	}
+	delete_option( 'ige_ffm_menus_ok' );
+	IGE_FFM_Installer::assurer_menus();
+	ige_t( 1 === count( $liens() ), 'Lien « Véhicules » manquant recréé dans le menu des services' );
+	delete_option( 'ige_ffm_menus_ok' );
+	IGE_FFM_Installer::assurer_menus();
+	ige_t( 1 === count( $liens() ) && IGE_FFM_VERSION === get_option( 'ige_ffm_menus_ok' ), 'Aucun doublon si la vérification repasse' );
+} else {
+	ige_t( true, 'Menus du thème absents sur ce site de test : vérification sans objet' );
+}
 $t = $GLOBALS['ige_t'];
 echo "\nRésultat : {$t['ok']} réussis, {$t['ko']} échoués\n";

@@ -108,6 +108,8 @@ $cn = IGE_FFM_Carburant::ajouter_carnet( array( 'station' => 'Engen Gombe', 'pre
 ige_t( is_int( $cn ) && 10 === count( IGE_FFM_Carburant::bons( array( 'carnet_id' => $cn ) ) ), 'Carnet de 10 bons de 30 000 enregistré' );
 ige_t( false !== strpos( ige_err( IGE_FFM_Carburant::ajouter_carnet( array( 'prefixe' => $pre, 'debut' => '105', 'fin' => '120', 'valeur_unitaire' => '30000', 'recu_le' => $auj ) ) ), 'chevauche' ), 'Carnet qui chevauche un carnet existant refusé' );
 ige_t( 10 === count( IGE_FFM_Carburant::plage( $pre . '101-' . $pre . '110' ) ) && array( $pre . '101', $pre . '103' ) === IGE_FFM_Carburant::plage( $pre . '101, ' . $pre . '103' ), 'Saisie d’une plage ou d’une liste de numéros' );
+ige_t( 10 === count( IGE_FFM_Carburant::plage( strtolower( $pre ) . '101 à ' . $pre . '110' ) ) && 10 === count( IGE_FFM_Carburant::plage( $pre . '101 A ' . $pre . '110' ) ), 'Plage « 101 à 110 » (accent, minuscules) comprise' );
+ige_t( array( 'CA-7', 'CA-8', 'CA-9' ) === IGE_FFM_Carburant::plage( 'CA-7-9' ), 'Une lettre A dans le préfixe n’est pas lue comme « à »' );
 
 echo "\n4. Remise et utilisation\n";
 ige_t( 3 === IGE_FFM_Carburant::remettre( $pre . '101-' . $pre . '103', $v1, $c1 ), 'Trois bons remis au véhicule 1 et à son chauffeur' );
