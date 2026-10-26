@@ -122,7 +122,23 @@ ige_t( 'montant' === IGE_FFM_Ecritures::saisir( array( 'montant' => '12,50' ) + 
 ige_t( 'montant' === IGE_FFM_Ecritures::saisir( array( 'montant' => '0' ) + $base, $pdf() )->get_error_code(), 'Montant nul refusé' );
 ige_t( 'rubrique' === IGE_FFM_Ecritures::saisir( array( 'rubrique_id' => 0, 'montant' => '1000' ) + $base, $pdf() )->get_error_code(), 'Sortie sans rubrique refusée' );
 ige_t( 'num_piece' === IGE_FFM_Ecritures::saisir( array( 'num_piece' => '', 'montant' => '1000' ) + $base, $pdf() )->get_error_code(), 'Sortie sans n° de pièce refusée' );
-ige_t( 'piece' === IGE_FFM_Ecritures::saisir( array( 'montant' => '1000' ) + $base, null )->get_error_code(), 'Sortie sans fichier justificatif refusée' );
+$regl_av = get_option( 'ige_ffm_reglages' );
+ige_t( false === IGE_FFM_Reglages::get( 'piece_obligatoire' ) && true === (bool) IGE_FFM_Reglages::get( 'num_piece_obligatoire' ), 'Par défaut : photo ou PDF facultatif, n° de pièce obligatoire' );
+$sans = IGE_FFM_Ecritures::saisir( array( 'num_piece' => 'SANS-FICHIER', 'montant' => '1000' ) + $base, null );
+ige_t( is_int( $sans ), 'Sortie sans fichier justificatif acceptée (pièce facultative) : ' . ige_m( $sans ) );
+if ( is_int( $sans ) ) {
+	ige_t( false === IGE_FFM_Pieces::etat_dossier( IGE_FFM_Ecritures::get( $sans ) )['complet'], 'Le dossier sans pièce reste signalé incomplet au vérificateur' );
+	IGE_FFM_Ecritures::contrepasser( $sans, 'Test pièce facultative' );
+}
+update_option( 'ige_ffm_reglages', array_merge( (array) $regl_av, array( 'piece_obligatoire' => true ) ), false );
+ige_t( 'piece' === IGE_FFM_Ecritures::saisir( array( 'montant' => '1000' ) + $base, null )->get_error_code(), 'Règle activée : sortie sans fichier justificatif refusée' );
+update_option( 'ige_ffm_reglages', array_merge( (array) $regl_av, array( 'num_piece_obligatoire' => false ) ), false );
+$sn = IGE_FFM_Ecritures::saisir( array( 'num_piece' => '', 'montant' => '1000' ) + $base, null );
+ige_t( is_int( $sn ), 'Règle du n° désactivée : sortie sans n° ni fichier acceptée' );
+if ( is_int( $sn ) ) {
+	IGE_FFM_Ecritures::contrepasser( $sn, 'Test n° facultatif' );
+}
+update_option( 'ige_ffm_reglages', $regl_av, false );
 ige_t( 'piece' === IGE_FFM_Ecritures::saisir( array( 'montant' => '1000' ) + $base, ige_fichier( 'virus.php', '<?php echo 1;' ) )->get_error_code(), 'Fichier .php refusé' );
 ige_t( 'piece' === IGE_FFM_Ecritures::saisir( array( 'montant' => '1000' ) + $base, ige_fichier( 'faux.pdf', '<?php echo 1;' ) )->get_error_code(), 'Faux PDF (contenu PHP) refusé' );
 ige_t( 'fournisseur' === IGE_FFM_Ecritures::saisir( array( 'beneficiaire' => '', 'montant' => '1000' ) + $base, $pdf() )->get_error_code(), 'Sortie sans fournisseur ni bénéficiaire refusée' );

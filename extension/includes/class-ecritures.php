@@ -212,7 +212,7 @@ final class IGE_FFM_Ecritures {
 			if ( ! $r || ! (int) $r['actif'] ) {
 				return new WP_Error( 'rubrique', 'Choisissez une rubrique active.' );
 			}
-			if ( IGE_FFM_Reglages::get( 'piece_obligatoire' ) && '' === $piece ) {
+			if ( IGE_FFM_Reglages::get( 'num_piece_obligatoire' ) && '' === $piece ) {
 				return new WP_Error( 'num_piece', 'Le numéro de la pièce justificative est obligatoire pour une sortie.' );
 			}
 			if ( $fid && ! IGE_FFM_Fournisseurs::get( $fid ) ) {

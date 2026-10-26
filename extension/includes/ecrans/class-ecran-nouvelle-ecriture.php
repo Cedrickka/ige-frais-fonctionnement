@@ -58,7 +58,8 @@ final class IGE_FFM_Ecran_Nouvelle_Ecriture {
 		}
 		$type     = 'entree' === $v( 'type' ) ? 'entree' : 'sortie';
 		$entrees  = (bool) IGE_FFM_Reglages::get( 'entrees_manuelles' );
-		$oblig    = (bool) IGE_FFM_Reglages::get( 'piece_obligatoire' );
+		$oblig    = (bool) IGE_FFM_Reglages::get( 'num_piece_obligatoire' );
+		$oblig_f  = (bool) IGE_FFM_Reglages::get( 'piece_obligatoire' );
 		$bloque   = (bool) IGE_FFM_Reglages::get( 'bloquer_depassement' );
 		$fourn    = $v( 'fournisseur_id' );
 		$modes    = array_filter( IGE_FFM_Referentiels::all( 'mode_paiement' ), static fn( $m ) => (int) $m['actif'] );
@@ -158,7 +159,7 @@ final class IGE_FFM_Ecran_Nouvelle_Ecriture {
 				</div>
 
 				<div class="ige-field">
-					<label for="ige-piece">Pièce justificative (photo ou PDF)<?php echo $oblig ? ' — obligatoire pour une sortie' : ''; ?></label>
+					<label for="ige-piece">Pièce justificative (photo ou PDF)<?php echo $oblig_f ? ' — obligatoire pour une sortie' : ' — facultative'; ?></label>
 					<input type="file" id="ige-piece" name="piece" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment">
 					<span class="ige-help">5 Mo au plus. Les photos sont réduites automatiquement avant l’envoi.</span>
 					<span class="ige-help" id="ige-piece-info" aria-live="polite"></span>
@@ -194,6 +195,7 @@ final class IGE_FFM_Ecran_Nouvelle_Ecriture {
 						<?php if ( $bloque ) : ?><li>Une sortie ne peut pas dépasser le disponible de sa rubrique.</li><?php endif; ?>
 						<li>Paiement en espèces limité à <?php echo esc_html( ige_ffm_montant( (int) IGE_FFM_Reglages::get( 'plafond_especes' ) ) ); ?> par opération.</li>
 						<li>Une écriture enregistrée ne se modifie pas : une erreur se corrige par contrepassation.</li>
+						<li><?php echo $oblig_f ? 'La photo ou le PDF de la pièce justificative est obligatoire pour une sortie.' : 'La photo ou le PDF de la pièce est facultatif ; il peut être ajouté plus tard depuis le livre de caisse.'; ?></li>
 						<?php if ( ! (int) $ex['budget_obligatoire'] ) : ?><li>Exercice <?php echo esc_html( $ex['annee'] ); ?> : saisie possible sans budget ; la consommation est suivie.</li><?php endif; ?>
 					</ul>
 				</section>

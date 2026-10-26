@@ -25,7 +25,7 @@ final class IGE_FFM_Ecran_Consolidation {
 	 * @return array<string,string>
 	 */
 	public static function vues() {
-		$v = array( 'services' => 'Par service', 'categories' => 'Par catégorie', 'rubriques' => 'Par rubrique', 'mois' => 'Par mois' );
+		$v = array( 'services' => 'Par service', 'services_categories' => 'Services et catégories', 'services_rubriques' => 'Services et rubriques', 'categories' => 'Par catégorie', 'rubriques' => 'Par rubrique', 'mois' => 'Par mois' );
 		if ( IGE_FFM_Fonctions::active( 'nomenclature' ) ) {
 			$v['nomenclature'] = 'Par ligne de la nomenclature';
 		}
@@ -70,6 +70,9 @@ final class IGE_FFM_Ecran_Consolidation {
 		$c  = IGE_FFM_Consolidation::calculer( (int) $ex['id'] );
 		$t  = $c['total'];
 		switch ( $vue ) {
+			case 'services_categories':
+			case 'services_rubriques':
+				return self::croisement( $c, 'services_rubriques' === $vue );
 			case 'categories':
 				$l = array();
 				foreach ( $c['categories'] as $k ) {
@@ -107,6 +110,64 @@ final class IGE_FFM_Ecran_Consolidation {
 	}
 
 	/**
+	 * Tableau croisé : une ligne par service, une colonne par catégorie (ou par rubrique).
+	 * Montants consommés (payé + engagé) des écritures validées.
+	 *
+	 * @param array $c        Consolidation calculée.
+	 * @param bool  $rubrique Colonnes par rubrique plutôt que par catégorie.
+	 * @return array
+	 */
+	public static function croisement( array $c, $rubrique = false ) {
+		$cols = array();
+		$rubs = IGE_FFM_Referentiels::all( 'rubrique' );
+		if ( $rubrique ) {
+			foreach ( $rubs as $r ) {
+				$cols[ (int) $r['id'] ] = array( $r['code'] . ' · ' . $r['libelle'], (int) $r['actif'] );
+			}
+		} else {
+			$codes = array();
+			foreach ( $rubs as $r ) {
+				$codes[ (int) $r['categorie_id'] ][] = $r['code'];
+			}
+			foreach ( IGE_FFM_Referentiels::all( 'categorie' ) as $k ) {
+				if ( empty( $codes[ (int) $k['id'] ] ) ) {
+					$cols[ (int) $k['id'] ] = array( $k['libelle'], 0 ); // Sans rubrique : affichée seulement si elle porte des dépenses.
+					continue;
+				}
+				$cols[ (int) $k['id'] ] = array( $k['libelle'] . ( empty( $codes[ (int) $k['id'] ] ) ? '' : ' (' . implode( ', ', $codes[ (int) $k['id'] ] ) . ')' ), (int) $k['actif'] );
+			}
+			$cols[0] = array( 'Sans catégorie', 0 );
+		}
+		$cle = $rubrique ? 'par_rub' : 'par_cat';
+		$tot = array_fill_keys( array_keys( $cols ), 0 );
+		foreach ( $c['services'] as $s ) {
+			foreach ( $s[ $cle ] as $id => $m ) {
+				if ( isset( $tot[ $id ] ) ) {
+					$tot[ $id ] += $m;
+				}
+			}
+		}
+		// Colonnes affichées : éléments actifs, et inactifs seulement s'ils ont des dépenses.
+		$ids = array_values( array_filter( array_keys( $cols ), static fn( $id ) => $cols[ $id ][1] || $tot[ $id ] ) );
+		$l   = array();
+		foreach ( $c['services'] as $s ) {
+			$ligne = array( $s['service']['code'] );
+			foreach ( $ids as $id ) {
+				$ligne[] = $s[ $cle ][ $id ] ?? 0;
+			}
+			$ligne[] = array_sum( array_map( static fn( $id ) => $s[ $cle ][ $id ] ?? 0, $ids ) );
+			$l[]     = $ligne;
+		}
+		$total = array( 'Total (' . count( $c['services'] ) . ' services)' );
+		foreach ( $ids as $id ) {
+			$total[] = $tot[ $id ];
+		}
+		$total[] = array_sum( array_map( static fn( $id ) => $tot[ $id ], $ids ) );
+		$entetes = array_merge( array( 'Service' ), array_map( static fn( $id ) => $cols[ $id ][0], $ids ), array( 'Total' ) );
+		return array( 'entetes' => $entetes, 'lignes' => $l, 'total' => $total, 'num' => range( 1, count( $ids ) + 1 ), 'croise' => true );
+	}
+
+	/**
 	 * Affichage.
 	 *
 	 * @return string
@@ -134,13 +195,26 @@ final class IGE_FFM_Ecran_Consolidation {
 		<section class="ige-card" style="padding:16px">
 			<div class="ige-tabs">
 				<?php foreach ( self::vues() as $k => $lbl ) : ?>
-					<a class="<?php echo $vue === $k ? 'ige-on' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'vue', $k, ige_ffm_url( 'consolidation' ) ) ); ?>"><?php echo esc_html( $lbl ); ?></a>
+					<?php
+					if ( 'services_rubriques' === $k ) {
+						continue;
+					}
+					$on = $vue === $k || ( 'services_categories' === $k && 'services_rubriques' === $vue );
+					?>
+					<a class="<?php echo $on ? 'ige-on' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'vue', $k, ige_ffm_url( 'consolidation' ) ) ); ?>"><?php echo esc_html( $lbl ); ?></a>
 				<?php endforeach; ?>
 			</div>
+			<?php if ( ! empty( $tab['croise'] ) ) : ?>
+				<p class="ige-small" style="margin:0 0 10px">Colonnes :
+					<?php if ( 'services_categories' === $vue ) : ?><strong>par catégorie</strong> · <a href="<?php echo esc_url( add_query_arg( 'vue', 'services_rubriques', ige_ffm_url( 'consolidation' ) ) ); ?>">par rubrique</a>
+					<?php else : ?><a href="<?php echo esc_url( add_query_arg( 'vue', 'services_categories', ige_ffm_url( 'consolidation' ) ) ); ?>">par catégorie</a> · <strong>par rubrique</strong><?php endif; ?>
+					<span class="ige-muted"> — montants consommés (payé + engagé) des écritures validées.</span>
+				</p>
+			<?php endif; ?>
 			<div class="ige-table-wrap"><table class="ige-table ige-num">
 				<thead><tr>
 					<?php foreach ( $tab['entetes'] as $i => $h ) : ?>
-						<th<?php echo $i ? ' class="ige-r"' : ''; ?>><?php echo esc_html( $h ); ?></th>
+						<th<?php echo $i ? ' class="ige-r"' : ''; ?><?php echo ! empty( $tab['croise'] ) && $i ? ' style="white-space:normal;min-width:96px;max-width:150px;vertical-align:bottom"' : ''; ?>><?php echo esc_html( $h ); ?></th>
 					<?php endforeach; ?>
 				</tr></thead>
 				<tbody>

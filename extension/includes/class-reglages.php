@@ -23,7 +23,8 @@ final class IGE_FFM_Reglages {
 		return array(
 			'bloquer_caisse_negative'    => array( 'bool', true, 'Refuser une sortie qui rend la caisse négative', 'controles' ),
 			'bloquer_depassement'        => array( 'bool', true, 'Refuser un dépassement du disponible (si un budget est défini)', 'controles' ),
-			'piece_obligatoire'          => array( 'bool', true, 'N° de pièce et photo obligatoires pour une sortie', 'controles' ),
+			'num_piece_obligatoire'      => array( 'bool', true, 'N° de la pièce justificative obligatoire pour une sortie', 'controles' ),
+			'piece_obligatoire'          => array( 'bool', false, 'Photo ou PDF de la pièce justificative obligatoire pour une sortie (sinon facultative)', 'controles' ),
 			'contrepassation_rejet'      => array( 'bool', true, 'Contrepassation obligatoire après un rejet', 'controles' ),
 			'entrees_manuelles'          => array( 'bool', true, 'Les services saisissent eux-mêmes leurs approvisionnements (en attendant les avances de fonds, étape 4)', 'controles' ),
 			'transmission_auto'          => array( 'bool', false, 'Transmettre automatiquement chaque écriture au central dès son enregistrement', 'controles' ),

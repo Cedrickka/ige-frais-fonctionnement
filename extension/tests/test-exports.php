@@ -94,7 +94,19 @@ ige_t( false !== strpos( $t['titre'], 'X' . $sfx ) && 0 === stripos( $t['fichier
 wp_set_current_user( 1 );
 $cv = IGE_FFM_Ecran_Consolidation::export_donnees( 'services' );
 ige_t( 'montant' === $cv['colonnes'][1][1] && 'decimal' === $cv['colonnes'][6][1] && 'nombre' === $cv['colonnes'][8][1], 'Consolidation : types de colonnes (montants, pourcentages, nombres)' );
-ige_t( ( IGE_FFM_Fonctions::active( 'nomenclature' ) ? 5 : 4 ) === count( IGE_FFM_Ecran_Consolidation::vues() ), 'Consolidation : une vue par onglet (nomenclature comprise si active)' );
+ige_t( ( IGE_FFM_Fonctions::active( 'nomenclature' ) ? 7 : 6 ) === count( IGE_FFM_Ecran_Consolidation::vues() ), 'Consolidation : une vue par onglet (croisements services × catégories et × rubriques, nomenclature comprise si active)' );
+$xc = IGE_FFM_Ecran_Consolidation::tableau( 'services_categories' );
+$xr = IGE_FFM_Ecran_Consolidation::tableau( 'services_rubriques' );
+$cs = IGE_FFM_Ecran_Consolidation::tableau( 'services' );
+$tot_conso = (int) $cs['total'][3] + (int) $cs['total'][4];
+ige_t( 'Service' === $xc['entetes'][0] && 'Total' === end( $xc['entetes'] ) && $tot_conso === (int) end( $xc['total'] ) && $tot_conso === (int) end( $xr['total'] ), 'Croisement services × catégories et × rubriques : total = payé + engagé de la consolidation' );
+$ok = true;
+foreach ( $xc['lignes'] as $l ) {
+	$ok = $ok && array_sum( array_slice( $l, 1, -1 ) ) === (int) end( $l );
+}
+ige_t( $ok && count( $xc['lignes'] ) === count( $cs['lignes'] ), 'Croisement : chaque ligne de service totalise ses colonnes' );
+$xe = IGE_FFM_Ecran_Consolidation::export_donnees( 'services_categories' );
+ige_t( 'montant' === $xe['colonnes'][1][1] && $xe['paysage'], 'Croisement : export Excel/PDF en montants, mise en page paysage' );
 
 echo "\n3. PDF\n";
 $pdf = IGE_FFM_Pdf::tableau( $t );

@@ -2,7 +2,7 @@
 
 Logique métier de l'application de gestion des frais de fonctionnement de l'Inspection Générale de l'Enseignement. Elle s'utilise avec le thème **IGE Frais de fonctionnement** (version 1.0.1 ou plus), qui fournit l'interface.
 
-Version **2.2.1** (lot 1 complet ; lot 2 : missions d'inspection, demandes de fonds, circuit de visas et chaîne de la dépense, rapprochement bancaire, plan de trésorerie, saisie hors connexion, double devise CDF/USD ; priorité 3 : parc automobile et gestion du charroi, stocks de fournitures, score de risque, comparaison des services, nomenclature budgétaire, rapport hebdomadaire ; dotations et bons carburant ; fonctions du site activables). Thème requis : IGE Frais de fonctionnement **1.0.2**. WordPress 6.5 ou plus (testé sur 7.1.3), PHP 8.0 ou plus.
+Version **2.3.0** (lot 1 complet ; lot 2 : missions d'inspection, demandes de fonds, circuit de visas et chaîne de la dépense, rapprochement bancaire, plan de trésorerie, saisie hors connexion, double devise CDF/USD ; priorité 3 : parc automobile et gestion du charroi, stocks de fournitures, score de risque, comparaison des services, nomenclature budgétaire, rapport hebdomadaire ; dotations et bons carburant ; fonctions du site activables). Thème requis : IGE Frais de fonctionnement **1.0.2**. WordPress 6.5 ou plus (testé sur 7.1.3), PHP 8.0 ou plus.
 
 ## 1. Ce que contient l'étape 1
 

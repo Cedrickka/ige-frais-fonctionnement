@@ -41,6 +41,7 @@ final class IGE_FFM_Installer {
 		if ( get_option( 'ige_ffm_db_version' ) !== IGE_FFM_DB_VERSION ) {
 			self::create_tables();
 			IGE_FFM_Roles::install();
+			self::migrer_pieces( (string) get_option( 'ige_ffm_db_version' ) );
 			IGE_FFM_Reglages::install_defaults();
 			IGE_FFM_Pieces::dossier();
 			self::un_seul_exercice_ouvert();
@@ -311,6 +312,26 @@ final class IGE_FFM_Installer {
 			}
 		}
 		update_option( 'ige_ffm_menus_ok', IGE_FFM_VERSION, false );
+	}
+
+	/**
+	 * Version 2.3.0 (schéma 12) : le n° de pièce et le fichier joint deviennent deux règles.
+	 * Le n° garde la valeur de l'ancienne règle ; la photo ou le PDF devient facultatif.
+	 *
+	 * @param string $avant Version du schéma avant la mise à jour.
+	 */
+	private static function migrer_pieces( $avant ) {
+		if ( '' === $avant || version_compare( $avant, '12', '>=' ) ) {
+			return;
+		}
+		$r = get_option( IGE_FFM_Reglages::OPTION, null );
+		if ( ! is_array( $r ) || array_key_exists( 'num_piece_obligatoire', $r ) ) {
+			return;
+		}
+		$r['num_piece_obligatoire'] = array_key_exists( 'piece_obligatoire', $r ) ? (bool) $r['piece_obligatoire'] : true;
+		$r['piece_obligatoire']     = false;
+		update_option( IGE_FFM_Reglages::OPTION, $r, false );
+		IGE_FFM_Audit::log( 'modification_reglages', 'reglages', 'mise à jour 2.3.0', array( 'piece_obligatoire' => true ), array( 'piece_obligatoire' => false, 'num_piece_obligatoire' => $r['num_piece_obligatoire'] ), 0 );
 	}
 
 	/**

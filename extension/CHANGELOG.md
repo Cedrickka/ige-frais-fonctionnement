@@ -1,5 +1,11 @@
 # Journal des versions
 
+## 2.3.0 — 26 octobre 2026 · Consolidation croisée et pièce facultative
+
+- Consolidation : nouvel onglet « Services et catégories », tableau croisé avec une ligne par service et une colonne par catégorie (rubriques rattachées rappelées dans l'en-tête), total par service et total général ; bascule « par rubrique » (R01 à R10). Montants consommés (payé + engagé) des écritures validées. Exports Excel et PDF (paysage) inclus.
+- Pièce justificative : la photo ou le PDF devient facultatif. Deux règles distinctes dans Exercice et règles de contrôle : « N° de la pièce justificative obligatoire » (reprend l'ancienne valeur) et « Photo ou PDF obligatoire » (désactivée à la mise à jour). Un dossier sans pièce reste signalé « incomplet » au vérificateur ; la pièce peut être ajoutée plus tard depuis le livre de caisse.
+- Schéma version 12 (migration des règles, tracée au journal d'audit). 7 tests automatiques supplémentaires.
+
 ## 2.2.1 — 24 octobre 2026 · Correctifs bons carburant et menus
 
 - Saisie d'une plage de bons « BC-1001 à BC-1060 » : le « à » accentué en minuscules est désormais compris (seuls les deux numéros extrêmes étaient retenus).

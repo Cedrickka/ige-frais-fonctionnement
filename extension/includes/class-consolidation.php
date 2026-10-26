@@ -62,7 +62,7 @@ final class IGE_FFM_Consolidation {
 			$cats[ (int) $c['id'] ] = array( 'libelle' => $c['libelle'], 'consomme' => 0, 'budget' => 0 );
 		}
 		$bud  = self::budgets( $exo );
-		$vide = array( 'budget' => 0, 'avec_budget' => false, 'entrees' => 0, 'paye' => 0, 'engage' => 0, 'mois' => 0 );
+		$vide = array( 'budget' => 0, 'avec_budget' => false, 'entrees' => 0, 'paye' => 0, 'engage' => 0, 'mois' => 0, 'par_cat' => array(), 'par_rub' => array() );
 		$svc  = array();
 		foreach ( IGE_FFM_Referentiels::all( 'service' ) as $s ) {
 			$svc[ (int) $s['id'] ] = array( 'service' => $s ) + $vide;
@@ -91,6 +91,9 @@ final class IGE_FFM_Consolidation {
 			if ( isset( $cats[ $cid ] ) ) {
 				$cats[ $cid ]['consomme'] += $m;
 			}
+			// Croisement service × catégorie et service × rubrique (payé + engagé).
+			$svc[ $sid ]['par_cat'][ $cid ] = ( $svc[ $sid ]['par_cat'][ $cid ] ?? 0 ) + $m;
+			$svc[ $sid ]['par_rub'][ $rid ] = ( $svc[ $sid ]['par_rub'][ $rid ] ?? 0 ) + $m;
 		}
 		foreach ( $bud as $sid => $lignes ) {
 			if ( ! isset( $svc[ $sid ] ) ) {
