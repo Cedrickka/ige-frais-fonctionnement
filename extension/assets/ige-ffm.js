@@ -237,3 +237,15 @@
 	});
 	maj();
 }());
+
+/* Message de résultat d'un formulaire : mis en évidence, adresse nettoyée. */
+(function () {
+	var f = document.getElementById('ige-flash');
+	if (f) {
+		try { f.scrollIntoView({ block: 'center' }); f.focus({ preventScroll: true }); } catch (e) { /* navigateur ancien */ }
+	}
+	if (window.history && history.replaceState && /[?&]ige_msg=/.test(location.search)) {
+		var u = location.pathname + location.search.replace(/([?&])ige_msg=[^&]*&?/, '$1').replace(/[?&]$/, '') + location.hash;
+		history.replaceState(null, '', u);
+	}
+})();

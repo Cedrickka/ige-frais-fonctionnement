@@ -223,7 +223,7 @@ final class IGE_FFM_Pdf {
 		$pdf->loadHtml( $html, 'UTF-8' );
 		$pdf->addInfo( 'Title', $o['titre'] );
 		$pdf->addInfo( 'Author', 'Inspection Générale de l’Enseignement' );
-		$pdf->addInfo( 'Creator', 'IGE · Frais de fonctionnement' );
+		$pdf->addInfo( 'Creator', ige_ffm_nom_appli( true ) );
 		$pdf->render();
 		$c    = $pdf->getCanvas();
 		$font = $fm->getFont( 'Cooper Hewitt', 'normal' );
@@ -274,7 +274,7 @@ final class IGE_FFM_Pdf {
 				'qr'            => $doc ? IGE_FFM_Documents::url_verification( $doc['reference'] ) : '',
 				'pied'          => $doc
 					? 'Document authentifiable : scannez le code ou saisissez la référence <b>' . esc_html( $doc['reference'] ) . '</b> sur la page « Vérifier un document ».<br>' . esc_html( $ref )
-					: 'Procès-verbal établi dans l’application de gestion des frais de fonctionnement · ' . esc_html( $ref ) . ' · le code QR d’authenticité est attribué à la signature finale.',
+					: 'Procès-verbal établi dans l’application « ' . esc_html( ige_ffm_nom_appli() ) . ' » · ' . esc_html( $ref ) . ' · le code QR d’authenticité est attribué à la signature finale.',
 			)
 		);
 	}
@@ -458,6 +458,17 @@ final class IGE_FFM_Pdf {
 				}
 				$t = IGE_FFM_Ecran_Consolidation::export_donnees( IGE_FFM_Ecran_Consolidation::vue() );
 				IGE_FFM_Audit::log( 'export_consolidation', 'exercice', $t['annee'], null, array( 'vue' => $t['vue'], 'format' => 'pdf' ) );
+				self::envoyer( self::tableau( $t ), $t['fichier'] . '.pdf' );
+				break;
+			case 'inventaire':
+				if ( ! current_user_can( 'ige_logistique' ) ) {
+					wp_die( 'Accès refusé.', '', array( 'response' => 403 ) );
+				}
+				$t = $id ? IGE_FFM_Patrimoine::export_donnees( $id ) : IGE_FFM_Ecran_Patrimoine::export_consolide();
+				if ( ! $t ) {
+					wp_die( 'Inventaire introuvable.', '', array( 'response' => 404 ) );
+				}
+				IGE_FFM_Audit::log( 'export_patrimoine', 'pat_inventaire', $t['fichier'], null, array( 'format' => 'pdf' ) );
 				self::envoyer( self::tableau( $t ), $t['fichier'] . '.pdf' );
 				break;
 		}

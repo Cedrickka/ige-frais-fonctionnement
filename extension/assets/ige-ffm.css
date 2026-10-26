@@ -100,3 +100,11 @@
 .ige-fonction input{margin-top:3px}
 .ige-alertes{list-style:none;padding-left:0!important}
 .ige-alertes li a{color:inherit}
+
+/* Inventaire des services : grille biens × locaux */
+.ige-inv th{white-space:normal;vertical-align:bottom;line-height:1.25}
+.ige-inv td,.ige-inv th{padding-left:6px;padding-right:6px}
+.ige-inv .ige-inv-q{width:52px;text-align:right;padding:5px 6px;font-variant-numeric:tabular-nums}
+.ige-inv tbody td:nth-child(2),.ige-inv thead th:nth-child(2),.ige-inv tfoot th:nth-child(2){position:sticky;left:0;background:#fff;z-index:1;box-shadow:1px 0 0 rgba(0,0,0,.06)}
+.ige-inv tr.ige-sous td{position:sticky;left:0}
+@media (max-width:640px){.ige-inv .ige-inv-q{width:44px}}

@@ -89,7 +89,7 @@ final class IGE_FFM_Rapports {
 				);
 			case 'rapport_annuel':
 				return array(
-					'titre'   => 'Rapport annuel sur les frais de fonctionnement ' . $ex['annee'],
+					'titre'   => 'Rapport annuel sur les frais de fonctionnement du trésor public ' . $ex['annee'],
 					'periode' => 'exercice ' . $ex['annee'] . ' au ' . wp_date( 'd/m/Y' ),
 					'contenu' => self::rapport_annuel( $ex ),
 				);
@@ -148,7 +148,7 @@ final class IGE_FFM_Rapports {
 		$r90   = array_sum( array_map( static fn( $l ) => $l['tranches']['plus90'], $avs ) );
 		ob_start();
 		?>
-		<div class="ige-subt">Frais de fonctionnement · <?php echo esc_html( strtolower( $noms[ $m ] ) . ' ' . $ex['annee'] ); ?> · écritures validées · montants en francs congolais</div>
+		<div class="ige-subt">Frais de fonctionnement du trésor public · <?php echo esc_html( strtolower( $noms[ $m ] ) . ' ' . $ex['annee'] ); ?> · écritures validées · montants en francs congolais</div>
 		<table class="ige-table ige-num">
 			<thead><tr><th>Service</th><th class="ige-r">Budget</th><th class="ige-r">Consommé cumulé</th><th class="ige-r">Dont <?php echo esc_html( strtolower( $noms[ $m ] ) ); ?></th><th class="ige-r">Exécution</th><th class="ige-r">Caisse au <?php echo esc_html( wp_date( 'd/m', strtotime( $fin ) ) ); ?></th></tr></thead>
 			<tbody>

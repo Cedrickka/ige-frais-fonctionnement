@@ -9,7 +9,7 @@
  * - entretiens planifiés et réalisés, réparations, pneumatiques, sinistres ;
  * - coût par véhicule et par kilomètre, alertes.
  *
- * Toute action est réservée à la capacité ige_logistique, sauf : un service demande un véhicule,
+ * Toute action est réservée à la capacité ige_gerer_parc (Gestionnaire du parc et Administration et Finance), sauf : un service demande un véhicule,
  * enregistre le départ et le retour de ses déplacements et les pleins des véhicules qui lui sont affectés.
  *
  * @package IGE_FF_Metier
@@ -104,7 +104,7 @@ final class IGE_FFM_Parc {
 	 * @return bool
 	 */
 	public static function gestionnaire( $user_id = null ) {
-		return user_can( $user_id ?? get_current_user_id(), 'ige_logistique' );
+		return user_can( $user_id ?? get_current_user_id(), 'ige_gerer_parc' );
 	}
 
 	/**
@@ -1324,7 +1324,7 @@ final class IGE_FFM_Parc {
 	 * @return array
 	 */
 	public static function filtre_alertes( $out ) {
-		if ( ! IGE_FFM_Fonctions::active( 'parc' ) ) {
+		if ( ! IGE_FFM_Fonctions::active( 'parc' ) || ( is_user_logged_in() && ! current_user_can( 'ige_gerer_parc' ) ) ) {
 			return $out;
 		}
 		$a = self::alertes();
@@ -1344,6 +1344,30 @@ final class IGE_FFM_Parc {
 	 */
 	public static function init() {
 		add_filter( 'ige_ffm_alertes', array( __CLASS__, 'filtre_alertes' ), 20 );
+		// Profil « Gestionnaire du parc automobile » : interface du thème.
+		add_action( 'after_setup_theme', static fn() => register_nav_menus( array( 'menu-parc' => 'Menu du Gestionnaire du parc automobile' ) ), 20 );
+		add_filter( 'ige_ff_roles_profils', static fn( $m ) => (array) $m + array( 'ige_parc' => 'parc' ) );
+		add_filter( 'ige_ff_menu_location', static fn( $loc, $profil = '' ) => 'parc' === $profil ? 'menu-parc' : $loc, 10, 2 );
+		add_filter(
+			'ige_ff_dashboard_url',
+			static function ( $url, $profil = '' ) {
+				if ( 'parc' === $profil ) {
+					$p = get_page_by_path( 'parc-automobile' );
+					return $p ? get_permalink( $p ) : $url;
+				}
+				return $url;
+			},
+			10,
+			2
+		);
+		add_filter(
+			'ige_ff_profil_libelle',
+			static function ( $label, $user = null ) {
+				return $user && in_array( 'ige_parc', (array) $user->roles, true ) ? 'Gestionnaire du parc automobile' : $label;
+			},
+			10,
+			2
+		);
 	}
 
 	/* ------------------------------------------------------------------ Notifications */
@@ -1356,7 +1380,7 @@ final class IGE_FFM_Parc {
 	 */
 	private static function prevenir_gestion( $sujet, $texte ) {
 		$a = array();
-		foreach ( get_users( array( 'capability' => 'ige_logistique', 'fields' => array( 'user_email' ) ) ) as $u ) {
+		foreach ( get_users( array( 'capability' => 'ige_gerer_parc', 'fields' => array( 'user_email' ) ) ) as $u ) {
 			if ( is_email( $u->user_email ) ) {
 				$a[] = $u->user_email;
 			}
@@ -1374,7 +1398,7 @@ final class IGE_FFM_Parc {
 	 */
 	private static function prevenir_demandeur( array $x, $texte ) {
 		$u = get_userdata( (int) $x['demandeur_id'] );
-		if ( $u && is_email( $u->user_email ) && ! user_can( $u, 'ige_logistique' ) ) {
+		if ( $u && is_email( $u->user_email ) && ! user_can( $u, 'ige_gerer_parc' ) ) {
 			IGE_FFM_Messagerie::envoyer( $u->user_email, 'Véhicule : ' . $x['numero'], $texte . "\n\n" . ige_ffm_url( 'vehicules' ) );
 		}
 	}

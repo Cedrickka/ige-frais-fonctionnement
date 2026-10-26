@@ -2,7 +2,7 @@
 
 Logique métier de l'application de gestion des frais de fonctionnement de l'Inspection Générale de l'Enseignement. Elle s'utilise avec le thème **IGE Frais de fonctionnement** (version 1.0.1 ou plus), qui fournit l'interface.
 
-Version **2.3.0** (lot 1 complet ; lot 2 : missions d'inspection, demandes de fonds, circuit de visas et chaîne de la dépense, rapprochement bancaire, plan de trésorerie, saisie hors connexion, double devise CDF/USD ; priorité 3 : parc automobile et gestion du charroi, stocks de fournitures, score de risque, comparaison des services, nomenclature budgétaire, rapport hebdomadaire ; dotations et bons carburant ; fonctions du site activables). Thème requis : IGE Frais de fonctionnement **1.0.2**. WordPress 6.5 ou plus (testé sur 7.1.3), PHP 8.0 ou plus.
+Version **2.4.0** (lot 1 complet ; lot 2 : missions d'inspection, demandes de fonds, circuit de visas et chaîne de la dépense, rapprochement bancaire, plan de trésorerie, saisie hors connexion, double devise CDF/USD ; priorité 3 : parc automobile et gestion du charroi, stocks de fournitures, score de risque, comparaison des services, nomenclature budgétaire, rapport hebdomadaire ; dotations et bons carburant ; fonctions du site activables ; inventaire des services ; profil Gestionnaire du parc automobile). Thème requis : IGE Frais de fonctionnement du trésor public **1.0.3**. WordPress 6.5 ou plus (testé sur 7.1.3), PHP 8.0 ou plus.
 
 ## 1. Ce que contient l'étape 1
 
@@ -141,6 +141,17 @@ Bibliothèques incluses (dossier `vendor/`) : Dompdf 3.1.0 (LGPL 2.1), php-font-
 
 **Hypothèses à confirmer** : le compte bancaire principal porte les paiements des services par chèque ou virement, les avances remises par chèque ou virement et les mouvements saisis ; les espèces restent dans les caisses. Le plan de trésorerie peut compter deux fois une demande de fonds destinée à payer une mission. Les seuils de la chaîne et des visas se règlent dans « Circuit de la dépense, devises et banque ».
 
+### Version 2.4.0 : inventaire des services, profil du parc, nom de l'application
+
+| Élément | Contenu |
+| --- | --- |
+| Nom | « Gestion des frais de fonctionnement du trésor public » partout : en-tête, page de connexion, onglet du navigateur, e-mails, PDF, classeurs Excel, application installable. L'ancien nom est remplacé à la mise à jour ; un nom personnalisé est conservé. |
+| Inventaire des services | Logistique > Inventaire des services (Administration et Finance, administrateur) : catalogue commun des biens par catégorie, locaux de chaque service (colonnes), inventaire daté en cours puis validé (figé, journal d'audit), reprise des quantités du dernier inventaire validé, écarts avec le précédent, import du fichier Excel « INVENTAIRE DE SERVICE » (« SERVICE: 8001 », en-tête N° · Désignation · locaux · TOTAL ; biens et locaux créés automatiquement), tableau consolidé biens × services, exports Excel et PDF au format du fichier de service. Module activable dans Fonctions du site. |
+| Gestionnaire du parc automobile | Nouveau profil avec son propre menu et le parc comme accueil. Le parc automobile n'est plus visible que par ce profil, Administration et Finance et l'administrateur (capacité `ige_gerer_parc`) ; il quitte le menu de la Direction. La page « Véhicules » des services (demandes de véhicule) reste ouverte aux services. |
+| Stocks de fournitures | Désactivés par défaut sur une nouvelle installation, activables dans Fonctions du site. Sur un site mis à jour, ils restent actifs seulement si des articles existent déjà. |
+| Messages après enregistrement | Message de succès (numéro, montant, rubrique, lien vers le livre de caisse) ou de refus (motif ; la saisie est conservée) mis en évidence en haut de la page ; l'adresse de retour porte un jeton unique et les pages de l'application ne sont plus mises en cache pour un utilisateur connecté (cache LiteSpeed de l'hébergeur), ce qui empêchait le message d'apparaître. |
+| Schéma | Version 13 : 4 tables `pat_bien`, `pat_local`, `pat_inventaire`, `pat_quantite`. |
+
 ### Version 2.2.0 : dotations et bons carburant
 
 | Élément | Contenu |
@@ -234,7 +245,11 @@ wp eval-file wp-content/plugins/ige-ff-metier/tests/test-lot3.php
 wp eval-file wp-content/plugins/ige-ff-metier/tests/test-carburant.php
 ```
 
-Résultats attendus : `88`, `76`, `57`, `74`, `57`, `109`, `33`, `51`, `102`, `102` puis `40 réussis`, sans échec (789 tests). Le test du déploiement n'envoie aucun e-mail (ils sont interceptés) et utilise les fichiers d'essai de `tests/fixtures/`. Le test des fonds suppose qu'on soit au moins en mai de l'exercice ; il clôture un exercice fictif (2030) puis le supprime, sans toucher l'exercice réel. Les tests couvrent le schéma, les données initiales, les droits de chaque rôle, la validation des référentiels, la création et la modification des comptes, la robustesse des mots de passe, le verrouillage, la désactivation, les bornes des règles et la détection d'une falsification du journal.
+```
+wp eval-file wp-content/plugins/ige-ff-metier/tests/test-inventaire.php
+```
+
+Résultats attendus : `92`, `80`, `57`, `74`, `57`, `109`, `36`, `51`, `102`, `106`, `42` puis `67 réussis`, sans échec (873 tests). Le test du déploiement n'envoie aucun e-mail (ils sont interceptés) et utilise les fichiers d'essai de `tests/fixtures/`. Le test des fonds suppose qu'on soit au moins en mai de l'exercice ; il clôture un exercice fictif (2030) puis le supprime, sans toucher l'exercice réel. Les tests couvrent le schéma, les données initiales, les droits de chaque rôle, la validation des référentiels, la création et la modification des comptes, la robustesse des mots de passe, le verrouillage, la désactivation, les bornes des règles et la détection d'une falsification du journal.
 
 Les tests de saisie couvrent les droits (lecteur, administrateur non rattaché, agent sur le budget), le blocage de la caisse négative et du dépassement du disponible, les validations (date future ou hors exercice, montant, rubrique, pièce, faux PDF, fichier PHP, plafond des espèces), le budget facultatif, les révisions motivées, le verrouillage du solde initial, le paiement d'un engagement, la contrepassation (et ses refus), le solde progressif du livre, la continuité de la numérotation, le mois clôturé, les doublons et la fusion des fournisseurs, le journal d'audit.
 

@@ -932,7 +932,7 @@ final class IGE_FFM_Ecran_Parc {
 	/** Dotation. */
 	public static function handle_dotation() {
 		ige_ffm_check_form( 'parc_dotation' );
-		ige_ffm_require( 'ige_logistique' );
+		ige_ffm_require( 'ige_gerer_parc' );
 		list( $cible, $id ) = array_pad( explode( ':', ige_ffm_post( 'cible' ) ), 2, 0 );
 		$r = IGE_FFM_Carburant::fixer_dotation( array( 'cible' => $cible, 'cible_id' => (int) $id, 'quantite' => ige_ffm_post( 'quantite' ), 'unite' => ige_ffm_post( 'unite' ) ) );
 		self::fin_onglet( $r, true === $r ? 'Dotation supprimée' : 'Dotation enregistrée', 'Dotation refusée' );
@@ -941,7 +941,7 @@ final class IGE_FFM_Ecran_Parc {
 	/** Carnet. */
 	public static function handle_carnet() {
 		ige_ffm_check_form( 'parc_carnet' );
-		ige_ffm_require( 'ige_logistique' );
+		ige_ffm_require( 'ige_gerer_parc' );
 		$r = IGE_FFM_Carburant::ajouter_carnet( self::post( array( 'station', 'prefixe', 'debut', 'fin', 'valeur_unitaire', 'litres_unitaire', 'recu_le', 'reference', 'ecriture' ) ) );
 		self::fin_onglet( $r, 'Carnet enregistré', 'Carnet refusé' );
 	}
@@ -949,7 +949,7 @@ final class IGE_FFM_Ecran_Parc {
 	/** Remise de bons. */
 	public static function handle_remise() {
 		ige_ffm_check_form( 'parc_remise' );
-		ige_ffm_require( 'ige_logistique' );
+		ige_ffm_require( 'ige_gerer_parc' );
 		$r = IGE_FFM_Carburant::remettre( ige_ffm_post( 'numeros' ), (int) ige_ffm_post( 'vehicule_id' ), (int) ige_ffm_post( 'chauffeur_id' ) );
 		self::fin_onglet( $r, is_int( $r ) ? $r . ' bon(s) remis' : '', 'Remise refusée' );
 	}
@@ -957,7 +957,7 @@ final class IGE_FFM_Ecran_Parc {
 	/** Annulation d'un bon. */
 	public static function handle_annuler_bon() {
 		ige_ffm_check_form( 'parc_annuler_bon' );
-		ige_ffm_require( 'ige_logistique' );
+		ige_ffm_require( 'ige_gerer_parc' );
 		self::fin_onglet( IGE_FFM_Carburant::annuler_bon( ige_ffm_post( 'numero' ), ige_ffm_post( 'motif' ) ), 'Bon annulé', 'Annulation refusée' );
 	}
 
@@ -1013,7 +1013,7 @@ final class IGE_FFM_Ecran_Parc {
 	/** Véhicule. */
 	public static function handle_vehicule() {
 		ige_ffm_check_form( 'parc_vehicule' );
-		ige_ffm_require( 'ige_logistique' );
+		ige_ffm_require( 'ige_gerer_parc' );
 		$id = (int) ige_ffm_post( 'id' );
 		$d  = self::post( array( 'immatriculation', 'marque', 'modele', 'annee', 'categorie', 'energie', 'places', 'chassis', 'service_id', 'chauffeur_id', 'conso_ref', 'reservoir', 'date_acquisition', 'valeur', 'km_initial' ) );
 		$r  = IGE_FFM_Parc::enregistrer_vehicule( $d, $id );
@@ -1031,7 +1031,7 @@ final class IGE_FFM_Ecran_Parc {
 	/** Statut. */
 	public static function handle_statut() {
 		ige_ffm_check_form( 'parc_statut' );
-		ige_ffm_require( 'ige_logistique' );
+		ige_ffm_require( 'ige_gerer_parc' );
 		$id = (int) ige_ffm_post( 'id' );
 		$r  = IGE_FFM_Parc::changer_statut( $id, ige_ffm_post( 'statut' ), ige_ffm_post( 'motif' ) );
 		if ( is_wp_error( $r ) ) {
@@ -1046,7 +1046,7 @@ final class IGE_FFM_Ecran_Parc {
 	/** Chauffeur. */
 	public static function handle_chauffeur() {
 		ige_ffm_check_form( 'parc_chauffeur' );
-		ige_ffm_require( 'ige_logistique' );
+		ige_ffm_require( 'ige_gerer_parc' );
 		$r = IGE_FFM_Parc::enregistrer_chauffeur( self::post( array( 'nom', 'telephone', 'service_id', 'permis_numero', 'permis_categories', 'permis_expire', 'actif' ) ), (int) ige_ffm_post( 'id' ) );
 		if ( is_wp_error( $r ) ) {
 			ige_ffm_flash( 'ko', 'Chauffeur non enregistré', $r->get_error_message() );
@@ -1060,7 +1060,7 @@ final class IGE_FFM_Ecran_Parc {
 	/** Document de bord. */
 	public static function handle_document() {
 		ige_ffm_check_form( 'parc_document' );
-		ige_ffm_require( 'ige_logistique' );
+		ige_ffm_require( 'ige_gerer_parc' );
 		$file = isset( $_FILES['scan'] ) ? $_FILES['scan'] : null; // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput
 		self::fin( IGE_FFM_Parc::ajouter_document( self::post( array( 'vehicule_id', 'type', 'reference', 'organisme', 'date_debut', 'date_fin', 'montant' ) ), $file ), 'Document enregistré', 'Document refusé' );
 	}
@@ -1085,7 +1085,7 @@ final class IGE_FFM_Ecran_Parc {
 	/** Attribution. */
 	public static function handle_attribuer() {
 		ige_ffm_check_form( 'parc_attribuer' );
-		ige_ffm_require( 'ige_logistique' );
+		ige_ffm_require( 'ige_gerer_parc' );
 		self::fin( IGE_FFM_Parc::attribuer( (int) ige_ffm_post( 'id' ), (int) ige_ffm_post( 'vehicule_id' ), (int) ige_ffm_post( 'chauffeur_id' ) ), 'Véhicule attribué', 'Attribution refusée', 'parc-automobile', 'Le service est prévenu par e-mail.' );
 	}
 
@@ -1133,7 +1133,7 @@ final class IGE_FFM_Ecran_Parc {
 	/** Intervention. */
 	public static function handle_intervention() {
 		ige_ffm_check_form( 'parc_intervention' );
-		ige_ffm_require( 'ige_logistique' );
+		ige_ffm_require( 'ige_gerer_parc' );
 		$d                = self::post( array( 'vehicule_id', 'nature', 'objet', 'date_prevue', 'date_realisee', 'km', 'garage', 'montant', 'prochaine_km', 'prochaine_date', 'immobilise', 'ecriture' ) );
 		$d['description'] = isset( $_POST['description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['description'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$file             = isset( $_FILES['piece'] ) ? $_FILES['piece'] : null; // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput
@@ -1143,7 +1143,7 @@ final class IGE_FFM_Ecran_Parc {
 	/** Réalisation d'une intervention planifiée. */
 	public static function handle_realiser() {
 		ige_ffm_check_form( 'parc_realiser' );
-		ige_ffm_require( 'ige_logistique' );
+		ige_ffm_require( 'ige_gerer_parc' );
 		self::fin( IGE_FFM_Parc::realiser( (int) ige_ffm_post( 'id' ), self::post( array( 'date_realisee', 'km', 'montant', 'garage', 'prochaine_km', 'prochaine_date', 'ecriture' ) ) ), 'Intervention réalisée', 'Action refusée' );
 	}
 
@@ -1152,7 +1152,7 @@ final class IGE_FFM_Ecran_Parc {
 		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ), 'ige_ffm_parc_export' ) ) {
 			wp_die( 'Lien expiré.', '', array( 'response' => 403 ) );
 		}
-		ige_ffm_require( 'ige_voir_tout' );
+		ige_ffm_require( 'ige_gerer_parc' );
 		$ex = IGE_FFM_Contexte::exercice();
 		if ( ! $ex ) {
 			wp_die( 'Aucun exercice ouvert.' );

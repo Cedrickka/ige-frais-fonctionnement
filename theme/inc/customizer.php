@@ -16,7 +16,7 @@ function ige_ff_defaults() {
 	return array(
 		'ige_ministere'   => "Ministère de l'Éducation Nationale\net Nouvelle Citoyenneté",
 		'ige_entite'      => "Inspection Générale de l'Enseignement",
-		'ige_application' => 'Gestion des frais de fonctionnement',
+		'ige_application' => 'Gestion des frais de fonctionnement du trésor public',
 		'ige_adresse'     => 'Kinshasa · République Démocratique du Congo',
 		'ige_accroche'    => "Espace réservé aux agents, responsables de service et au service Administration et Finance.",
 	);
@@ -75,3 +75,34 @@ function ige_ff_customize_register( $wp_customize ) {
 	}
 }
 add_action( 'customize_register', 'ige_ff_customize_register' );
+
+/**
+ * Nom de l'application : remplace l'ancien intitulé enregistré (version 1.0.3).
+ */
+function ige_ff_migrer_nom_application() {
+	$v = get_theme_mod( 'ige_application', null );
+	if ( null !== $v && 'Gestion des frais de fonctionnement' === trim( (string) $v ) ) {
+		set_theme_mod( 'ige_application', ige_ff_defaults()['ige_application'] );
+	}
+}
+add_action( 'after_setup_theme', 'ige_ff_migrer_nom_application', 20 );
+
+/**
+ * Titre des onglets du navigateur : « Page – Nom de l'application ».
+ *
+ * @param array $parts Parties du titre.
+ * @return array
+ */
+function ige_ff_titre_document( $parts ) {
+	$nom = ige_ff_texte( 'ige_application' );
+	if ( '' !== $nom ) {
+		$parts['site'] = $nom;
+		unset( $parts['tagline'] );
+		if ( empty( $parts['title'] ) || $parts['title'] === get_bloginfo( 'name' ) ) {
+			$parts['title'] = $nom;
+			unset( $parts['site'] );
+		}
+	}
+	return $parts;
+}
+add_filter( 'document_title_parts', 'ige_ff_titre_document' );

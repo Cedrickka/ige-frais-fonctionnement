@@ -265,15 +265,16 @@ final class IGE_FFM_Ecran_Nouvelle_Ecriture {
 		$result = self::enregistrer( $data, $file );
 		if ( is_wp_error( $result ) ) {
 			IGE_FFM_Ecrans::remember( array_map( static fn( $v ) => sanitize_text_field( (string) $v ), $data ) );
-			ige_ffm_flash( 'ko', 'Écriture non enregistrée', $result->get_error_message() );
+			ige_ffm_flash( 'ko', 'Écriture refusée : elle n’a pas été enregistrée', $result->get_error_message() . ' Les informations saisies sont conservées ci-dessous : corrigez puis enregistrez de nouveau.' );
 			wp_safe_redirect( $retour );
 			exit;
 		}
 		$e = IGE_FFM_Ecritures::get( $result );
 		ige_ffm_flash(
 			'ok',
-			'Écriture ' . $e['id_ecriture'] . ' enregistrée',
-			sprintf( '%s de %s. Vous pouvez saisir la suivante.', 'entree' === $e['type'] ? 'Entrée' : ( 'engagee' === $e['statut'] ? 'Engagement' : 'Sortie payée' ), ige_ffm_montant( (int) $e['montant'] ) )
+			'Écriture enregistrée avec succès : ' . $e['id_ecriture'],
+			sprintf( '%s de %s%s. Vous pouvez saisir la suivante.', 'entree' === $e['type'] ? 'Entrée' : ( 'engagee' === $e['statut'] ? 'Engagement' : 'Sortie payée' ), ige_ffm_montant( (int) $e['montant'] ), $e['rubrique_id'] ? ' en ' . ( IGE_FFM_Referentiels::get( 'rubrique', (int) $e['rubrique_id'] )['code'] ?? '' ) : '' ),
+			array( 'Voir l’écriture dans le livre de caisse', add_query_arg( 'ecriture', (int) $e['id'], ige_ffm_url( 'livre-de-caisse' ) ) . '#ige-detail' )
 		);
 		wp_safe_redirect( $retour );
 		exit;

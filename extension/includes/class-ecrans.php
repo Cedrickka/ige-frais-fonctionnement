@@ -42,6 +42,7 @@ require_once __DIR__ . '/ecrans/class-ecran-hors-connexion.php';
 require_once __DIR__ . '/ecrans/class-ecran-fonctions.php';
 require_once __DIR__ . '/ecrans/class-ecran-parc.php';
 require_once __DIR__ . '/ecrans/class-ecran-stocks.php';
+require_once __DIR__ . '/ecrans/class-ecran-patrimoine.php';
 require_once __DIR__ . '/ecrans/class-ecran-analyses.php';
 
 /**
@@ -86,9 +87,10 @@ final class IGE_FFM_Ecrans {
 			'rapprochement-bancaire' => array( 'ige_gerer_fonds', 'IGE_FFM_Ecran_Rapprochement' ),
 			'hors-connexion'     => array( 'ige_saisir', 'IGE_FFM_Ecran_Hors_Connexion' ),
 			'fonctions-du-site'  => array( 'ige_administrer', 'IGE_FFM_Ecran_Fonctions' ),
-			'parc-automobile'    => array( 'ige_voir_tout', 'IGE_FFM_Ecran_Parc' ),
+			'parc-automobile'    => array( 'ige_gerer_parc', 'IGE_FFM_Ecran_Parc' ),
 			'vehicules'          => array( 'ige_acceder', 'IGE_FFM_Ecran_Vehicules' ),
 			'stocks'             => array( 'ige_voir_tout', 'IGE_FFM_Ecran_Stocks' ),
+			'inventaire-des-services' => array( 'ige_logistique', 'IGE_FFM_Ecran_Patrimoine' ),
 			'risques'            => array( 'ige_voir_tout', 'IGE_FFM_Ecran_Risques' ),
 			'notifications'      => array( 'ige_administrer', 'IGE_FFM_Ecran_Notifications' ),
 		);

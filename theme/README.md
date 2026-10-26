@@ -4,7 +4,7 @@ Thème de l'application de gestion des frais de fonctionnement de l'Inspection G
 
 Le thème gère **l'apparence** : en-tête, menus par profil, modèles de pages, composants, documents imprimables. La **logique comptable** (écritures, budgets, contrôles bloquants, droits, PDF, codes QR) relève de l'extension métier « IGE Frais de fonctionnement », qui s'appuie sur les fonctions et crochets décrits plus bas.
 
-Version 1.0.0 · WordPress 6.5 ou plus (testé sur 7.1.3) · PHP 8.0 ou plus.
+Version 1.0.3 · WordPress 6.5 ou plus (testé sur 7.1.3) · PHP 8.0 ou plus.
 
 ---
 
@@ -149,4 +149,5 @@ ige-ff/
 ## Versions
 
 - 1.0.2 : lien « Sécurité » (double authentification) à côté de « Se déconnecter », sur ordinateur et téléphone.
+- 1.0.3 : nouveau nom « Gestion des frais de fonctionnement du trésor public » (valeur par défaut, remplacement de l’ancien nom, titre de l’onglet du navigateur).
 - 1.0.1 : l'élément « Administration » du menu reste actif sur toutes les pages d'administration.

@@ -92,7 +92,11 @@ ige_t( is_wp_error( IGE_FFM_Referentiels::save( 'service', array( 'code' => 'X' 
 ige_t( user_can( $compta, 'ige_logistique' ) && ! user_can( $agent, 'ige_logistique' ) && ! user_can( $lect, 'ige_logistique' ), 'Droit « logistique » : Administration et Finance seulement' );
 
 echo "\n2. Fonctions du site\n";
-ige_t( 12 === count( IGE_FFM_Fonctions::modules() ) && ! in_array( false, IGE_FFM_Fonctions::etats(), true ), '12 fonctions activables, toutes actives par défaut' );
+$e0 = IGE_FFM_Fonctions::etats();
+ige_t( 13 === count( IGE_FFM_Fonctions::modules() ) && false === $e0['stocks'] && 1 === count( array_filter( $e0, static fn( $v ) => ! $v ) ), '13 fonctions activables : toutes actives par défaut sauf les stocks de fournitures' );
+ige_t( IGE_FFM_Fonctions::page_inactive( 'stocks' ) && ! IGE_FFM_Fonctions::page_inactive( 'inventaire-des-services' ), 'Stocks désactivés par défaut, inventaire des services actif' );
+update_option( IGE_FFM_Fonctions::OPTION, array( 'stocks' => true ) );
+ige_t( IGE_FFM_Fonctions::active( 'stocks' ), 'L’administrateur peut activer les stocks' );
 ige_t( 'parc' === IGE_FFM_Fonctions::module_de_page( 'vehicules' ) && 'rapprochement' === IGE_FFM_Fonctions::module_de_action( 'banque_releve' ) && 'missions' === IGE_FFM_Fonctions::module_de_action( 'mission_payer' ) && null === IGE_FFM_Fonctions::module_de_action( 'ecriture' ), 'Pages et formulaires rattachés à leur fonction ; le socle n’en dépend pas' );
 $chg = IGE_FFM_Fonctions::enregistrer( array_merge( IGE_FFM_Fonctions::etats(), array( 'parc' => false, 'devise_usd' => false, 'chaine' => false ) ), $compta );
 ige_t( 3 === count( $chg ) && ! IGE_FFM_Fonctions::active( 'parc' ) && IGE_FFM_Fonctions::page_inactive( 'parc-automobile' ) && ! IGE_FFM_Fonctions::page_inactive( 'livre-de-caisse' ), 'Parc, dollar et chaîne complète désactivés' );

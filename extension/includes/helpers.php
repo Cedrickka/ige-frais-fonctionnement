@@ -84,12 +84,34 @@ function ige_ffm_url( $slug, $query = array() ) {
  * @param string $titre Titre.
  * @param string $texte Texte.
  */
-function ige_ffm_flash( $type, $titre, $texte = '' ) {
+function ige_ffm_flash( $type, $titre, $texte = '', $lien = null ) {
+	global $ige_ffm_flash_jeton;
 	$key  = 'ige_ffm_flash_' . get_current_user_id();
 	$list = get_transient( $key ) ?: array();
-	$list[] = array( $type, $titre, $texte );
+	$list[] = array( $type, $titre, $texte, $lien );
 	set_transient( $key, $list, 300 );
+	// Copie liée à l'adresse de retour : le message s'affiche même si un cache de page
+	// ou d'objets fait perdre la première, et l'adresse unique contourne les caches.
+	if ( empty( $ige_ffm_flash_jeton ) ) {
+		$ige_ffm_flash_jeton = strtolower( wp_generate_password( 12, false, false ) );
+	}
+	set_transient( 'ige_ffm_fj_' . $ige_ffm_flash_jeton, array( 'u' => get_current_user_id(), 'l' => $list ), 300 );
 }
+
+/**
+ * Ajoute le jeton du message à l'adresse de retour d'un formulaire.
+ *
+ * @param string $location Adresse.
+ * @return string
+ */
+function ige_ffm_flash_redirect( $location ) {
+	global $ige_ffm_flash_jeton;
+	if ( ! empty( $ige_ffm_flash_jeton ) && is_string( $location ) && 0 === strpos( $location, home_url() ) ) {
+		$location = add_query_arg( 'ige_msg', $ige_ffm_flash_jeton, remove_query_arg( 'ige_msg', $location ) );
+	}
+	return $location;
+}
+add_filter( 'wp_redirect', 'ige_ffm_flash_redirect', 5 );
 
 /**
  * Affiche (une seule fois) les messages en attente.
@@ -99,15 +121,24 @@ function ige_ffm_flash( $type, $titre, $texte = '' ) {
 function ige_ffm_flash_render() {
 	$key  = 'ige_ffm_flash_' . get_current_user_id();
 	$list = get_transient( $key );
+	$jet  = isset( $_GET['ige_msg'] ) ? preg_replace( '/[^a-z0-9]/', '', strtolower( (string) wp_unslash( $_GET['ige_msg'] ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+	if ( '' !== $jet ) {
+		$copie = get_transient( 'ige_ffm_fj_' . $jet );
+		if ( is_array( $copie ) && (int) $copie['u'] === get_current_user_id() ) {
+			$list = $list ?: $copie['l'];
+			delete_transient( 'ige_ffm_fj_' . $jet );
+		}
+	}
 	if ( ! $list ) {
 		return '';
 	}
 	delete_transient( $key );
 	$html = '';
 	foreach ( $list as $m ) {
-		$html .= ige_ffm_banner( $m[0], $m[1], $m[2] ? ' ' . esc_html( $m[2] ) : '' );
+		$lien = ! empty( $m[3] ) && is_array( $m[3] ) ? ' <a href="' . esc_url( $m[3][1] ) . '">' . esc_html( $m[3][0] ) . '</a>' : '';
+		$html .= ige_ffm_banner( $m[0], $m[1], ( $m[2] ? ' ' . esc_html( $m[2] ) : '' ) . $lien );
 	}
-	return $html;
+	return '<div class="ige-flash" id="ige-flash" tabindex="-1">' . $html . '</div>';
 }
 
 /**
@@ -202,3 +233,40 @@ function ige_ffm_back( $fallback = '' ) {
 	wp_safe_redirect( $ref ? remove_query_arg( array( 'modifier' ), $ref ) : ( $fallback ?: home_url( '/' ) ) );
 	exit;
 }
+
+/**
+ * Nom officiel de l'application (modifiable dans Apparence › Personnaliser › Identité IGE).
+ *
+ * @param bool $court Forme courte « IGE · … » (expéditeur, fichiers).
+ * @return string
+ */
+function ige_ffm_nom_appli( $court = false ) {
+	$nom = function_exists( 'ige_ff_texte' ) ? trim( ige_ff_texte( 'ige_application' ) ) : '';
+	if ( '' === $nom || 'Gestion des frais de fonctionnement' === $nom ) {
+		$nom = 'Gestion des frais de fonctionnement du trésor public';
+	}
+	if ( $court ) {
+		$f = preg_replace( '/^Gestion des /u', '', $nom );
+		return 'IGE · ' . mb_strtoupper( mb_substr( $f, 0, 1 ) ) . mb_substr( $f, 1 );
+	}
+	return $nom;
+}
+
+/**
+ * Pages de l'application jamais mises en cache pour un utilisateur connecté
+ * (soldes, messages et données personnelles toujours à jour, y compris derrière
+ * un cache d'hébergeur de type LiteSpeed).
+ */
+function ige_ffm_pas_de_cache() {
+	if ( ! is_user_logged_in() ) {
+		return;
+	}
+	if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+		define( 'DONOTCACHEPAGE', true );
+	}
+	nocache_headers();
+	if ( ! headers_sent() ) {
+		header( 'X-LiteSpeed-Cache-Control: no-cache' );
+	}
+}
+add_action( 'template_redirect', 'ige_ffm_pas_de_cache', 0 );

@@ -42,6 +42,7 @@ final class IGE_FFM_Installer {
 			self::create_tables();
 			IGE_FFM_Roles::install();
 			self::migrer_pieces( (string) get_option( 'ige_ffm_db_version' ) );
+			self::migrer_v24( (string) get_option( 'ige_ffm_db_version' ) );
 			IGE_FFM_Reglages::install_defaults();
 			IGE_FFM_Pieces::dossier();
 			self::un_seul_exercice_ouvert();
@@ -164,6 +165,7 @@ final class IGE_FFM_Installer {
 			'visas'                   => array( 'Visas', 'Demandes de fonds, ordonnancements et ordres de mission à viser', 'templates/liste.php' ),
 			'fonctions-du-site'       => array( 'Fonctions du site', 'Activer ou désactiver les modules et leurs menus', 'templates/administration.php' ),
 			'vehicules'               => array( 'Véhicules', 'Demandes de véhicule, départs et retours, pleins', 'templates/liste.php' ),
+			'inventaire-des-services' => array( 'Inventaire des services', 'Biens et équipements comptés local par local dans chaque service', 'templates/liste.php' ),
 		);
 		foreach ( $pages as $slug => $p ) {
 			if ( get_page_by_path( $slug ) ) {
@@ -279,11 +281,12 @@ final class IGE_FFM_Installer {
 			return;
 		}
 		$loc = get_nav_menu_locations();
-		foreach ( array( 'menu-service', 'menu-direction', 'menu-admin' ) as $l ) {
+		foreach ( array( 'menu-service', 'menu-direction', 'menu-admin', 'menu-central' ) as $l ) {
 			if ( empty( $loc[ $l ] ) ) {
 				return; // Menus du thème pas encore créés : nouvel essai plus tard.
 			}
 		}
+		$loc = self::menus_v24( $loc );
 		$present = static function ( $location, $page_id ) use ( $loc ) {
 			foreach ( (array) wp_get_nav_menu_items( (int) $loc[ $location ] ) as $it ) {
 				if ( 'page' === $it->object && (int) $it->object_id === (int) $page_id ) {
@@ -296,7 +299,6 @@ final class IGE_FFM_Installer {
 			array( 'menu-service', 'vehicules', 'Véhicules', '', 7 ),
 			array( 'menu-direction', 'visas', 'Visas', '', 2 ),
 			array( 'menu-direction', 'risques', 'Risques', '', 10 ),
-			array( 'menu-direction', 'parc-automobile', 'Parc automobile', '', 11 ),
 			array( 'menu-admin', 'fonctions-du-site', 'Fonctions du site', 'Règles', 0 ),
 			array( 'menu-admin', 'deploiement', 'Services et reprise Excel', 'Déploiement', 0 ),
 		);
@@ -312,6 +314,80 @@ final class IGE_FFM_Installer {
 			}
 		}
 		update_option( 'ige_ffm_menus_ok', IGE_FFM_VERSION, false );
+	}
+
+	/**
+	 * Version 2.4.0 : menu du Gestionnaire du parc (seul lui et Administration et Finance
+	 * voient le parc automobile), lien retiré du menu de la Direction, lien « Inventaire
+	 * des services » dans la Logistique d'Administration et Finance.
+	 *
+	 * @param array $loc Emplacements de menus.
+	 * @return array Emplacements mis à jour.
+	 */
+	private static function menus_v24( array $loc ) {
+		$parc = get_page_by_path( 'parc-automobile' );
+		if ( $parc ) {
+			foreach ( (array) wp_get_nav_menu_items( (int) $loc['menu-direction'] ) as $it ) {
+				if ( 'page' === $it->object && (int) $it->object_id === (int) $parc->ID ) {
+					wp_delete_post( $it->ID, true );
+				}
+			}
+			if ( empty( $loc['menu-parc'] ) || ! wp_get_nav_menu_object( (int) $loc['menu-parc'] ) ) {
+				$menu = wp_get_nav_menu_object( 'IGE · Parc automobile' );
+				$mid  = $menu ? (int) $menu->term_id : wp_create_nav_menu( 'IGE · Parc automobile' );
+				if ( ! is_wp_error( $mid ) ) {
+					if ( ! $menu ) {
+						self::lien_page( (int) $mid, (int) $parc->ID, 'Parc automobile', 1 );
+					}
+					$loc['menu-parc'] = (int) $mid;
+					set_theme_mod( 'nav_menu_locations', $loc );
+				}
+			}
+		}
+		$inv = get_page_by_path( 'inventaire-des-services' );
+		if ( $inv ) {
+			$deja = false;
+			$log  = 0;
+			foreach ( (array) wp_get_nav_menu_items( (int) $loc['menu-central'] ) as $it ) {
+				if ( 'page' === $it->object && (int) $it->object_id === (int) $inv->ID ) {
+					$deja = true;
+				}
+				if ( 0 === (int) $it->menu_item_parent && 'Logistique' === $it->title ) {
+					$log = (int) $it->ID;
+				}
+			}
+			if ( ! $deja ) {
+				if ( $log ) {
+					self::ajouter_sous_groupe( 'menu-central', 'Logistique', (int) $inv->ID, 'Inventaire des services' );
+				} else {
+					self::ajouter_au_menu( 'menu-central', (int) $inv->ID, 'Inventaire des services', 7 );
+				}
+			}
+		}
+		return $loc;
+	}
+
+	/**
+	 * Ajoute un lien de page à un menu donné.
+	 *
+	 * @param int    $menu    Menu.
+	 * @param int    $page_id Page.
+	 * @param string $titre   Libellé.
+	 * @param int    $pos     Position.
+	 */
+	private static function lien_page( $menu, $page_id, $titre, $pos ) {
+		wp_update_nav_menu_item(
+			$menu,
+			0,
+			array(
+				'menu-item-title'     => $titre,
+				'menu-item-object'    => 'page',
+				'menu-item-object-id' => $page_id,
+				'menu-item-type'      => 'post_type',
+				'menu-item-status'    => 'publish',
+				'menu-item-position'  => $pos,
+			)
+		);
 	}
 
 	/**
@@ -335,6 +411,30 @@ final class IGE_FFM_Installer {
 	}
 
 	/**
+	 * Mise à jour 2.4.0 : nom de l'application ; stocks de fournitures désactivés par défaut,
+	 * sauf sur un site qui les utilise déjà (articles enregistrés).
+	 *
+	 * @param string $avant Version du schéma avant la mise à jour.
+	 */
+	private static function migrer_v24( $avant ) {
+		$ancien = get_theme_mod( 'ige_application', '' );
+		if ( '' === $ancien || 'Gestion des frais de fonctionnement' === trim( (string) $ancien ) ) {
+			set_theme_mod( 'ige_application', 'Gestion des frais de fonctionnement du trésor public' );
+		}
+		if ( '' === $avant || version_compare( $avant, '13', '>=' ) ) {
+			return;
+		}
+		global $wpdb;
+		$o = get_option( IGE_FFM_Fonctions::OPTION, array() );
+		$o = is_array( $o ) ? $o : array();
+		if ( ! array_key_exists( 'stocks', $o ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+			$o['stocks'] = (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . IGE_FFM_DB::t( 'article' ) ) > 0;
+			update_option( IGE_FFM_Fonctions::OPTION, $o, true );
+		}
+	}
+
+	/**
 	 * Menus du lot V2 sur un site déjà installé (une seule fois) : Risques et Parc pour la Direction.
 	 */
 	public static function menus_v21() {
@@ -350,7 +450,7 @@ final class IGE_FFM_Installer {
 			$deja[] = (int) $it->object_id;
 		}
 		$pos = 10;
-		foreach ( array( 'risques' => 'Risques', 'parc-automobile' => 'Parc automobile' ) as $slug => $titre ) {
+		foreach ( array( 'risques' => 'Risques' ) as $slug => $titre ) {
 			$p = get_page_by_path( $slug );
 			if ( $p && ! in_array( (int) $p->ID, $deja, true ) ) {
 				self::ajouter_au_menu( 'menu-direction', (int) $p->ID, $titre, $pos++ );

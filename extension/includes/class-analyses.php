@@ -306,7 +306,7 @@ final class IGE_FFM_Analyses {
 		$exo = (int) $ex['id'];
 		$syn = IGE_FFM_Verification::synthese( $exo );
 		$p   = array();
-		$p[] = 'Bonjour,' . "\n\n" . 'Voici les priorités de la semaine du ' . wp_date( 'd/m/Y' ) . ' pour la gestion des frais de fonctionnement (exercice ' . $ex['annee'] . ').';
+		$p[] = 'Bonjour,' . "\n\n" . 'Voici les priorités de la semaine du ' . wp_date( 'd/m/Y' ) . ' pour la ' . lcfirst( ige_ffm_nom_appli() ) . ' (exercice ' . $ex['annee'] . ').';
 		$p[] = 'À VÉRIFIER' . "\n" . sprintf( '%d écriture(s) transmise(s) pour %s, dont %d avec une anomalie.', $syn['a_verifier']['n'] ?? 0, ige_ffm_montant( (int) ( $syn['a_verifier']['montant'] ?? 0 ) ), $syn['anomalies']['n'] ?? 0 ) . "\n" . ige_ffm_url( 'verification' );
 		$al  = IGE_FFM_Consolidation::alertes( $exo );
 		if ( $al ) {

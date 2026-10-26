@@ -1,5 +1,15 @@
 # Journal des versions
 
+## 2.4.0 — 26 octobre 2026 · Inventaire des services, profil du parc, nom de l'application
+
+- Nom de l'application : « Gestion des frais de fonctionnement du trésor public » sur toutes les pages, e-mails, PDF, classeurs et dans l'onglet du navigateur (thème 1.0.3 recommandé ; l'extension met aussi le nom à jour).
+- Inventaire des services (nouveau module, Logistique) : catalogue des biens, locaux par service, inventaires datés en cours puis validés, reprise et écarts avec l'inventaire précédent, import du fichier Excel « INVENTAIRE DE SERVICE », tableau consolidé biens × services, exports Excel et PDF. Réservé à Administration et Finance et à l'administrateur.
+- Profil « Gestionnaire du parc automobile » : menu propre, accueil sur le parc. Le parc n'est plus visible que par ce profil, Administration et Finance et l'administrateur ; retiré du menu de la Direction. La page « Véhicules » des services reste disponible.
+- Stocks de fournitures désactivés par défaut (activables dans Fonctions du site) ; conservés sur un site mis à jour qui a déjà des articles.
+- Saisie d'une écriture : message de succès ou de refus avec le motif, toujours affiché en haut de la page, même derrière le cache de l'hébergeur.
+- Rappel : la règle « Photo ou PDF de la pièce obligatoire » (distincte du n° de pièce) et l'onglet « Services et catégories » ajouté à côté de « Par service » sont arrivés en 2.3.0.
+- Schéma version 13. 67 tests automatiques supplémentaires, 873 au total.
+
 ## 2.3.0 — 26 octobre 2026 · Consolidation croisée et pièce facultative
 
 - Consolidation : nouvel onglet « Services et catégories », tableau croisé avec une ligne par service et une colonne par catégorie (rubriques rattachées rappelées dans l'en-tête), total par service et total général ; bascule « par rubrique » (R01 à R10). Montants consommés (payé + engagé) des écritures validées. Exports Excel et PDF (paysage) inclus.

@@ -366,7 +366,7 @@ final class IGE_FFM_Ecran_Arrete {
 						<div class="ige-qr" data-ige-qr="<?php echo esc_attr( IGE_FFM_Documents::url_verification( $doc['reference'] ) ); ?>" aria-label="Code QR de vérification"></div>
 						<div>Document authentifiable : scannez le code ou saisissez la référence <b><?php echo esc_html( $doc['reference'] ); ?></b> sur la page « Vérifier un document ».<br><?php echo esc_html( IGE_FFM_Arretes::reference( $a ) ); ?></div>
 					<?php else : ?>
-						<div>Procès-verbal établi dans l’application de gestion des frais de fonctionnement · <?php echo esc_html( IGE_FFM_Arretes::reference( $a ) ); ?> · le code QR d’authenticité est attribué à la signature finale.</div>
+						<div>Procès-verbal établi dans l’application « <?php echo esc_html( ige_ffm_nom_appli() ); ?> » · <?php echo esc_html( IGE_FFM_Arretes::reference( $a ) ); ?> · le code QR d’authenticité est attribué à la signature finale.</div>
 					<?php endif; ?>
 				</div>
 			</article>

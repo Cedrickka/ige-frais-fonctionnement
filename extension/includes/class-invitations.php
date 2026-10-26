@@ -87,7 +87,7 @@ final class IGE_FFM_Invitations {
 		$lien    = network_site_url( 'wp-login.php?action=rp&key=' . rawurlencode( $cle ) . '&login=' . rawurlencode( $u->user_login ), 'login' );
 		$service = $c['service_id'] ? IGE_FFM_Comptes::service_code( (int) $c['service_id'] ) : '';
 		$texte   = sprintf( "Bonjour %s,\n\n", $u->display_name )
-			. sprintf( "Un compte a été créé pour vous dans l’application de gestion des frais de fonctionnement de l’IGE.\n\nProfil : %s%s\nIdentifiant : %s\n\n", IGE_FFM_Roles::libelle( $c['profil'] ), $service ? ' · ' . $service : '', $u->user_login )
+			. sprintf( "Un compte a été créé pour vous dans l’application « " . ige_ffm_nom_appli() . " » de l’IGE.\n\nProfil : %s%s\nIdentifiant : %s\n\n", IGE_FFM_Roles::libelle( $c['profil'] ), $service ? ' · ' . $service : '', $u->user_login )
 			. "Pour activer votre compte, choisissez votre mot de passe personnel en ouvrant ce lien (valable 24 heures, utilisable une seule fois) :\n\n" . $lien . "\n\n"
 			. 'Ensuite, connectez-vous sur ' . home_url( '/' ) . ". À chaque connexion, un code de vérification vous sera envoyé à cette adresse.\n\n"
 			. 'Si le lien a expiré, demandez une nouvelle invitation à Administration et Finance.';

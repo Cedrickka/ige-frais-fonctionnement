@@ -86,6 +86,14 @@ final class IGE_FFM_Fonctions {
 				'groupe'  => 'Logistique',
 				'pages'   => array( 'stocks' ),
 				'actions' => array( 'stock_*' ),
+				'defaut'  => false,
+			),
+			'inventaire'     => array(
+				'libelle' => 'Inventaire des services',
+				'desc'    => 'Biens et équipements comptés local par local dans chaque service, import du fichier Excel d’inventaire, tableau consolidé.',
+				'groupe'  => 'Logistique',
+				'pages'   => array( 'inventaire-des-services' ),
+				'actions' => array( 'inv_*' ),
 			),
 			'risques'        => array(
 				'libelle' => 'Risques et comparaison des services',
@@ -127,8 +135,8 @@ final class IGE_FFM_Fonctions {
 		$o   = get_option( self::OPTION, array() );
 		$o   = is_array( $o ) ? $o : array();
 		$out = array();
-		foreach ( array_keys( self::modules() ) as $k ) {
-			$out[ $k ] = array_key_exists( $k, $o ) ? (bool) $o[ $k ] : true;
+		foreach ( self::modules() as $k => $m ) {
+			$out[ $k ] = array_key_exists( $k, $o ) ? (bool) $o[ $k ] : ( $m['defaut'] ?? true );
 		}
 		return $out;
 	}

@@ -75,7 +75,7 @@ final class IGE_FFM_Hors_Connexion {
 			header( 'Content-Type: application/manifest+json; charset=utf-8' );
 			echo wp_json_encode( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				array(
-					'name'             => 'IGE · Frais de fonctionnement',
+					'name'             => ige_ffm_nom_appli( true ),
 					'short_name'       => 'IGE Frais',
 					'lang'             => 'fr',
 					'start_url'        => wp_parse_url( ige_ffm_url( 'nouvelle-ecriture' ), PHP_URL_PATH ),

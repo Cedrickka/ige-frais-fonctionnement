@@ -708,6 +708,52 @@ final class IGE_FFM_DB {
   created_at datetime NOT NULL,
   PRIMARY KEY  (id)
 ) $c;",
+			'CREATE TABLE ' . $t( 'pat_bien' ) . " (
+  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  designation varchar(190) NOT NULL,
+  cle varchar(190) NOT NULL,
+  categorie varchar(60) NOT NULL DEFAULT '',
+  actif tinyint(1) NOT NULL DEFAULT 1,
+  created_at datetime NOT NULL,
+  PRIMARY KEY  (id),
+  UNIQUE KEY cle (cle)
+) $c;",
+			'CREATE TABLE ' . $t( 'pat_local' ) . " (
+  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  service_id bigint(20) unsigned NOT NULL,
+  libelle varchar(90) NOT NULL,
+  cle varchar(90) NOT NULL,
+  ordre int(10) unsigned NOT NULL DEFAULT 0,
+  actif tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY  (id),
+  UNIQUE KEY service_cle (service_id,cle)
+) $c;",
+			'CREATE TABLE ' . $t( 'pat_inventaire' ) . " (
+  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  service_id bigint(20) unsigned NOT NULL,
+  reference varchar(40) NOT NULL,
+  date_inventaire date NOT NULL,
+  statut varchar(12) NOT NULL DEFAULT 'brouillon',
+  origine varchar(12) NOT NULL DEFAULT 'saisie',
+  fichier varchar(190) NOT NULL DEFAULT '',
+  observations text NULL,
+  created_by bigint(20) unsigned NOT NULL,
+  created_at datetime NOT NULL,
+  valide_par bigint(20) unsigned NULL,
+  valide_le datetime NULL,
+  PRIMARY KEY  (id),
+  UNIQUE KEY reference (reference),
+  KEY service_date (service_id,date_inventaire)
+) $c;",
+			'CREATE TABLE ' . $t( 'pat_quantite' ) . " (
+  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  inventaire_id bigint(20) unsigned NOT NULL,
+  bien_id bigint(20) unsigned NOT NULL,
+  local_id bigint(20) unsigned NOT NULL,
+  quantite int(10) unsigned NOT NULL DEFAULT 0,
+  PRIMARY KEY  (id),
+  UNIQUE KEY cellule (inventaire_id,bien_id,local_id)
+) $c;",
 			'CREATE TABLE ' . $t( 'audit' ) . " (
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   user_id bigint(20) unsigned NOT NULL DEFAULT 0,
@@ -734,6 +780,6 @@ final class IGE_FFM_DB {
 	 * @return string[]
 	 */
 	public static function tables() {
-		return array( 'exercice', 'service', 'categorie', 'rubrique', 'mode_paiement', 'budget', 'solde_initial', 'revision_budget', 'compte', 'fournisseur', 'ecriture', 'lot', 'piece', 'echange', 'avance', 'arrete', 'document', 'taux', 'visa', 'demande', 'mission', 'mission_membre', 'banque', 'releve', 'releve_ligne', 'mouvement', 'suspens', 'prevision', 'nomenclature', 'vehicule', 'chauffeur', 'vehicule_doc', 'deplacement', 'carburant', 'entretien', 'article', 'stock_mvt', 'inventaire', 'dotation', 'carnet', 'bon', 'audit' );
+		return array( 'exercice', 'service', 'categorie', 'rubrique', 'mode_paiement', 'budget', 'solde_initial', 'revision_budget', 'compte', 'fournisseur', 'ecriture', 'lot', 'piece', 'echange', 'avance', 'arrete', 'document', 'taux', 'visa', 'demande', 'mission', 'mission_membre', 'banque', 'releve', 'releve_ligne', 'mouvement', 'suspens', 'prevision', 'nomenclature', 'vehicule', 'chauffeur', 'vehicule_doc', 'deplacement', 'carburant', 'entretien', 'article', 'stock_mvt', 'inventaire', 'dotation', 'carnet', 'bon', 'pat_bien', 'pat_local', 'pat_inventaire', 'pat_quantite', 'audit' );
 	}
 }

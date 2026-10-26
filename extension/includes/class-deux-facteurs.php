@@ -113,7 +113,7 @@ final class IGE_FFM_Deux_Facteurs {
 		$code = str_pad( (string) random_int( 0, 999999 ), 6, '0', STR_PAD_LEFT );
 		$txt  = 'activation' === $objet
 			? "Bonjour {$u->display_name},\n\nVoici le code pour activer la double authentification de votre compte {$u->user_login} :\n\n**{$code}**\n\nIl est valable 10 minutes."
-			: "Bonjour {$u->display_name},\n\nVoici votre code de connexion à l’application des frais de fonctionnement (compte {$u->user_login}) :\n\n**{$code}**\n\nIl est valable 10 minutes et ne sert qu’une fois.\n\nSi vous n’essayez pas de vous connecter, quelqu’un connaît votre mot de passe : changez-le et prévenez Administration et Finance.";
+			: "Bonjour {$u->display_name},\n\nVoici votre code de connexion à l’application « " . ige_ffm_nom_appli() . " » (compte {$u->user_login}) :\n\n**{$code}**\n\nIl est valable 10 minutes et ne sert qu’une fois.\n\nSi vous n’essayez pas de vous connecter, quelqu’un connaît votre mot de passe : changez-le et prévenez Administration et Finance.";
 		$ok   = IGE_FFM_Messagerie::envoyer( $u->user_email, 'activation' === $objet ? 'Activation de la double authentification' : 'Votre code de connexion', $txt );
 		if ( ! $ok ) {
 			return new WP_Error( 'envoi', 'L’e-mail n’a pas pu être envoyé. Réessayez dans un instant, utilisez un code de secours, ou prévenez Administration et Finance.' );

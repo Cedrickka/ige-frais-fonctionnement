@@ -45,7 +45,7 @@ final class IGE_FFM_Messagerie {
 			'utilisateur'  => defined( 'IGE_FFM_SMTP_UTILISATEUR' ) ? IGE_FFM_SMTP_UTILISATEUR : ( $o['utilisateur'] ?? '' ),
 			'mot_de_passe' => defined( 'IGE_FFM_SMTP_MOT_DE_PASSE' ) ? IGE_FFM_SMTP_MOT_DE_PASSE : IGE_FFM_Deux_Facteurs::dechiffrer( (string) ( $o['mot_de_passe'] ?? '' ) ),
 			'expediteur'   => defined( 'IGE_FFM_SMTP_EXPEDITEUR' ) ? IGE_FFM_SMTP_EXPEDITEUR : ( $o['expediteur'] ?? '' ),
-			'nom'          => $o['nom'] ?? 'IGE · Frais de fonctionnement',
+			'nom'          => ( empty( $o['nom'] ) || 'IGE · Frais de fonctionnement' === $o['nom'] ) ? ige_ffm_nom_appli( true ) : $o['nom'],
 		);
 		if ( '' === $r['expediteur'] ) {
 			$r['expediteur'] = $r['utilisateur'];
@@ -86,7 +86,7 @@ final class IGE_FFM_Messagerie {
 		$o['port']        = $port;
 		$o['utilisateur'] = $user;
 		$o['expediteur']  = $exp;
-		$o['nom']         = sanitize_text_field( (string) ( $in['nom'] ?? '' ) ) ?: 'IGE · Frais de fonctionnement';
+		$o['nom']         = sanitize_text_field( (string) ( $in['nom'] ?? '' ) ) ?: ige_ffm_nom_appli( true );
 		$mdp              = (string) ( $in['mot_de_passe'] ?? '' );
 		if ( '' !== $mdp ) {
 			$o['mot_de_passe'] = IGE_FFM_Deux_Facteurs::chiffrer( $mdp );
@@ -182,14 +182,14 @@ final class IGE_FFM_Messagerie {
 	 */
 	public static function envoyer( $a, $sujet, $texte ) {
 		$html  = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1d2433;max-width:560px">';
-		$html .= '<div style="border-left:4px solid #007fc7;padding-left:10px;margin-bottom:18px"><b style="color:#0f2f6b">Ministère de l’Éducation Nationale et Nouvelle Citoyenneté</b><br><span style="font-size:13px">Inspection Générale de l’Enseignement · Frais de fonctionnement</span></div>';
+		$html .= '<div style="border-left:4px solid #007fc7;padding-left:10px;margin-bottom:18px"><b style="color:#0f2f6b">Ministère de l’Éducation Nationale et Nouvelle Citoyenneté</b><br><span style="font-size:13px">Inspection Générale de l’Enseignement · ' . esc_html( ige_ffm_nom_appli() ) . '</span></div>';
 		foreach ( preg_split( "/\n\s*\n/", trim( $texte ) ) as $p ) {
 			$p     = esc_html( $p );
 			$p     = preg_replace( '#(https?://[^\s<]+)#', '<a href="$1" style="color:#007fc7">$1</a>', $p );
 			$p     = preg_replace( '/\*\*(.+?)\*\*/', '<b style="font-size:24px;letter-spacing:4px">$1</b>', $p );
 			$html .= '<p style="margin:0 0 14px;line-height:1.5">' . nl2br( $p ) . '</p>';
 		}
-		$html .= '<p style="font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb;padding-top:10px;margin-top:20px">Message automatique de l’application de gestion des frais de fonctionnement. Ne répondez pas à ce message si vous ne l’attendiez pas : prévenez Administration et Finance.</p></div>';
+		$html .= '<p style="font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb;padding-top:10px;margin-top:20px">Message automatique de l’application « ' . esc_html( ige_ffm_nom_appli() ) . ' ». Ne répondez pas à ce message si vous ne l’attendiez pas : prévenez Administration et Finance.</p></div>';
 		$types = static fn() => 'text/html';
 		add_filter( 'wp_mail_content_type', $types );
 		$ok = wp_mail( $a, '[IGE] ' . $sujet, $html );

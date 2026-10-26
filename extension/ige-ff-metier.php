@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name:       IGE Frais de fonctionnement (métier)
+ * Plugin Name:       IGE Frais de fonctionnement du trésor public (métier)
  * Plugin URI:        https://ige-gestion.com/
- * Description:       Gestion des frais de fonctionnement de l'Inspection Générale de l'Enseignement : budgets, caisses, transmission et vérification, avances, arrêtés, consolidation et rapports ; missions, demandes de fonds, visas, banque, trésorerie, double devise, saisie hors connexion ; parc automobile, stocks de fournitures, risques, rapport hebdomadaire ; fonctions activables.
- * Version:           2.3.0
+ * Description:       Gestion des frais de fonctionnement du trésor public de l'Inspection Générale de l'Enseignement : budgets, caisses, transmission et vérification, avances, arrêtés, consolidation et rapports ; missions, demandes de fonds, visas, banque, trésorerie, double devise, saisie hors connexion ; parc automobile, stocks de fournitures, inventaire des services, risques, rapport hebdomadaire ; fonctions activables.
+ * Version:           2.4.0
  * Requires at least: 6.5
  * Requires PHP:      8.0
  * Author:            Inspection Générale de l'Enseignement
@@ -15,8 +15,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'IGE_FFM_VERSION', '2.3.0' );
-define( 'IGE_FFM_DB_VERSION', '12' );
+define( 'IGE_FFM_VERSION', '2.4.0' );
+define( 'IGE_FFM_DB_VERSION', '13' );
 define( 'IGE_FFM_FILE', __FILE__ );
 define( 'IGE_FFM_DIR', plugin_dir_path( __FILE__ ) );
 define( 'IGE_FFM_URL', plugin_dir_url( __FILE__ ) );
@@ -66,6 +66,7 @@ require_once IGE_FFM_DIR . 'includes/class-fonctions.php';
 require_once IGE_FFM_DIR . 'includes/class-parc.php';
 require_once IGE_FFM_DIR . 'includes/class-carburant.php';
 require_once IGE_FFM_DIR . 'includes/class-stocks.php';
+require_once IGE_FFM_DIR . 'includes/class-patrimoine.php';
 require_once IGE_FFM_DIR . 'includes/class-analyses.php';
 require_once IGE_FFM_DIR . 'includes/class-ecrans.php';
 
@@ -99,7 +100,7 @@ add_action(
 		if ( is_user_logged_in() && is_page( array( 'rapports', 'arrete-de-caisse', 'double-authentification' ) ) ) {
 			wp_enqueue_script( 'ige-ffm-qrcode', IGE_FFM_URL . 'assets/vendor/qrcode.js', array(), '1.4.4', true );
 		}
-		if ( is_user_logged_in() && is_page( array( 'nouvelle-ecriture', 'livre-de-caisse', 'verification', 'transmission', 'arrete-de-caisse', 'caisses', 'avances', 'rapports', 'double-authentification', 'missions', 'mes-demandes-de-fonds', 'demandes-de-fonds', 'dossier-de-depense', 'rapprochement-bancaire', 'tresorerie', 'visas', 'parc-automobile', 'vehicules', 'stocks', 'risques', 'notifications', 'fonctions-du-site' ) ) ) {
+		if ( is_user_logged_in() && is_page( array( 'nouvelle-ecriture', 'livre-de-caisse', 'verification', 'transmission', 'arrete-de-caisse', 'caisses', 'avances', 'rapports', 'double-authentification', 'missions', 'mes-demandes-de-fonds', 'demandes-de-fonds', 'dossier-de-depense', 'rapprochement-bancaire', 'tresorerie', 'visas', 'parc-automobile', 'vehicules', 'stocks', 'inventaire-des-services', 'risques', 'notifications', 'fonctions-du-site' ) ) ) {
 			wp_enqueue_script( 'ige-ffm-saisie', IGE_FFM_URL . 'assets/ige-ffm.js', wp_script_is( 'ige-ffm-qrcode', 'enqueued' ) ? array( 'ige-ffm-qrcode' ) : array(), (string) filemtime( IGE_FFM_DIR . 'assets/ige-ffm.js' ), true );
 		}
 	},
